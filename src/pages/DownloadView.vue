@@ -623,18 +623,20 @@ export default {
 					source: new WMTSSource( ( brt_options ) )
 				} );
 
-				var vectorSource = new VectorSource( {
+				const vectorSource = new VectorSource( {
 					format: new GeoJSON(),
-					url: function ( extent ) {
+					loader: function ( extent ) {
 
-						return (
-							that.WFSURL + '?' +
-              'version=1.1.0&request=GetFeature&typename=BAG3D:Tiles&' +
-              'outputFormat=application/json&srsname=EPSG:28992&' +
-              'bbox=' +
-              extent.join( ',' ) +
-              ',EPSG:28992'
-						);
+						fetch( that.WFSURL + '?' +
+      'version=1.1.0&request=GetFeature&typename=BAG3D:Tiles&' +
+      'outputFormat=application/json&srsname=EPSG:28992&' +
+      'bbox=' + extent.join( ',' ) + ',EPSG:28992'
+						).then( r => r.json() ).then( data => {
+
+							this.clear();
+							this.addFeatures( this.getFormat().readFeatures( data ) );
+
+						} );
 
 					},
 					strategy: bboxStrategy,
