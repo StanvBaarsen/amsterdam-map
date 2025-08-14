@@ -207,6 +207,42 @@
             </td>
             <td><a :href="OGCAPIURL">{{ OGCAPIURL }}</a></td>
           </tr>
+          <tr>
+            <td>
+              Cesium 3D Tiles (LoD1.2) <a
+                :href="'https://docs.3dbag.nl/' + $route.params.locale + '/delivery/webservices#cesium-3d-tiles'"
+                target="_blank"
+              ><b-icon
+                size="is-small"
+                icon="help-circle"
+              /></a>
+            </td>
+            <td><a :href="Cesium3DTilesLoD12URL">{{ Cesium3DTilesLoD12URL }}</a></td>
+          </tr>
+          <tr>
+            <td>
+              Cesium 3D Tiles (LoD1.3) <a
+                :href="'https://docs.3dbag.nl/' + $route.params.locale + '/delivery/webservices#cesium-3d-tiles'"
+                target="_blank"
+              ><b-icon
+                size="is-small"
+                icon="help-circle"
+              /></a>
+            </td>
+            <td><a :href="Cesium3DTilesLoD13URL">{{ Cesium3DTilesLoD13URL }}</a></td>
+          </tr>
+          <tr>
+            <td>
+              Cesium 3D Tiles (LoD2.2) <a
+                :href="'https://docs.3dbag.nl/' + $route.params.locale + '/delivery/webservices#cesium-3d-tiles'"
+                target="_blank"
+              ><b-icon
+                size="is-small"
+                icon="help-circle"
+              /></a>
+            </td>
+            <td><a :href="Cesium3DTilesLoD22URL">{{ Cesium3DTilesLoD22URL }}</a></td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -457,7 +493,7 @@ export default {
 			mapVisible: false,
 			showMetadataJSON: false,
 			map: null,
-			tileFormats: [ "CityJSON", "OBJ", "GPKG" ],
+			tileFormats: [ "CityJSON", "OBJ", "GPKG", "IFC" ],
 
 			selectedTile: null,
 			TileIndexFileURL: this.$root.$data[ "version_data" ][ "TILE_INDEX" ],
@@ -467,6 +503,9 @@ export default {
 			WFSURL: this.$root.$data[ "version_data" ][ "WFS" ],
 			WMSURL: this.$root.$data[ "version_data" ][ "WMS" ],
 			OGCAPIURL: this.$root.$data[ "version_data" ][ "OGCAPI" ],
+			Cesium3DTilesLoD12URL: this.$root.$data[ "version_data" ][ "3DTilesets" ][ "lod12" ],
+			Cesium3DTilesLoD13URL: this.$root.$data[ "version_data" ][ "3DTilesets" ][ "lod13" ],
+			Cesium3DTilesLoD22URL: this.$root.$data[ "version_data" ][ "3DTilesets" ][ "lod22" ],
 			metadata_url: this.$root.$data[ "version_data" ][ "metadata" ],
 			versions_data_archived: this.$root.$data[ "versions_data_archived" ],
 			metadata_json: Object(),
@@ -474,6 +513,7 @@ export default {
 				CityJSON: Object(),
 				OBJ: Object(),
 				GPKG: Object(),
+				IFC: Object(),
 			},
 		};
 
@@ -498,6 +538,7 @@ export default {
 			this.setFormatData( "CityJSON" );
 			this.setFormatData( "OBJ" );
 			this.setFormatData( "GPKG" );
+			this.setFormatData( "IFC" );
 
 		}
 
@@ -680,6 +721,8 @@ export default {
 						that.setFormatHash( "OBJ", obj_sha256 );
 						let gpkg_sha256 = e.selected[ 0 ].get( 'gpkg_sha256' );
 						that.setFormatHash( "GPKG", gpkg_sha256 );
+						let ifc_sha256 = e.selected[ 0 ].get( 'ifc_sha256' );
+						that.setFormatHash( "IFC", ifc_sha256 );
 
 					} );
 
@@ -695,7 +738,7 @@ export default {
 
 			if ( ! this.map ) {
 
-		    this.initiateMap();
+				this.initiateMap();
 
 			}
 

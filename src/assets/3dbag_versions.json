@@ -19,6 +19,8 @@
 
       "GPKG" : "https://data.3dbag.nl/v20241216/tiles/{TID_X}/{TID_Y}/{TID_Z}/{TID_X}-{TID_Y}-{TID_Z}.gpkg",
 
+      "IFC" : "https://data.3dbag.nl/v20241216/tiles/{TID_X}/{TID_Y}/{TID_Z}/{TID_X}-{TID_Y}-{TID_Z}.ifc",
+
       "WFS" : "https://data.3dbag.nl/api/BAG3D/wfs",
 
       "WMS" : "https://data.3dbag.nl/api/BAG3D/wms",
