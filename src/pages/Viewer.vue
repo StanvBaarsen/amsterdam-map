@@ -65,7 +65,7 @@
             {{ basemapOptions.attribution }}
           </span> |
         </span>
-        <a :href="'https://docs.3dbag.nl/'+$route.params.locale+'/copyright' ">© 3DBAG by tudelft3d and 3DGI</a>
+        <a :href="'https://docs.3dbag.nl/'+$i18n.locale+'/copyright' ">© 3DBAG by tudelft3d and 3DGI</a>
       </p>
     </div>
     <div id="debug-panel" />
@@ -338,7 +338,7 @@ export default {
 			if ( res ) {
 
 				this.$router.push( {
-					path: '/' + this.$route.params.locale + '/viewer',
+					name: 'Viewer',
 					query: {
 						rdx: res.rd_x,
 						rdy: res.rd_y,
