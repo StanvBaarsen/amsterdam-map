@@ -74,39 +74,6 @@
           </div>
         </div>
         <div class="navbar-end">
-          <router-link
-            to="/viewer"
-            :class="{'is-active': currentRouteName=='Viewer'}"
-            class="navbar-item"
-          >
-            {{ $t("nav.3dmap") }}
-          </router-link>
-          <router-link
-            to="/download"
-            :class="{'is-active': currentRouteName=='Download'}"
-            class="navbar-item"
-          >
-            {{ $t("nav.download") }}
-          </router-link>
-          <router-link
-            to="/dashboard"
-            :class="{'is-active': currentRouteName=='Dashboard'}"
-            class="navbar-item"
-          >
-            {{ $t("nav.dashboard") }}
-          </router-link>
-          <a
-            :href="'https://docs.3dbag.nl/' + currentLocale"
-            class="navbar-item docs-link"
-          >
-            {{ $t("nav.docs") }}
-          </a>
-          <a
-            class="navbar-item"
-            :href="currentLocale == 'en' ? 'https://forms.gle/NZg83heXM75pAmfVA' : 'https://forms.gle/N1FPRp3RG45EaBjUA'"
-          >
-            {{ $t("nav.feedback") }}
-          </a>
           <LocaleSwitcher />
         </div>
       </div>
@@ -142,7 +109,7 @@ export default {
 	computed: {
 		currentLocale() {
 
-			return this.$route.params.locale;
+			return this.$i18n.locale;
 
 		},
 		currentRouteName() {

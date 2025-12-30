@@ -6,18 +6,14 @@
     <div
       class="navbar-dropdown is-right"
     >
-      <router-link
-        :to="createRoute( $i18n.availableLocales[ 0 ] )"
+      <a
+        v-for="locale in $i18n.availableLocales"
+        :key="locale"
         class="navbar-item"
+        @click="switchLocale(locale)"
       >
-        <span>{{ localeName($i18n.availableLocales[ 0 ]) }}</span>
-      </router-link>
-      <router-link
-        :to="createRoute( $i18n.availableLocales[ 1 ] )"
-        class="navbar-item"
-      >
-        <span>{{ localeName($i18n.availableLocales[ 1 ]) }}</span>
-      </router-link>
+        <span>{{ localeName(locale) }}</span>
+      </a>
     </div>
   </div>
 </template>
@@ -28,40 +24,11 @@ export default {
 
 	name: "LocaleSwitcher",
 
-	data() {
-
-		return {
-		};
-
-	},
-
-	computed: {
-		otherLocale() {
-
-			for ( var i = 0; i < this.$i18n.availableLocales.length; i ++ ) {
-
-				if ( this.$i18n.availableLocales[ i ] != this.$i18n.locale ) {
-
-					return this.$i18n.availableLocales[ i ];
-
-				}
-
-			}
-
-			return this.$i18n.fallbackLocale;
-
-		},
-	},
 	methods: {
 
-		createRoute( localeCode ) {
+		switchLocale( localeCode ) {
 
-			var routeParams = this.$route.path.split( "/" );
-			const hash = this.$route.hash;
-
-			routeParams[ 1 ] = localeCode;
-
-			return routeParams.join( "/" ) + hash;
+			this.$i18n.locale = localeCode;
 
 		},
 		localeName( locale ) {
