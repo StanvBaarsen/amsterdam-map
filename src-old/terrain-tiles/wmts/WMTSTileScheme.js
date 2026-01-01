@@ -3,7 +3,7 @@ import {
 	TileMatrix,
 	BaseTileScheme
 } from '../base/TileScheme.js';
-import X2JS from 'x2js';
+import * as X2JS from 'x2js';
 
 export class WMTSTileScheme extends BaseTileScheme {
 
@@ -20,7 +20,7 @@ export class WMTSTileScheme extends BaseTileScheme {
 
 			this.capabilities = capabilities;
 			this.getTileMatrixSet();
-			if (onLoadTileScheme) onLoadTileScheme();
+			onLoadTileScheme();
 
 		} );
 
