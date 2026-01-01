@@ -28,26 +28,20 @@ export class WMTSTilesRenderer extends TilesRenderer {
 	getRequestURL( tile ) {
 
 		let requestURL = this.url;
-        if (requestURL.indexOf('?') === -1) {
-            requestURL += '?';
-        }
 
 		for ( const [ k, v ] of Object.entries( this.wmtsOptions ) ) {
-            if (k === 'url') continue;
 
-            if (!requestURL.endsWith('?') && !requestURL.endsWith('&')) {
+			if ( k != Object.keys( this.wmtsOptions )[ 0 ] ) {
+
 				requestURL += "&";
+
 			}
 
 			requestURL += k + "=" + v;
 
 		}
 
-        if (!requestURL.endsWith('?') && !requestURL.endsWith('&')) {
-            requestURL += "&";
-        }
-
-		requestURL += "TileCol=" + tile.col.toString();
+		requestURL += "&TileCol=" + tile.col.toString();
 		requestURL += "&TileRow=" + tile.row.toString();
 		requestURL += "&tileMatrix=" + tile.tileMatrix.level.toString();
 

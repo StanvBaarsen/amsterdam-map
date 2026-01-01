@@ -1,9 +1,10 @@
 import {
 	Texture,
-	PlaneGeometry,
+	PlaneBufferGeometry,
 	MeshBasicMaterial,
 	Mesh,
 	Group,
+	RGBFormat,
 	LinearFilter
 } from 'three';
 
@@ -84,11 +85,6 @@ export class TilesRenderer {
 		// Create tiles that hadn't been created yet
 		tiles.forEach( function ( ti ) {
 
-			// Check bounds
-			if ( ti.col < 0 || ti.col >= ti.tileMatrix.matrixWidth || ti.row < 0 || ti.row >= ti.tileMatrix.matrixHeight ) {
-				return;
-			}
-
 			const tileId = ti.getId();
 
 			if ( ! this.activeTiles.has( tileId ) ) {
@@ -116,7 +112,7 @@ export class TilesRenderer {
 			if ( this.group.children[ i ].name != this.tileLevel ) {
 
 				// Place tiles of old tileLevel above temporary (white) tiles, but underneath fully loaded tiles of new tileLevel
-				this.group.children[ i ].renderOrder = -2;
+				this.group.children[ i ].renderOrder = 1;
 
 			}
 
@@ -170,12 +166,12 @@ export class TilesRenderer {
 
 	createTile( tile, transform ) {
 
-		var geometry = this.track( new PlaneGeometry( tile.tileMatrix.tileSpanX, tile.tileMatrix.tileSpanY ) );
+		var geometry = this.track( new PlaneBufferGeometry( tile.tileMatrix.tileSpanX, tile.tileMatrix.tileSpanY ) );
 
 		var mesh = new Mesh( geometry, this.tempMaterial );
 		mesh.name = this.tileLevel;
 		// The temporary (white) tiles on the bottom
-		mesh.renderOrder = -3;
+		mesh.renderOrder = 0;
 		this.group.add( mesh );
 
 		const requestURL = this.getRequestURL( tile );
@@ -194,7 +190,7 @@ export class TilesRenderer {
 			scope.downloadQueue.delete( tileId );
 
 			// Place tiles of new/current tile level with loaded texture completely on top
-			mesh.renderOrder = -1;
+			mesh.renderOrder = 2;
 
 			const tex = new Texture();
 			var image = new Image();
@@ -206,11 +202,11 @@ export class TilesRenderer {
 				tex.minFilter = LinearFilter;
 				tex.generateMipmaps = false;
 				tex.needsUpdate = true;
-				// tex.format = RGBFormat;
+				tex.format = RGBFormat;
 				var material = new MeshBasicMaterial( { map: scope.track( tex ) } );
 				material.depthWrite = false;
 				mesh.material = material;
-				if (scope.onLoadTile) scope.onLoadTile();
+				scope.onLoadTile();
 
 			};
 
@@ -227,12 +223,6 @@ export class TilesRenderer {
 		mesh.position.set( scenePosition.x, scenePosition.y, scenePosition.z );
 		mesh.updateMatrix();
 
-	}
-
-	dispose() {
-		this.abortDownloads();
-		this.resourceTracker.dispose();
-		this.group.clear();
 	}
 
 }
