@@ -132,7 +132,7 @@ class TileMatrix {
 	getTileAt( position ) {
 
 		const col = Math.floor( ( position.x - this.minX ) / this.tileSpanX );
-		const row = Math.floor( this.matrixHeight - ( position.y - this.minY ) / this.tileSpanX );
+		const row = Math.floor( ( this.maxY - position.y ) / this.tileSpanY );
 
 		return new Tile( this, col, row );
 
@@ -168,7 +168,7 @@ class BaseTileScheme {
 	getTilesInView( camera, resFactor, transform ) {
 
 		if ( this.tileMatrixSet.length == 0 ) {
-
+            // console.log("getTilesInView: TileMatrixSet empty");
 			return [];
 
 		}
@@ -177,24 +177,50 @@ class BaseTileScheme {
 		raycaster.setFromCamera( { x: 0, y: 0 }, camera );
 
 		let position = new Vector3();
-		raycaster.ray.intersectPlane( new Plane( new Vector3( 0, 1, 0 ), 0 ), position );
+		const intersect = raycaster.ray.intersectPlane( new Plane( new Vector3( 0, 1, 0 ), 0 ), position );
+        
+        if (!intersect) {
+            return [];
+        }
 
 		const dist = camera.position.distanceTo( position );
 
 		position.x = position.x + transform.x;
 		position.y = - position.z + transform.y;
 
-		const tileMatrix = this.getTileMatrix( dist * resFactor );
+		let tileMatrix = this.getTileMatrix( dist * resFactor );
+        
+        // Safety loop: If too many tiles, try lower resolution
+        let tiles = [];
+        let attempts = 0;
+        const MAX_TILES = 150; // Increased from 60 to 150 since we have a queue now
 
-		const centerTile = tileMatrix.getTileAt( position );
+        while (attempts < 5) {
+            const centerTile = tileMatrix.getTileAt( position );
+            tiles = this.growRegion( centerTile, camera, transform, MAX_TILES + 50 ); // Allow slightly more before aborting
 
-		const tiles = this.growRegion( centerTile, camera, transform );
+            if (tiles.length <= MAX_TILES) {
+                break;
+            }
+
+            // Too many tiles, try next level up (lower resolution / larger scale denom)
+            // Assuming tileMatrixSet is descending (Level 0 is first/largest)
+            // We want to go BACKWARDS in the array (towards Level 0)
+            const currentIndex = this.tileMatrixSet.indexOf(tileMatrix);
+            if (currentIndex > 0) {
+                tileMatrix = this.tileMatrixSet[currentIndex - 1];
+                attempts++;
+            } else {
+                // Already at Level 0 (lowest res), can't go lower
+                break;
+            }
+        }
 
 		return tiles;
 
 	}
 
-	growRegion( centerTile, camera, transform ) {
+	growRegion( centerTile, camera, transform, maxLimit = 1000 ) {
 
 		let visited = new Set( centerTile.getId() );
 		let queue = [ centerTile ];
@@ -234,12 +260,11 @@ class BaseTileScheme {
 
 			// prevent infinite loop
 			counter ++;
-			if ( counter == 1000 ) {
-
-				console.log( "Too many tiles in view! Skipping at 1000..." );
+			if ( tilesInView.length > maxLimit ) {
+				// console.log( "Too many tiles in view! Aborting growRegion." );
 				break;
-
 			}
+            if ( counter > 2000 ) break; // Hard safety break
 
 		}
 
