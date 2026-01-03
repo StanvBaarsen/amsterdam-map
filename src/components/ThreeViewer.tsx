@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { TilesRenderer } from '3d-tiles-renderer';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 // @ts-ignore
 import { WMSTilesRenderer, WMTSTilesRenderer } from '../terrain-tiles';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -10,50 +12,50 @@ import markerSprite from '../assets/locationmarker.png';
 import landmarkLocations from '../assets/landmark_locations.json';
 
 // Adjusts the three.js standard shader to include batchid highlight
-function batchIdHighlightShaderMixin( shader: any ) {
-
-	const newShader = { ...shader };
-	newShader.uniforms = {
-		highlightedBatchId: { value: - 1 },
-		highlightColor: { value: new THREE.Color( 0xFFC107 ).convertSRGBToLinear() },
-		...THREE.UniformsUtils.clone( shader.uniforms ),
-	};
-	newShader.extensions = {
-		derivatives: true,
-	};
-	newShader.lights = true;
-	newShader.fog = true;
-	newShader.vertexShader =
-		`
-			attribute float _batchid;
-			varying float batchid;
-		` +
-		newShader.vertexShader.replace(
-			/#include <uv_vertex>/,
-			`
-			#include <uv_vertex>
-			batchid = _batchid;
-			`
-		);
-	newShader.fragmentShader =
-		`
-			varying float batchid;
-			uniform float highlightedBatchId;
-			uniform vec3 highlightColor;
-		` +
-		newShader.fragmentShader.replace(
-			/vec4 diffuseColor = vec4\( diffuse, opacity \);/,
-			`
-			vec4 diffuseColor =
-				abs( batchid - highlightedBatchId ) < 0.5 ?
-				vec4( highlightColor, opacity ) :
-				vec4( diffuse, opacity );
-			`
-		);
-
-	return newShader;
-
-}
+// function batchIdHighlightShaderMixin( shader: any ) {
+// 
+// 	const newShader = { ...shader };
+// 	newShader.uniforms = {
+// 		highlightedBatchId: { value: - 1 },
+// 		highlightColor: { value: new THREE.Color( 0x00FF00 ).convertSRGBToLinear() }, // DEBUG: Green
+// 		...THREE.UniformsUtils.clone( shader.uniforms ),
+// 	};
+// 	newShader.extensions = {
+// 		derivatives: true,
+// 	};
+// 	newShader.lights = true;
+// 	newShader.fog = true;
+// 	newShader.vertexShader =
+// 		`
+// 			attribute float _batchid;
+// 			varying float batchid;
+// 		` +
+// 		newShader.vertexShader.replace(
+// 			/#include <uv_vertex>/,
+// 			`
+// 			#include <uv_vertex>
+// 			batchid = _batchid;
+// 			`
+// 		);
+// 	newShader.fragmentShader =
+// 		`
+// 			varying float batchid;
+// 			uniform float highlightedBatchId;
+// 			uniform vec3 highlightColor;
+// 		` +
+// 		newShader.fragmentShader.replace(
+// 			/vec4 diffuseColor = vec4\( diffuse, opacity \);/,
+// 			`
+// 			vec4 diffuseColor =
+// 				abs( batchid - highlightedBatchId ) < 0.5 ?
+// 				vec4( highlightColor, opacity ) :
+// 				vec4( diffuse, opacity );
+// 			`
+// 		);
+// 
+// 	return newShader;
+// 
+// }
 
 interface ThreeViewerProps {
     tilesUrl?: string;
@@ -66,7 +68,7 @@ interface ThreeViewerProps {
 }
 
 export const ThreeViewer: React.FC<ThreeViewerProps> = ({
-    tilesUrl = 'http://godzilla.bk.tudelft.nl/3dtiles/ZuidHolland/lod13/tileset1.json',
+    tilesUrl = 'https://data.3dbag.nl/v20250903/3dtiles/lod22/tileset.json',
     basemapOptions = {
         type: "wmts",
         options: {
@@ -96,6 +98,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     onShowLocationBox,
     // onHideLocationBox
 }) => {
+    // const boxRef = useRef<THREE.Box3>(new THREE.Box3());
     const containerRef = useRef<HTMLDivElement>(null);
     const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
     const sceneRef = useRef<THREE.Scene | null>(null);
@@ -110,13 +113,14 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     const pointerCasterRef = useRef({ startClientX: 0, startClientY: 0 });
     const requestRef = useRef<number>(0);
     const cameraPositionedRef = useRef(false);
+    const tilesCentered = useRef(false);
     
     const location = useLocation();
     const needsRerender = useRef(0);
 
     // Materials
-    const materialRef = useRef<THREE.ShaderMaterial | null>(null);
-    const highlightMaterialRef = useRef<THREE.ShaderMaterial | null>(null);
+    const materialRef = useRef<THREE.Material | null>(null);
+    const highlightMaterialRef = useRef<THREE.Material | null>(null);
 
     const markerName = "LocationMarker";
 
@@ -170,11 +174,11 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         // Lights
         const dirLight = new THREE.DirectionalLight( 0xffffff );
         dirLight.position.set( 0.63, 1, 0 );
-        dirLight.intensity = 0.8;
+        dirLight.intensity = 1.2;
         scene.add( dirLight );
 
         const ambLight = new THREE.AmbientLight( 0xffffff );
-        ambLight.intensity = 0.5;
+        ambLight.intensity = 0.8;
         scene.add( ambLight );
 
         const pLight = new THREE.PointLight( 0xffffff );
@@ -190,21 +194,11 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         offsetParentRef.current = offsetParent;
 
         // Materials
-        const material = new THREE.ShaderMaterial( batchIdHighlightShaderMixin( THREE.ShaderLib.lambert ) );
-        // @ts-ignore
-        material.extensions.derivatives = true;
-        material.defines = material.defines || {};
-        material.defines.USE_UV = "";
-        material.uniforms.diffuse.value = new THREE.Color( 0xc4c8cf ).convertSRGBToLinear();
+        // Use a standard material first to ensure we can control the appearance
+        const material = new THREE.MeshLambertMaterial({ color: 0xadd8e6 }); // Clean light blue
         materialRef.current = material;
 
-        const highlightMaterial = new THREE.ShaderMaterial( batchIdHighlightShaderMixin( THREE.ShaderLib.lambert ) );
-        // @ts-ignore
-        highlightMaterial.extensions.derivatives = true;
-        highlightMaterial.defines = highlightMaterial.defines || {};
-        highlightMaterial.defines.USE_UV = "";
-        highlightMaterial.uniforms.diffuse.value = new THREE.Color( 0xc4c8cf ).convertSRGBToLinear();
-        highlightMaterial.uniforms.highlightedBatchId.value = 1;
+        const highlightMaterial = new THREE.MeshLambertMaterial({ color: 0xffcc00 });
         highlightMaterialRef.current = highlightMaterial;
 
         // Events
@@ -213,6 +207,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         renderer.domElement.addEventListener( 'pointerdown', onPointerDown, false );
         renderer.domElement.addEventListener( 'pointerup', onPointerUp, false );
 
+        console.log("initScene completed, starting animate loop");
         needsRerender.current = 1;
         animate();
     };
@@ -261,6 +256,50 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     const animate = () => {
         requestRef.current = requestAnimationFrame( animate );
         
+        if (requestRef.current % 60 === 0) {
+            console.log("animate loop running. Tiles root:", tilesRef.current?.root ? "Exists" : "Missing");
+            if (tilesRef.current && tilesRef.current.root) {
+                 const root = tilesRef.current.root;
+                 // @ts-ignore
+                 if (root.cached && root.cached.sphere) {
+                     // @ts-ignore
+                     const sphere = root.cached.sphere;
+                     
+                     // Calculate World Position of the Sphere Center
+                     const worldCenter = sphere.center.clone();
+                     if (offsetParentRef.current) {
+                         worldCenter.applyMatrix4(offsetParentRef.current.matrixWorld);
+                     }
+
+                     console.log("Debug Info:", {
+                         sphereCenterLocal: sphere.center,
+                         sphereRadius: sphere.radius,
+                         sphereCenterWorld: worldCenter,
+                         cameraPos: cameraRef.current?.position,
+                         cameraTarget: controlsRef.current?.target,
+                         transform: root.cached.transform
+                     });
+
+                     // Force Camera to Center of Sphere (0,0,0) if we haven't yet
+                     // This overrides the route logic for debugging
+                     /*
+                     if (requestRef.current % 600 === 0) { // Every 10 seconds force it back to check
+                         console.log("DEBUG: Forcing Camera to Sphere Center (0,0,0) Local");
+                     }
+                     */
+                 }
+            }
+            
+            if (tilesRef.current) {
+                 console.log("Stats:", {
+                     downloading: tilesRef.current.stats.downloading,
+                     failed: tilesRef.current.stats.failed,
+                     parsing: tilesRef.current.stats.parsing,
+                     visible: tilesRef.current.stats.visible
+                 });
+            }
+        }
+
         // Force update matrix world of offset parent to ensure rotation is applied
         if (offsetParentRef.current) {
             offsetParentRef.current.updateMatrixWorld(true);
@@ -270,13 +309,79 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         TWEEN.update();
 
         if (cameraRef.current && dummyCameraRef.current) {
+            dummyCameraRef.current.matrixWorld.copy( cameraRef.current.matrixWorld );
             dummyCameraRef.current.position.copy( cameraRef.current.position );
             dummyCameraRef.current.quaternion.copy( cameraRef.current.quaternion );
+            dummyCameraRef.current.scale.copy( cameraRef.current.scale );
             dummyCameraRef.current.updateMatrixWorld();
         }
 
         if (tilesRef.current) {
             tilesRef.current.update();
+            
+            // Force material update on every frame to ensure new tiles get the material
+            // This is a bit expensive but ensures consistency for now
+            tilesRef.current.forEachLoadedModel((scene: THREE.Object3D) => {
+                scene.traverse((c: any) => {
+                    if (c.isMesh && c.material !== materialRef.current && c.material !== highlightMaterialRef.current) {
+                        c.material = materialRef.current;
+                    }
+                });
+            });
+
+            // Center the tileset using root sphere
+            if (!tilesCentered.current && tilesRef.current.root) {
+                const root = tilesRef.current.root;
+                // @ts-ignore
+                if (root.cached && root.cached.sphere) {
+                    // @ts-ignore
+                    const sphere = root.cached.sphere;
+                    
+                    // Calculate the true center including transform
+                    const center = sphere.center.clone();
+                    if (root.transform) {
+                        const transform = new THREE.Matrix4().fromArray(root.transform);
+                        center.applyMatrix4(transform);
+                    } else if (root.cached.transform) {
+                         // Fallback if transform is stored in cached
+                         // Note: cached.transform might be a Matrix4 already or array
+                         const t = root.cached.transform;
+                         if (t.elements) {
+                             center.applyMatrix4(t);
+                         } else if (t.length === 16) {
+                             const transform = new THREE.Matrix4().fromArray(t);
+                             center.applyMatrix4(transform);
+                         }
+                    }
+
+                    tilesRef.current.group.position.copy(center).multiplyScalar(-1);
+                    tilesCentered.current = true;
+                    console.log("Tiles centered at:", tilesRef.current.group.position);
+
+                    // Initial Camera Positioning
+                    if (!cameraPositionedRef.current) {
+                        const q = new URLSearchParams(location.search);
+                        if (q.has("rdx") && q.has("rdy")) {
+                            setCameraPosFromRoute(q);
+                        } else {
+                            // Random landmark
+                            const keys = Object.keys(landmarkLocations);
+                            const landmark = (landmarkLocations as any)[keys[keys.length * Math.random() << 0]];
+                            
+                            if (onShowLocationBox) onShowLocationBox(`DEBUG: Loaded. Moving to ${landmark.name}`);
+                            
+                            setCameraPosFromRoute(new URLSearchParams({
+                                rdx: landmark.rdx,
+                                rdy: landmark.rdy,
+                                ox: landmark.ox,
+                                oy: landmark.oy,
+                                oz: landmark.oz
+                            }));
+                        }
+                        cameraPositionedRef.current = true;
+                    }
+                }
+            }
         }
 
         // Fallback: If tiles are loaded but camera not positioned, do it now
@@ -466,7 +571,9 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     };
 
     const reinitTiles = (init: boolean) => {
+        console.log("reinitTiles called with URL:", tilesUrl);
         cameraPositionedRef.current = false; // Reset flag
+        tilesCentered.current = false; // Reset centering flag
         if (!offsetParentRef.current || !rendererRef.current || !dummyCameraRef.current) {
             console.error("Missing refs in reinitTiles");
             return;
@@ -480,14 +587,18 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         const tiles = new TilesRenderer( tilesUrl );
         
         // Configure Draco Loader
-        // const dracoLoader = new DRACOLoader();
-        // dracoLoader.setDecoderPath( 'https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/gltf/' );
-        // tiles.manager.addHandler( /\.gltf$/, dracoLoader );
+        const dracoLoader = new DRACOLoader();
+        dracoLoader.setDecoderPath( 'https://www.gstatic.com/draco/versioned/decoders/1.4.3/' );
+
+        const loader = new GLTFLoader( tiles.manager );
+        loader.setDRACOLoader( dracoLoader );
+
+        tiles.manager.addHandler( /\.gltf$/, loader );
         
         tiles.fetchOptions = { mode: 'cors' };
         // tiles.group.rotation.x = - Math.PI / 2;
-        tiles.displayBoxBounds = true;
-        tiles.colorMode = 7; // BatchID
+        tiles.displayBoxBounds = false;
+        tiles.colorMode = 0; // None (Use material color)
         tiles.lruCache.minSize = 85;
         tiles.lruCache.maxSize = 115;
         tiles.errorTarget = 6;
@@ -507,6 +618,8 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
             if (onShowLocationBox) onShowLocationBox("DEBUG: Tileset Loaded");
 
             if (init && !cameraPositionedRef.current) {
+                // Moved to animate loop to ensure tiles are centered first
+                /*
                 const q = new URLSearchParams(location.search);
                 if (q.has("rdx") && q.has("rdy")) {
                     setCameraPosFromRoute(q);
@@ -530,6 +643,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                     // }, 10000);
                 }
                 cameraPositionedRef.current = true;
+                */
             }
             
             if (tiles.root) {
@@ -542,10 +656,11 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         };
 
         tiles.onLoadModel = (s: any) => {
+            console.log("onLoadModel fired", s);
             s.traverse((c: any) => {
                 if (c.material) {
                     // c.material.dispose();
-                    // c.material = materialRef.current; // Apply custom material
+                    c.material = materialRef.current; // Apply custom material
                     if (c.geometry) c.geometry.computeBoundingBox();
                 }
             });
@@ -608,19 +723,33 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
 
         if (isNaN(rdx)) return;
 
-        const transform = tilesRef.current.root.cached.transform;
-        const tileset_offset_x = transform.elements[ 12 ];
-        const tileset_offset_y = transform.elements[ 13 ];
-        
-        const local_x = rdx - tileset_offset_x;
-        const local_y = 0;
-        const local_z = - ( rdy - tileset_offset_y );
+        // We have centered the tileset by moving tilesRef.current.group.position.
+        // groupPos is in the Local Space (Z-up) of the tileset.
+        const groupPos = tilesRef.current.group.position;
 
-        controlsRef.current.target.x = local_x;
-        controlsRef.current.target.z = local_z;
-        cameraRef.current.position.x = local_x + ox;
-        cameraRef.current.position.y = local_y + oy;
-        cameraRef.current.position.z = local_z + oz;
+        // Target Point in Local Space (Z-up)
+        // We want to look at (rdx, rdy, 0) in the original data.
+        // Since we moved the group by groupPos, the point is now at:
+        const local_x = rdx + groupPos.x;
+        const local_y = rdy + groupPos.y;
+        const local_z = 0 + groupPos.z;
+
+        // Convert to World Space (Y-up)
+        // OffsetParent is rotated -90 degrees around X.
+        // (x, y, z) -> (x, z, -y)
+        const world_x = local_x;
+        const world_y = local_z;
+        const world_z = -local_y;
+
+        controlsRef.current.target.x = world_x;
+        controlsRef.current.target.y = world_y;
+        controlsRef.current.target.z = world_z;
+        
+        // Camera Position relative to Target
+        // The offset (ox, oy, oz) seems to be in World Space (Y-up) based on default camera pos (400,400,400)
+        cameraRef.current.position.x = world_x + ox;
+        cameraRef.current.position.y = world_y + oy;
+        cameraRef.current.position.z = world_z + oz;
         
         controlsRef.current.update();
 
@@ -629,36 +758,17 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
             // Remove old debug objects if they exist
             const oldCube = sceneRef.current.getObjectByName("DebugCube");
             if (oldCube) sceneRef.current.remove(oldCube);
-            const oldAxes = sceneRef.current.getObjectByName("DebugAxes");
-            if (oldAxes) sceneRef.current.remove(oldAxes);
-            const oldGrid = sceneRef.current.getObjectByName("DebugGrid");
-            if (oldGrid) sceneRef.current.remove(oldGrid);
-
-            // 1. Solid Red Cube at Target (100m size)
+            
             // const geom = new THREE.BoxGeometry(100, 100, 100); 
             // const mat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
             // const cube = new THREE.Mesh(geom, mat);
             // cube.name = "DebugCube";
-            // cube.position.set(local_x, local_y, local_z);
+            // cube.position.set(world_x, world_y, world_z);
             // sceneRef.current.add(cube);
-            
-            // 2. Axes Helper at Target
-            // const axes = new THREE.AxesHelper(500);
-            // axes.name = "DebugAxes";
-            // axes.position.set(local_x, local_y, local_z);
-            // sceneRef.current.add(axes);
-
-            // 3. Grid Helper at Target (Ground)
-            // const grid = new THREE.GridHelper(2000, 20);
-            // grid.name = "DebugGrid";
-            // grid.position.set(local_x, local_y, local_z);
-            // sceneRef.current.add(grid);
-
-            // console.log("Added debug cube, axes, and grid at:", local_x, local_y, local_z);
         }
         
         if (q.get("placeMarker") === "true") {
-            placeMarkerOnPoint(new THREE.Vector3(local_x, local_y, local_z));
+            placeMarkerOnPoint(new THREE.Vector3(world_x, world_y, world_z));
         }
     };
 
