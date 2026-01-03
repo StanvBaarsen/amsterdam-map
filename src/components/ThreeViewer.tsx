@@ -5,9 +5,9 @@ import { TilesRenderer } from '3d-tiles-renderer';
 import { WMSTilesRenderer, WMTSTilesRenderer } from '../terrain-tiles';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import TWEEN from '@tweenjs/tween.js';
-// import { useLocation } from 'react-router-dom';
-// import markerSprite from '../assets/locationmarker.png';
-// import landmarkLocations from '../assets/landmark_locations.json';
+import { useLocation } from 'react-router-dom';
+import markerSprite from '../assets/locationmarker.png';
+import landmarkLocations from '../assets/landmark_locations.json';
 
 // Adjusts the three.js standard shader to include batchid highlight
 function batchIdHighlightShaderMixin( shader: any ) {
@@ -93,7 +93,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     },
     onObjectPicked,
     onCamRotationZ,
-    // onShowLocationBox,
+    onShowLocationBox,
     // onHideLocationBox
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -111,14 +111,14 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     const requestRef = useRef<number>(0);
     const cameraPositionedRef = useRef(false);
     
-    // const location = useLocation();
+    const location = useLocation();
     const needsRerender = useRef(0);
 
     // Materials
     const materialRef = useRef<THREE.ShaderMaterial | null>(null);
     const highlightMaterialRef = useRef<THREE.ShaderMaterial | null>(null);
 
-    // const markerName = "LocationMarker";
+    const markerName = "LocationMarker";
 
     const initScene = () => {
         if (!containerRef.current) return;
@@ -504,51 +504,39 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
 
         tiles.onLoadTileSet = () => {
             console.log("onLoadTileSet fired (root ready)");
+            if (onShowLocationBox) onShowLocationBox("DEBUG: Tileset Loaded");
+
+            if (init && !cameraPositionedRef.current) {
+                const q = new URLSearchParams(location.search);
+                if (q.has("rdx") && q.has("rdy")) {
+                    setCameraPosFromRoute(q);
+                } else {
+                    // Random landmark
+                    const keys = Object.keys(landmarkLocations);
+                    const landmark = (landmarkLocations as any)[keys[keys.length * Math.random() << 0]];
+                    
+                    if (onShowLocationBox) onShowLocationBox(`DEBUG: Loaded. Moving to ${landmark.name}`);
+                    
+                    setCameraPosFromRoute(new URLSearchParams({
+                        rdx: landmark.rdx,
+                        rdy: landmark.rdy,
+                        ox: landmark.ox,
+                        oy: landmark.oy,
+                        oz: landmark.oz
+                    }));
+
+                    // setTimeout(() => {
+                    //    if (onHideLocationBox) onHideLocationBox();
+                    // }, 10000);
+                }
+                cameraPositionedRef.current = true;
+            }
             
             if (tiles.root) {
-                console.log("Tiles root exists, initializing basemap");
-                
-                // Calculate Root Center
-                const sphere = new THREE.Sphere();
-                tiles.root.cached.sphere.copy(sphere); // Get bounding sphere
-                
-                console.log("Root Sphere Center (Local):", sphere.center);
-                console.log("Root Sphere Radius:", sphere.radius);
-
-                // Position Camera at Root Center + Offset
-                if (init && !cameraPositionedRef.current) {
-                    // We ignore the route params for a moment to ensure we see the data
-                    const center = sphere.center;
-                    const radius = sphere.radius;
-                    
-                    // Position camera to see the whole set
-                    const dist = radius * 2;
-                    const camPos = new THREE.Vector3(center.x, center.y + dist, center.z + dist);
-                    
-                    if (cameraRef.current && controlsRef.current) {
-                        cameraRef.current.position.copy(camPos);
-                        controlsRef.current.target.copy(center);
-                        controlsRef.current.update();
-                        console.log("Forced Camera to Root Center:", center);
-                    }
-
-                    // Add Debug Sphere at Root Center
-                    if (offsetParentRef.current) {
-                        const debugGeo = new THREE.SphereGeometry(radius / 10, 32, 32);
-                        const debugMat = new THREE.MeshBasicMaterial({ color: 0xffff00, wireframe: true });
-                        const debugSphere = new THREE.Mesh(debugGeo, debugMat);
-                        debugSphere.position.copy(center);
-                        debugSphere.name = "RootDebugSphere";
-                        offsetParentRef.current.add(debugSphere);
-                        console.log("Added Root Debug Sphere at:", center);
-                    }
-                    
-                    cameraPositionedRef.current = true;
-                }
-
                 reinitBasemap();
             } else {
                 console.warn("Tiles root is missing in onLoadTileSet");
+                if (onShowLocationBox) onShowLocationBox("DEBUG: Root Missing!");
             }
             needsRerender.current = 2;
         };
@@ -604,98 +592,98 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
 
         if (terrainTilesRef.current) {
             // terrainTilesRef.current.init(sceneRef.current);
-            // offsetParentRef.current.add(terrainTilesRef.current.group);
+            offsetParentRef.current.add(terrainTilesRef.current.group);
         }
         needsRerender.current = 1;
     };
 
-    // const setCameraPosFromRoute = (q: URLSearchParams) => {
-    //     if (!tilesRef.current || !tilesRef.current.root || !controlsRef.current || !cameraRef.current) return;
+    const setCameraPosFromRoute = (q: URLSearchParams) => {
+        if (!tilesRef.current || !tilesRef.current.root || !controlsRef.current || !cameraRef.current) return;
 
-    //     const rdx = parseFloat(q.get("rdx") || "0");
-    //     const rdy = parseFloat(q.get("rdy") || "0");
-    //     const ox = parseFloat(q.get("ox") || "400");
-    //     const oy = parseFloat(q.get("oy") || "400");
-    //     const oz = parseFloat(q.get("oz") || "400");
+        const rdx = parseFloat(q.get("rdx") || "0");
+        const rdy = parseFloat(q.get("rdy") || "0");
+        const ox = parseFloat(q.get("ox") || "400");
+        const oy = parseFloat(q.get("oy") || "400");
+        const oz = parseFloat(q.get("oz") || "400");
 
-    //     if (isNaN(rdx)) return;
+        if (isNaN(rdx)) return;
 
-    //     const transform = tilesRef.current.root.cached.transform;
-    //     const tileset_offset_x = transform.elements[ 12 ];
-    //     const tileset_offset_y = transform.elements[ 13 ];
+        const transform = tilesRef.current.root.cached.transform;
+        const tileset_offset_x = transform.elements[ 12 ];
+        const tileset_offset_y = transform.elements[ 13 ];
         
-    //     const local_x = rdx - tileset_offset_x;
-    //     const local_y = 0;
-    //     const local_z = - ( rdy - tileset_offset_y );
+        const local_x = rdx - tileset_offset_x;
+        const local_y = 0;
+        const local_z = - ( rdy - tileset_offset_y );
 
-    //     controlsRef.current.target.x = local_x;
-    //     controlsRef.current.target.z = local_z;
-    //     cameraRef.current.position.x = local_x + ox;
-    //     cameraRef.current.position.y = local_y + oy;
-    //     cameraRef.current.position.z = local_z + oz;
+        controlsRef.current.target.x = local_x;
+        controlsRef.current.target.z = local_z;
+        cameraRef.current.position.x = local_x + ox;
+        cameraRef.current.position.y = local_y + oy;
+        cameraRef.current.position.z = local_z + oz;
         
-    //     controlsRef.current.update();
+        controlsRef.current.update();
 
-    //     // Debug Cube
-    //     if (sceneRef.current) {
-    //         // Remove old debug objects if they exist
-    //         const oldCube = sceneRef.current.getObjectByName("DebugCube");
-    //         if (oldCube) sceneRef.current.remove(oldCube);
-    //         const oldAxes = sceneRef.current.getObjectByName("DebugAxes");
-    //         if (oldAxes) sceneRef.current.remove(oldAxes);
-    //         const oldGrid = sceneRef.current.getObjectByName("DebugGrid");
-    //         if (oldGrid) sceneRef.current.remove(oldGrid);
+        // Debug Cube
+        if (sceneRef.current) {
+            // Remove old debug objects if they exist
+            const oldCube = sceneRef.current.getObjectByName("DebugCube");
+            if (oldCube) sceneRef.current.remove(oldCube);
+            const oldAxes = sceneRef.current.getObjectByName("DebugAxes");
+            if (oldAxes) sceneRef.current.remove(oldAxes);
+            const oldGrid = sceneRef.current.getObjectByName("DebugGrid");
+            if (oldGrid) sceneRef.current.remove(oldGrid);
 
-    //         // 1. Solid Red Cube at Target (100m size)
-    //         // const geom = new THREE.BoxGeometry(100, 100, 100); 
-    //         // const mat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-    //         // const cube = new THREE.Mesh(geom, mat);
-    //         // cube.name = "DebugCube";
-    //         // cube.position.set(local_x, local_y, local_z);
-    //         // sceneRef.current.add(cube);
+            // 1. Solid Red Cube at Target (100m size)
+            // const geom = new THREE.BoxGeometry(100, 100, 100); 
+            // const mat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+            // const cube = new THREE.Mesh(geom, mat);
+            // cube.name = "DebugCube";
+            // cube.position.set(local_x, local_y, local_z);
+            // sceneRef.current.add(cube);
             
-    //         // 2. Axes Helper at Target
-    //         // const axes = new THREE.AxesHelper(500);
-    //         // axes.name = "DebugAxes";
-    //         // axes.position.set(local_x, local_y, local_z);
-    //         // sceneRef.current.add(axes);
+            // 2. Axes Helper at Target
+            // const axes = new THREE.AxesHelper(500);
+            // axes.name = "DebugAxes";
+            // axes.position.set(local_x, local_y, local_z);
+            // sceneRef.current.add(axes);
 
-    //         // 3. Grid Helper at Target (Ground)
-    //         // const grid = new THREE.GridHelper(2000, 20);
-    //         // grid.name = "DebugGrid";
-    //         // grid.position.set(local_x, local_y, local_z);
-    //         // sceneRef.current.add(grid);
+            // 3. Grid Helper at Target (Ground)
+            // const grid = new THREE.GridHelper(2000, 20);
+            // grid.name = "DebugGrid";
+            // grid.position.set(local_x, local_y, local_z);
+            // sceneRef.current.add(grid);
 
-    //         // console.log("Added debug cube, axes, and grid at:", local_x, local_y, local_z);
-    //     }
+            // console.log("Added debug cube, axes, and grid at:", local_x, local_y, local_z);
+        }
         
-    //     if (q.get("placeMarker") === "true") {
-    //         placeMarkerOnPoint(new THREE.Vector3(local_x, local_y, local_z));
-    //     }
-    // };
+        if (q.get("placeMarker") === "true") {
+            placeMarkerOnPoint(new THREE.Vector3(local_x, local_y, local_z));
+        }
+    };
 
-    // const placeMarkerOnPoint = (position: THREE.Vector3) => {
-    //     if (!sceneRef.current) return;
+    const placeMarkerOnPoint = (position: THREE.Vector3) => {
+        if (!sceneRef.current) return;
         
-    //     const existingMarker = sceneRef.current.getObjectByName(markerName);
-    //     if (existingMarker) sceneRef.current.remove(existingMarker);
+        const existingMarker = sceneRef.current.getObjectByName(markerName);
+        if (existingMarker) sceneRef.current.remove(existingMarker);
 
-    //     const textureLoader = new THREE.TextureLoader();
-    //     const map = textureLoader.load(markerSprite);
-    //     const material = new THREE.SpriteMaterial({ map: map });
-    //     const sprite = new THREE.Sprite(material);
+        const textureLoader = new THREE.TextureLoader();
+        const map = textureLoader.load(markerSprite);
+        const material = new THREE.SpriteMaterial({ map: map });
+        const sprite = new THREE.Sprite(material);
 
-    //     material.depthWrite = false;
-    //     material.depthTest = false;
-    //     material.sizeAttenuation = false;
+        material.depthWrite = false;
+        material.depthTest = false;
+        material.sizeAttenuation = false;
 
-    //     sprite.position.set(position.x, position.y, position.z);
-    //     sprite.scale.set(0.04, 0.10, 1);
-    //     sprite.name = markerName;
+        sprite.position.set(position.x, position.y, position.z);
+        sprite.scale.set(0.04, 0.10, 1);
+        sprite.name = markerName;
 
-    //     sceneRef.current.add(sprite);
-    //     needsRerender.current = 1;
-    // };
+        sceneRef.current.add(sprite);
+        needsRerender.current = 1;
+    };
 
     useEffect(() => {
         initScene();
