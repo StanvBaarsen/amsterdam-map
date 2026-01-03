@@ -1,37 +1,20 @@
 import React, { useState, useMemo } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThreeViewer } from './components/ThreeViewer';
-import { DropDownSelector } from './components/DropDownSelector';
-import { SearchBar } from './components/SearchBar';
-import { Compass } from './components/Compass';
 import { BuildingInformation } from './components/BuildingInformation';
-import { useTranslation } from 'react-i18next';
 import BAG3D from './assets/3dbag_versions.json';
 
 const ViewerPage: React.FC = () => {
-    const { t } = useTranslation();
-    const navigate = useNavigate();
-    const [basemapPreset, setBasemapPreset] = useState('brtachtergrondkaart');
-    const [tileset, setTileset] = useState('lod12');
-    const [camRotationZ, setCamRotationZ] = useState(0);
+
+    const [basemapPreset] = useState('brtachtergrondkaart');
+    const [tileset] = useState('lod22');
+    const [, setCamRotationZ] = useState(0);
     const [showLocationBox, setShowLocationBox] = useState(false);
     const [locationBoxText, setLocationBoxText] = useState('');
     const [pickedBuilding, setPickedBuilding] = useState<any>(null);
     const [showBuildingInfo, setShowBuildingInfo] = useState(false);
     
     const BAG3DVersionData = (BAG3D as any)["versions"][(BAG3D as any)["latest"]];
-
-    const basemaps: any = {
-        brtachtergrondkaart: { name: "BRT Achtergrondkaart", icon: "map" },
-        brtachtergrondkaartgrijs: { name: "BRT Achtergrondkaart (Grijs)", icon: "map" },
-        luchtfotoWMTS: { name: "Luchtfoto Actueel", icon: "map" }
-    };
-
-    const lods: any = {
-        lod22: { name: "LoD 2.2", icon: "home" },
-        lod13: { name: "LoD 1.3", icon: "home" },
-        lod12: { name: "LoD 1.2", icon: "home" }
-    };
 
     const basemapOptions = useMemo(() => {
         const sources: any = {
@@ -82,44 +65,31 @@ const ViewerPage: React.FC = () => {
         return BAG3DVersionData['3DTilesets'][lod];
     };
 
-    const handleOrientNorth = () => {
-        // This would require a ref to ThreeViewer to call pointCameraToNorth
-        // For now, we can implement it later or use a context/event bus
-        console.log("Orient North clicked");
-    };
-
     return (
         <div id="viewer" style={{ width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative' }}>
-            <nav className="navbar is-fixed-top is-white" role="navigation" aria-label="main navigation">
-                <div className="navbar-brand">
-                    <div className="navbar-item">
-                        <span className="logo-text" style={{marginRight: '0.4em', color: '#000', fontWeight: 'bold'}}>Amsterdam kaartje</span>
-                    </div>
+            <div style={{ position: 'absolute', top: '2rem', width: '100%', textAlign: 'center', zIndex: 10, pointerEvents: 'none' }}>
+                <div style={{
+                    display: 'inline-block',
+                    padding: '1rem 2.5rem',
+                    background: 'rgba(255, 255, 255, 0.85)',
+                    backdropFilter: 'blur(12px)',
+                    borderRadius: '24px',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                    pointerEvents: 'auto'
+                }}>
+                    <h1 style={{ 
+                        margin: 0,
+                        color: '#1a1a1a',
+                        fontSize: '1.25rem',
+                        fontWeight: '600',
+                        letterSpacing: '0.2em',
+                        textTransform: 'uppercase',
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
+                    }}>
+                        Amsterdam 2035
+                    </h1>
                 </div>
-            </nav>
-
-            <section id="map-options" className="field has-addons" style={{ position: 'absolute', top: '4rem', left: '1rem', zIndex: 10 }}>
-                <DropDownSelector 
-                    value={basemapPreset} 
-                    options={basemaps} 
-                    title={t('viewer.baselayer2')} 
-                    onChange={setBasemapPreset} 
-                />
-                <DropDownSelector 
-                    value={tileset} 
-                    options={lods} 
-                    title="LoD" 
-                    onChange={setTileset} 
-                />
-                <SearchBar onSelectPlace={(place) => {
-                    const params = new URLSearchParams(window.location.search);
-                    params.set('rdx', place.rd_x);
-                    params.set('rdy', place.rd_y);
-                    params.set('placeMarker', 'true');
-                    navigate(`/?${params.toString()}`);
-                }} />
-                <Compass rotation={camRotationZ} onOrientNorth={handleOrientNorth} />
-            </section>
+            </div>
 
             {showLocationBox && (
                 <div id="locationbox" className="box" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 20 }}>
