@@ -22,7 +22,6 @@ export class WMTSTilesRenderer extends TilesRenderer {
 		this.wmtsOptions = wmtsOptions;
 
 		this.tileScheme = new WMTSTileScheme( this.url, this.tileMatrixSet, onLoadTileScheme );
-        this.onLoadTile = onLoadTileScheme;
 
 	}
 

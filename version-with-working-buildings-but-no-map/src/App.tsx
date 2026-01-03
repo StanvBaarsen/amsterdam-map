@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import { ThreeViewer } from './components/ThreeViewer';
 import { DropDownSelector } from './components/DropDownSelector';
@@ -33,7 +33,7 @@ const ViewerPage: React.FC = () => {
         lod12: { name: "LoD 1.2", icon: "home" }
     };
 
-    const basemapOptions = useMemo(() => {
+    const getBasemapOptions = (preset: string) => {
         const sources: any = {
             brtachtergrondkaart: {
                 type: "wmts",
@@ -75,8 +75,8 @@ const ViewerPage: React.FC = () => {
                 }
             }
         };
-        return sources[basemapPreset] || sources['brtachtergrondkaart'];
-    }, [basemapPreset]);
+        return sources[preset] || sources['brtachtergrondkaart'];
+    };
 
     const getTilesUrl = (lod: string) => {
         return BAG3DVersionData['3DTilesets'][lod];
@@ -136,7 +136,7 @@ const ViewerPage: React.FC = () => {
 
             <ThreeViewer 
                 tilesUrl={getTilesUrl(tileset)}
-                basemapOptions={basemapOptions}
+                basemapOptions={getBasemapOptions(basemapPreset)}
                 onCamRotationZ={setCamRotationZ}
                 onShowLocationBox={(text) => {
                     setLocationBoxText(text);
