@@ -3,7 +3,7 @@ import {
 	TileMatrix,
 	BaseTileScheme
 } from '../base/TileScheme.js';
-import * as X2JS from 'x2js';
+import X2JS from 'x2js';
 
 export class WMTSTileScheme extends BaseTileScheme {
 
@@ -15,14 +15,18 @@ export class WMTSTileScheme extends BaseTileScheme {
 		this.tileMatrixSetId = tileMatrixSetId;
 
 		const capabilitiesURL = this.url + "request=GetCapabilities&service=WMTS";
+        console.log("Fetching WMTS Capabilities:", capabilitiesURL);
 
 		this.fetchCapabilities( capabilitiesURL ).then( capabilities => {
-
+            console.log("WMTS Capabilities loaded");
 			this.capabilities = capabilities;
 			this.getTileMatrixSet();
-			onLoadTileScheme();
+            console.log("TileMatrixSet loaded:", this.tileMatrixSet.length);
+			if (onLoadTileScheme) onLoadTileScheme();
 
-		} );
+		} ).catch(err => {
+            console.error("WMTS Capabilities fetch failed:", err);
+        });
 
 	}
 

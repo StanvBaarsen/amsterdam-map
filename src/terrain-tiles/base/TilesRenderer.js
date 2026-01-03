@@ -1,10 +1,9 @@
 import {
 	Texture,
-	PlaneBufferGeometry,
+	PlaneGeometry,
 	MeshBasicMaterial,
 	Mesh,
 	Group,
-	RGBFormat,
 	LinearFilter
 } from 'three';
 
@@ -22,11 +21,14 @@ export class TilesRenderer {
 
 		this.tileLevel = 0;
 
-		this.resFactor = 4.5;
+		this.resFactor = 4.5; // Adjusted to 8.0 as requested
 
 		this.tileMatrixLevels = null;
 		this.activeTiles = new Set();
 		this.downloadQueue = new Map();
+        this.pendingFetches = 0;
+        this.maxConcurrentFetches = 10;
+        this.fetchQueue = [];
 
 		this.tilesInView = null;
 
@@ -37,7 +39,7 @@ export class TilesRenderer {
 
 		this.onLoadTile = null;
 
-		this.tempMaterial = new MeshBasicMaterial( { color: 0xFFFFFF } );
+		this.tempMaterial = new MeshBasicMaterial( { color: 0xFFFFFF, side: 2 } ); // DoubleSide
 		this.tempMaterial.depthWrite = false;
 
 	}
@@ -85,6 +87,11 @@ export class TilesRenderer {
 		// Create tiles that hadn't been created yet
 		tiles.forEach( function ( ti ) {
 
+			// Check bounds
+			if ( ti.col < 0 || ti.col >= ti.tileMatrix.matrixWidth || ti.row < 0 || ti.row >= ti.tileMatrix.matrixHeight ) {
+				return;
+			}
+
 			const tileId = ti.getId();
 
 			if ( ! this.activeTiles.has( tileId ) ) {
@@ -112,7 +119,7 @@ export class TilesRenderer {
 			if ( this.group.children[ i ].name != this.tileLevel ) {
 
 				// Place tiles of old tileLevel above temporary (white) tiles, but underneath fully loaded tiles of new tileLevel
-				this.group.children[ i ].renderOrder = 1;
+				this.group.children[ i ].renderOrder = -2;
 
 			}
 
@@ -129,6 +136,7 @@ export class TilesRenderer {
 		}
 
 		this.downloadQueue.clear();
+        this.fetchQueue = []; // Clear pending fetches
 
 	}
 
@@ -166,13 +174,17 @@ export class TilesRenderer {
 
 	createTile( tile, transform ) {
 
-		var geometry = this.track( new PlaneBufferGeometry( tile.tileMatrix.tileSpanX, tile.tileMatrix.tileSpanY ) );
+		var geometry = this.track( new PlaneGeometry( tile.tileMatrix.tileSpanX, tile.tileMatrix.tileSpanY ) );
 
 		var mesh = new Mesh( geometry, this.tempMaterial );
 		mesh.name = this.tileLevel;
 		// The temporary (white) tiles on the bottom
-		mesh.renderOrder = 0;
+		mesh.renderOrder = -3;
 		this.group.add( mesh );
+
+		const scenePosition = tile.getCenterPosition( transform );
+		mesh.position.set( scenePosition.x, scenePosition.y, scenePosition.z );
+		mesh.updateMatrix();
 
 		const requestURL = this.getRequestURL( tile );
 
@@ -181,48 +193,76 @@ export class TilesRenderer {
 		var controller = new AbortController();
 		var signal = controller.signal;
 		this.downloadQueue.set( tileId, controller );
-		fetch( requestURL, { signal } ).then( function ( res ) {
 
-			return res.arrayBuffer();
+        const fetchTile = () => {
+            this.pendingFetches++;
+            fetch( requestURL, { signal } ).then( function ( res ) {
 
-		} ).then( function ( buffer ) {
+                return res.arrayBuffer();
 
-			scope.downloadQueue.delete( tileId );
+            } ).then( function ( buffer ) {
 
-			// Place tiles of new/current tile level with loaded texture completely on top
-			mesh.renderOrder = 2;
+                scope.downloadQueue.delete( tileId );
+                scope.pendingFetches--;
+                scope.processFetchQueue();
 
-			const tex = new Texture();
-			var image = new Image();
-			image.src = 'data:image/png;base64,' + arrayBuffer2Base64( buffer );
-			image.onload = function () {
+                // Place tiles of new/current tile level with loaded texture completely on top
+                mesh.renderOrder = -1;
 
-				tex.image = image;
-				tex.magFilter = LinearFilter;
-				tex.minFilter = LinearFilter;
-				tex.generateMipmaps = false;
-				tex.needsUpdate = true;
-				tex.format = RGBFormat;
-				var material = new MeshBasicMaterial( { map: scope.track( tex ) } );
-				material.depthWrite = false;
-				mesh.material = material;
-				scope.onLoadTile();
+                const tex = new Texture();
+                var image = new Image();
+                image.src = 'data:image/png;base64,' + arrayBuffer2Base64( buffer );
+                image.onload = function () {
 
-			};
+                    // console.log("Texture loaded for tile:", tileId);
+                    tex.image = image;
+                    tex.magFilter = LinearFilter;
+                    tex.minFilter = LinearFilter;
+                    tex.generateMipmaps = false;
+                    tex.needsUpdate = true;
+                    tex.colorSpace = 'srgb'; // Use srgb color space
+                    var material = new MeshBasicMaterial( { map: scope.track( tex ), side: 2 } ); // DoubleSide
+                    material.depthWrite = false;
+                    mesh.material = material;
+                    if (scope.onLoadTile) scope.onLoadTile();
 
-		} ).catch( function ( e ) {
+                };
+                
+                image.onerror = function(err) {
+                    console.error("Texture load error for tile:", tileId, err);
+                };
 
-			// we end up here if abort() is called on the Abortcontroller attached to this tile
-			scope.downloadQueue.delete( tileId );
-			scope.activeTiles.delete( tileId );
-			scope.resourceTracker.untrack( geometry );
+            } ).catch( function ( e ) {
 
-		} );
+                // we end up here if abort() is called on the Abortcontroller attached to this tile
+                scope.downloadQueue.delete( tileId );
+                scope.activeTiles.delete( tileId );
+                scope.resourceTracker.untrack( geometry );
+                scope.pendingFetches--;
+                scope.processFetchQueue();
 
-		const scenePosition = tile.getCenterPosition( transform );
-		mesh.position.set( scenePosition.x, scenePosition.y, scenePosition.z );
-		mesh.updateMatrix();
+            } );
+        };
 
+        if (this.pendingFetches < this.maxConcurrentFetches) {
+            fetchTile();
+        } else {
+            this.fetchQueue.push(fetchTile);
+        }
+
+	}
+
+    processFetchQueue() {
+        if (this.fetchQueue.length > 0 && this.pendingFetches < this.maxConcurrentFetches) {
+            const nextFetch = this.fetchQueue.shift();
+            nextFetch();
+        }
+    }
+
+	dispose() {
+		this.abortDownloads();
+		this.resourceTracker.dispose();
+		this.group.clear();
 	}
 
 }
