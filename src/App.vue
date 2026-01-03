@@ -14,7 +14,7 @@
             class="logo-text"
             style="margin-right:0.4em; color: #000"
           >
-            3DBAG
+            Amsterdam kaart
           </router-link>
           <span
             class="logo-text"
