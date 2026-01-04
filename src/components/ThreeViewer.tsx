@@ -195,7 +195,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
 
         // Materials
         // Use a standard material first to ensure we can control the appearance
-        const material = new THREE.MeshLambertMaterial({ color: 0xadd8e6 }); // Clean light blue
+        const material = new THREE.MeshLambertMaterial({ color: 0xff4444 }); // Clean light blue
         materialRef.current = material;
 
         const highlightMaterial = new THREE.MeshLambertMaterial({ color: 0xffcc00 });
