@@ -6,8 +6,7 @@ import BAG3D from './assets/3dbag_versions.json';
 
 const ViewerPage: React.FC = () => {
 
-    const [basemapPreset] = useState('brtachtergrondkaart');
-    const [tileset] = useState('lod22');
+    const [basemapPreset] = useState('brtachtergrondkaartgrijs');
     const [, setCamRotationZ] = useState(0);
     const [showLocationBox, setShowLocationBox] = useState(false);
     const [locationBoxText, setLocationBoxText] = useState('');
@@ -61,8 +60,8 @@ const ViewerPage: React.FC = () => {
         return sources[basemapPreset] || sources['brtachtergrondkaart'];
     }, [basemapPreset]);
 
-    const getTilesUrl = (lod: string) => {
-        return BAG3DVersionData['3DTilesets'][lod];
+    const getTilesUrl = () => {
+        return BAG3DVersionData['3DTilesets']['lod12'];
     };
 
     return (
@@ -105,7 +104,7 @@ const ViewerPage: React.FC = () => {
             />
 
             <ThreeViewer 
-                tilesUrl={getTilesUrl(tileset)}
+                tilesUrl={getTilesUrl()}
                 basemapOptions={basemapOptions}
                 onCamRotationZ={setCamRotationZ}
                 onShowLocationBox={(text) => {
