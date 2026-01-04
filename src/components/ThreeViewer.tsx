@@ -155,7 +155,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         const controls = new OrbitControls( camera, renderer.domElement );
         controls.screenSpacePanning = false;
         controls.minDistance = 1;
-        controls.maxDistance = 10000000; // INCREASED MAX DISTANCE
+        controls.maxDistance = 4000; // Limit max zoom out to 2km
         controls.maxPolarAngle = 0.8; // Matched reference implementation
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
@@ -168,7 +168,54 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
             ONE: THREE.TOUCH.ROTATE,
             TWO: THREE.TOUCH.DOLLY_PAN
         };
-        controls.addEventListener( 'change', () => { needsRerender.current = 1; } );
+        controls.addEventListener( 'change', () => { 
+            needsRerender.current = 1; 
+
+            // Constrain to Amsterdam
+            if (tilesCentered.current && tilesRef.current) {
+                const groupPos = tilesRef.current.group.position;
+                const target = controls.target;
+                
+                // Amsterdam Bounds (RD)
+                // Tighter bounds for Amsterdam area (approx 4km radius from Central Station)
+                const minRDX = 119000;
+                const maxRDX = 124000;
+                const minRDY = 484500;
+                const maxRDY = 488000;
+                
+                // Calculate current RD from target
+                // world_x = rdx + groupPos.x
+                // world_z = -(rdy + groupPos.y)
+                const currentRDX = target.x - groupPos.x;
+                const currentRDY = -target.z - groupPos.y;
+                
+                let clampedRDX = Math.max(minRDX, Math.min(maxRDX, currentRDX));
+                let clampedRDY = Math.max(minRDY, Math.min(maxRDY, currentRDY));
+                
+                if (clampedRDX !== currentRDX || clampedRDY !== currentRDY) {
+                    // Convert back to World
+                    const newWorldX = clampedRDX + groupPos.x;
+                    const newWorldZ = -(clampedRDY + groupPos.y);
+                    
+                    controls.target.x = newWorldX;
+                    controls.target.z = newWorldZ;
+                    
+                    // Also adjust camera position to maintain offset?
+                    // If we just clamp target, the camera might "slide" relative to target if we don't move camera too.
+                    // But OrbitControls handles camera position relative to target.
+                    // If we move target, OrbitControls might jump?
+                    // Actually, modifying target inside 'change' event might be tricky.
+                    // But let's try.
+                    
+                    // We also need to clamp the camera position so it doesn't drift away?
+                    // No, OrbitControls updates camera based on target.
+                    // If we force target back, the camera should follow?
+                    // Let's see.
+                    const offset = camera.position.clone().sub(target);
+                    camera.position.copy(new THREE.Vector3(newWorldX, target.y, newWorldZ).add(offset));
+                }
+            }
+        } );
         controlsRef.current = controls;
 
         // Lights
