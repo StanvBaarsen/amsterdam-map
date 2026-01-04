@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThreeViewer } from './components/ThreeViewer';
 import { BuildingInformation } from './components/BuildingInformation';
-import BAG3D from './assets/3dbag_versions.json';
 
 const ViewerPage: React.FC = () => {
 
@@ -13,8 +12,6 @@ const ViewerPage: React.FC = () => {
     const [pickedBuilding, setPickedBuilding] = useState<any>(null);
     const [showBuildingInfo, setShowBuildingInfo] = useState(false);
     
-    const BAG3DVersionData = (BAG3D as any)["versions"][(BAG3D as any)["latest"]];
-
     const basemapOptions = useMemo(() => {
         const sources: any = {
             brtachtergrondkaart: {
@@ -61,7 +58,9 @@ const ViewerPage: React.FC = () => {
     }, [basemapPreset]);
 
     const getTilesUrl = () => {
-        return BAG3DVersionData['3DTilesets']['lod12'];
+        // Use local tileset if available
+        return '/amsterdam_3dtiles/tileset_amsterdam.json';
+        // return BAG3DVersionData['3DTilesets']['lod12'];
     };
 
     return (
