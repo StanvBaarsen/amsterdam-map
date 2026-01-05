@@ -1,0 +1,38 @@
+[
+    {
+        "year": 1400,
+        "description": "# Amsterdam in 1400\n\nDit is Amsterdam in 1400. Een kleine nederzetting aan de Amstel. De stad is nog jong en bestaat voornamelijk uit houten huizen. De handel begint op gang te komen, maar het is nog lang niet de wereldstad die het later zal worden.\n\nDe Dam is het centrum van de stad, waar de Amstel wordt afgedamd. Hier vindt de handel plaats en ontmoeten mensen elkaar. De stad wordt beschermd door wallen en poorten, die de grenzen van de stad markeren.\n\nHet leven is eenvoudig maar hard. Visserij en scheepvaart zijn de belangrijkste bronnen van inkomsten. De stad groeit langzaam maar zeker, en de eerste stenen gebouwen verschijnen.",
+        "coordinate": {
+            "x": 121100,
+            "y": 486500
+        },
+        "image": "/amsterdam-1400.webp"
+    },
+    {
+        "year": 1650,
+        "description": "# De Gouden Eeuw\n\nAmsterdam groeit explosief in de 17e eeuw. De grachtengordel wordt aangelegd, een meesterwerk van stedenbouw en watermanagement. De stad wordt het centrum van de wereldhandel, met schepen die naar alle uithoeken van de aarde varen.\n\nRijke kooplieden laten prachtige grachtenpanden bouwen, die nog steeds het stadsbeeld bepalen. De kunst bloeit, met meesters als Rembrandt en Vermeer die in de stad werken. Amsterdam is een toevluchtsoord voor denkers en vluchtelingen uit heel Europa.\n\nDe bevolking groeit snel, en de stad barst uit haar voegen. Nieuwe wijken worden aangelegd, en de haven wordt steeds verder uitgebreid. Het is een tijd van ongekende welvaart en culturele bloei.",
+        "coordinate": {
+            "x": 121500,
+            "y": 487500
+        },
+        "image": "/amsterdam-1600.webp"
+    },
+    {
+        "year": 1800,
+        "description": "# Franse Tijd en Industrialisatie\n\nAmsterdam in de 19e eeuw. De stad verandert onder invloed van de industrialisatie. Stoommachines doen hun intrede, en fabrieken verrijzen aan de randen van de stad. De spoorwegen verbinden Amsterdam met de rest van Europa.\n\nHet is ook een tijd van sociale onrust en verandering. De arbeidersklasse groeit, en de leefomstandigheden in de volkswijken zijn vaak slecht. Tegelijkertijd worden er nieuwe culturele instellingen opgericht, zoals het Rijksmuseum en het Concertgebouw.\n\nDe stad breidt zich verder uit buiten de singelgracht. Nieuwe wijken zoals De Pijp en Oud-West worden gebouwd om de groeiende bevolking te huisvesten. Amsterdam is op weg naar de moderne tijd.",
+        "coordinate": {
+            "x": 122000,
+            "y": 488000
+        },
+        "image": "/amsterdam-1800.webp"
+    },
+    {
+        "year": 2026,
+        "description": "# Modern Amsterdam\n\nDe stad zoals we die nu kennen. Een metropool met een rijke historie, maar ook een stad die vooruit kijkt. Toerisme, technologie en creatieve industrieën zijn belangrijke pijlers van de economie.\n\nAmsterdam is een stad van diversiteit, waar mensen van over de hele wereld samenleven. De historische binnenstad is UNESCO werelderfgoed, maar de stad blijft zich vernieuwen. De Zuidas is het nieuwe zakelijke centrum, en aan de IJ-oevers verrijzen moderne woonwijken.\n\nDuurzaamheid en leefbaarheid staan hoog op de agenda. De stad streeft ernaar om klimaatneutraal te worden en de openbare ruimte te verbeteren voor fietsers en voetgangers. Amsterdam blijft een stad in beweging.",
+        "coordinate": {
+            "x": 121000,
+            "y": 487000
+        },
+        "image": "/amsterdam-2026.webp"
+    }
+]

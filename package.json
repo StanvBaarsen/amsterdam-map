@@ -24,6 +24,7 @@
     "react-dom": "^19.2.0",
     "react-i18next": "^16.5.0",
     "react-icons": "^5.5.0",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^7.11.0",
     "three": "^0.182.0",
     "x2js": "^3.4.4"

@@ -9,7 +9,9 @@ import { useBasemap } from '../hooks/useBasemap';
 import { IntroOverlay } from './overlays/IntroOverlay';
 import { LoadingOverlay } from './overlays/LoadingOverlay';
 import { TimelineOverlay } from './overlays/TimelineOverlay';
+import { StorylineOverlay } from './overlays/StorylineOverlay';
 import { processTileColors } from '../utils/tiles';
+import storylinesData from '../assets/storylines.json';
 
 interface ThreeViewerProps {
     tilesUrl?: string;
@@ -19,6 +21,7 @@ interface ThreeViewerProps {
     onCamRotationZ?: (rot: number) => void;
     onShowLocationBox?: (text: string) => void;
     onHideLocationBox?: () => void;
+    onStorylineToggle?: (active: boolean) => void;
 }
 
 export const ThreeViewer: React.FC<ThreeViewerProps> = ({
@@ -38,14 +41,25 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         }
     },
     onObjectPicked,
-    onCamRotationZ
+    onCamRotationZ,
+    onStorylineToggle
 }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [loadingProgress, setLoadingProgress] = useState(0);
     const [showIntro, setShowIntro] = useState(true);
     const [currentYear, setCurrentYear] = useState(2026);
     const [isPlaying, setIsPlaying] = useState(false);
+    const [storylineIndex, setStorylineIndex] = useState(0);
+    const [storylineMode, setStorylineMode] = useState<'overview' | 'focus'>('overview');
+    const [skipStoryline, setSkipStoryline] = useState(false);
+    const [isStorylineComplete, setIsStorylineComplete] = useState(false);
     
+    useEffect(() => {
+        if (onStorylineToggle) {
+            onStorylineToggle(storylineMode === 'focus');
+        }
+    }, [storylineMode, onStorylineToggle]);
+
     const containerRef = useRef<HTMLDivElement>(null);
     const { rendererRef, sceneRef, cameraRef, dummyCameraRef, controlsRef, offsetParentRef, isReady } = useThreeScene(containerRef);
     
@@ -57,6 +71,8 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2());
     const pointerCasterRef = useRef({ startClientX: 0, startClientY: 0 });
     const requestRef = useRef<number>(0);
+    const streetLevelCameraPositionRef = useRef<{ position: THREE.Vector3, target: THREE.Vector3 } | null>(null);
+    const hasZoomedOutRef = useRef(false);
 
     const location = useLocation();
 
@@ -135,6 +151,110 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     }, [reinitBasemap]);
 
     const isRewindingRef = useRef(false);
+    const isOrbitingRef = useRef(false);
+
+    const animateCameraToStoryline = (targetRD: { x: number, y: number }, onComplete?: () => void) => {
+        if (!tilesRef.current || !controlsRef.current || !cameraRef.current) return;
+
+        const groupPos = tilesRef.current.group.position;
+        const local_x = targetRD.x + groupPos.x;
+        const local_y = targetRD.y + groupPos.y;
+        
+        // Convert to World Space (Y-up, rotated parent)
+        const world_x = local_x;
+        const world_y = 0 + groupPos.z; 
+        const world_z = -local_y;
+
+        const target = new THREE.Vector3(world_x, world_y, world_z);
+        
+        // Zoom in position
+        const dist = 600; 
+        const camPos = target.clone().add(new THREE.Vector3(dist, dist, dist));
+
+        new TWEEN.Tween(cameraRef.current.position)
+            .to({ x: camPos.x, y: camPos.y, z: camPos.z }, 4000)
+            .easing(TWEEN.Easing.Quadratic.Out)
+            .start();
+
+        new TWEEN.Tween(controlsRef.current.target)
+            .to({ x: target.x, y: target.y, z: target.z }, 4000)
+            .easing(TWEEN.Easing.Quadratic.Out)
+            .onUpdate(() => {
+                controlsRef.current?.update();
+                needsRerender.current = 1;
+            })
+            .onComplete(() => {
+                if (onComplete) onComplete();
+            })
+            .start();
+    };
+
+    const animateCameraToOverview = () => {
+        if (!controlsRef.current || !cameraRef.current || !initialCameraStateRef.current) return;
+
+        const { position, target } = initialCameraStateRef.current;
+
+        new TWEEN.Tween(cameraRef.current.position)
+            .to({ x: position.x, y: position.y, z: position.z }, 2000)
+            .easing(TWEEN.Easing.Quadratic.Out)
+            .start();
+
+        new TWEEN.Tween(controlsRef.current.target)
+            .to({ x: target.x, y: target.y, z: target.z }, 2000)
+            .easing(TWEEN.Easing.Quadratic.Out)
+            .onUpdate(() => {
+                controlsRef.current?.update();
+                needsRerender.current = 1;
+            })
+            .start();
+    };
+
+    const zoomOutToMax = () => {
+        if (!controlsRef.current || !cameraRef.current || !initialCameraStateRef.current) return;
+
+        const { target } = initialCameraStateRef.current;
+        const initialPos = initialCameraStateRef.current.position;
+        const direction = new THREE.Vector3().subVectors(initialPos, target).normalize();
+        
+        const dist = 6000;
+        const endPos = target.clone().add(direction.multiplyScalar(dist));
+
+        new TWEEN.Tween(cameraRef.current.position)
+            .to({ x: endPos.x, y: endPos.y, z: endPos.z }, 10000)
+            .easing(TWEEN.Easing.Quadratic.Out)
+            .onUpdate(() => {
+                 controlsRef.current?.update();
+                 needsRerender.current = 1;
+            })
+            .start();
+            
+        new TWEEN.Tween(controlsRef.current.target)
+            .to({ x: target.x, y: target.y, z: target.z }, 10000)
+            .easing(TWEEN.Easing.Quadratic.Out)
+            .start();
+    };
+
+    const handleNextStoryline = () => {
+        isOrbitingRef.current = false;
+        setStorylineMode('overview');
+        
+        // Wait for timeline to slide up (approx 1s)
+        setTimeout(() => {
+            animateCameraToOverview();
+            
+            // Wait for camera to move a bit before playing
+            setTimeout(() => {
+                setStorylineIndex(prev => prev + 1);
+                setIsPlaying(true);
+            }, 2000);
+        }, 1000);
+    };
+
+    const onUserInteraction = () => {
+        if (isOrbitingRef.current) {
+            isOrbitingRef.current = false;
+        }
+    };
 
     // Playback Loop
     useEffect(() => {
@@ -144,78 +264,38 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                 if (isRewindingRef.current) return;
 
                 setCurrentYear(prev => {
-                    const next = prev + 1; // 1 year per 20ms = 50 years/sec
+                    const next = prev + 1; 
+                    
+                    // Check for storyline events if not skipped
+                    if (!skipStoryline) {
+                        const nextEvent = storylinesData[storylineIndex];
+                        if (nextEvent && next >= nextEvent.year) {
+                            setIsPlaying(false);
+                            animateCameraToStoryline(nextEvent.coordinate, () => {
+                                setStorylineMode('focus');
+                            });
+                            isOrbitingRef.current = true;
+                            return nextEvent.year;
+                        }
+                    }
+
+                    if (next >= 1850 && !hasZoomedOutRef.current) {
+                        hasZoomedOutRef.current = true;
+                        zoomOutToMax();
+                    }
+
                     if (next >= 2026) {
                         setIsPlaying(false);
+                        setIsStorylineComplete(true);
                         return 2026;
                     }
                     return next;
                 });
-            }, 20);
+            }, 50);
         }
         return () => clearInterval(interval);
-    }, [isPlaying]);
+    }, [isPlaying, storylineIndex, skipStoryline]);
 
-    useEffect(() => {
-        if (isPlaying && controlsRef.current && cameraRef.current) {
-            // Only zoom out and reset if we are at the end (2026)
-            if (currentYear >= 2026) {
-                isRewindingRef.current = true;
-                
-                // Smoothly rewind year
-                const yearObj = { year: 2026 };
-                new TWEEN.Tween(yearObj)
-                    .to({ year: 1400 }, 1000)
-                    .easing(TWEEN.Easing.Quadratic.Out)
-                    .onUpdate(() => {
-                        setCurrentYear(Math.round(yearObj.year));
-                    })
-                    .onComplete(() => {
-                        isRewindingRef.current = false;
-                    })
-                    .start();
-
-                const controls = controlsRef.current;
-                const camera = cameraRef.current;
-                
-                if (initialCameraStateRef.current) {
-                    const { position, target } = initialCameraStateRef.current;
-                    
-                    new TWEEN.Tween(camera.position)
-                        .to({ x: position.x, y: position.y, z: position.z }, 1000)
-                        .easing(TWEEN.Easing.Quadratic.Out)
-                        .start();
-
-                    new TWEEN.Tween(controls.target)
-                        .to({ x: target.x, y: target.y, z: target.z }, 1000)
-                        .easing(TWEEN.Easing.Quadratic.Out)
-                        .onUpdate(() => {
-                            controls.update();
-                            needsRerender.current = 1;
-                        })
-                        .start();
-                } else {
-                    const currentDist = camera.position.distanceTo(controls.target);
-                    const targetDist = controls.maxDistance * 0.8;
-                    
-                    if (currentDist < targetDist) {
-                        const startPos = camera.position.clone();
-                        const direction = startPos.clone().sub(controls.target).normalize();
-                        const targetPos = controls.target.clone().add(direction.multiplyScalar(targetDist));
-                        
-                        new TWEEN.Tween(camera.position)
-                            .to({ x: targetPos.x, y: targetPos.y, z: targetPos.z }, 1000)
-                            .easing(TWEEN.Easing.Quadratic.Out)
-                            .onUpdate(() => {
-                                controls.update();
-                                needsRerender.current = 1;
-                            })
-                            .start();
-                    }
-                }
-            }
-        }
-    }, [isPlaying]);
 
     const markerName = "LocationMarker";
 
@@ -325,7 +405,8 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
             
             if (tilesRef.current.root && isStable) {
                 stableFramesRef.current++;
-                if (stableFramesRef.current > 15 && !isFinishingLoadRef.current) {
+                // Wait for 60 frames (approx 1 sec) of stability to ensure everything is truly loaded
+                if (stableFramesRef.current > 60 && !isFinishingLoadRef.current) {
                     isFinishingLoadRef.current = true;
                     setLoadingProgress(100);
                     setTimeout(() => {
@@ -349,6 +430,13 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
 
     const updateTilesAndMaterials = () => {
         if (tilesRef.current) {
+            // While loading, force high detail loading even if far away
+            if (isLoadingRef.current) {
+                tilesRef.current.errorTarget = 1;
+            } else {
+                tilesRef.current.errorTarget = 10;
+            }
+
             if (tilesRef.current.update()) {
                 needsRerender.current = Math.max(needsRerender.current, 1);
             }
@@ -373,24 +461,58 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         target.copy(localTarget);
         
         const dist = 2000;
-        const camPos = target.clone().add(new THREE.Vector3(0, dist * 1.0, dist * 0.8));
+        const streetPos = target.clone().add(new THREE.Vector3(0, dist * 1.0, dist * 0.8));
         
+        // Calculate overview position (high up)
+        // Use a large distance to see the whole city
+        const overviewDist = 15000;
+        const overviewPos = target.clone().add(new THREE.Vector3(0, overviewDist, 100)); // Almost top-down
+
         if (cameraRef.current && controlsRef.current && dummyCameraRef.current) {
-            cameraRef.current.position.copy(camPos);
+            // Start at overview position
+            cameraRef.current.position.copy(overviewPos);
             controlsRef.current.target.copy(target);
             controlsRef.current.update();
             
-            dummyCameraRef.current.position.copy(camPos);
+            dummyCameraRef.current.position.copy(overviewPos);
             dummyCameraRef.current.lookAt(target);
             dummyCameraRef.current.updateMatrixWorld();
 
+            // Store street position for later animation
+            streetLevelCameraPositionRef.current = {
+                position: streetPos.clone(),
+                target: target.clone()
+            };
+
             initialCameraStateRef.current = {
-                position: camPos.clone(),
+                position: streetPos.clone(),
                 target: target.clone()
             };
         }
         cameraPositionedRef.current = true;
     };
+
+    // const handleStart = () => {
+    //     setShowIntro(false);
+        
+    //     if (cameraRef.current && controlsRef.current && streetLevelCameraPositionRef.current) {
+    //         const { position, target } = streetLevelCameraPositionRef.current;
+
+    //         new TWEEN.Tween(cameraRef.current.position)
+    //             .to({ x: position.x, y: position.y, z: position.z }, 3000)
+    //             .easing(TWEEN.Easing.Quadratic.InOut)
+    //             .start();
+
+    //         new TWEEN.Tween(controlsRef.current.target)
+    //             .to({ x: target.x, y: target.y, z: target.z }, 3000)
+    //             .easing(TWEEN.Easing.Quadratic.InOut)
+    //             .onUpdate(() => {
+    //                 controlsRef.current?.update();
+    //                 needsRerender.current = 1;
+    //             })
+    //             .start();
+    //     }
+    // };
 
     const checkCentering = () => {
         if (tilesRef.current && !tilesCentered.current && tilesRef.current.root) {
@@ -454,7 +576,15 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
             offsetParentRef.current.updateMatrixWorld(true);
         }
 
-        if (controlsRef.current) controlsRef.current.update();
+        if (controlsRef.current) {
+            if (isOrbitingRef.current) {
+                controlsRef.current.autoRotate = true;
+                controlsRef.current.autoRotateSpeed = 1.5;
+            } else {
+                controlsRef.current.autoRotate = false;
+            }
+            controlsRef.current.update();
+        }
         TWEEN.update();
 
         if (cameraRef.current && dummyCameraRef.current) {
@@ -490,8 +620,13 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         window.addEventListener('resize', onWindowResize, false);
         if (rendererRef.current) {
             rendererRef.current.domElement.addEventListener('pointermove', onPointerMove, false);
-            rendererRef.current.domElement.addEventListener('pointerdown', onPointerDown, false);
+            rendererRef.current.domElement.addEventListener('pointerdown', (e) => {
+                onPointerDown(e);
+                onUserInteraction();
+            }, false);
             rendererRef.current.domElement.addEventListener('pointerup', onPointerUp, false);
+            rendererRef.current.domElement.addEventListener('wheel', onUserInteraction, false);
+            rendererRef.current.domElement.addEventListener('touchstart', onUserInteraction, false);
         }
 
         needsRerender.current = 1;
@@ -504,6 +639,8 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                 rendererRef.current.domElement.removeEventListener('pointermove', onPointerMove);
                 rendererRef.current.domElement.removeEventListener('pointerdown', onPointerDown);
                 rendererRef.current.domElement.removeEventListener('pointerup', onPointerUp);
+                rendererRef.current.domElement.removeEventListener('wheel', onUserInteraction);
+                rendererRef.current.domElement.removeEventListener('touchstart', onUserInteraction);
             }
         };
     }, [rendererRef.current]);
@@ -529,14 +666,17 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                 let clampedRDY = Math.max(minRDY, Math.min(maxRDY, currentRDY));
 
                 if (clampedRDX !== currentRDX || clampedRDY !== currentRDY) {
-                    const newWorldX = clampedRDX + groupPos.x;
-                    const newWorldZ = -(clampedRDY + groupPos.y);
+                    const diffRDX = clampedRDX - currentRDX;
+                    const diffRDY = clampedRDY - currentRDY;
 
-                    controlsRef.current!.target.x = newWorldX;
-                    controlsRef.current!.target.z = newWorldZ;
+                    const diffWorldX = diffRDX;
+                    const diffWorldZ = -diffRDY;
 
-                    const offset = cameraRef.current!.position.clone().sub(target);
-                    cameraRef.current!.position.copy(new THREE.Vector3(newWorldX, target.y, newWorldZ).add(offset));
+                    controlsRef.current!.target.x += diffWorldX;
+                    controlsRef.current!.target.z += diffWorldZ;
+
+                    cameraRef.current!.position.x += diffWorldX;
+                    cameraRef.current!.position.z += diffWorldZ;
                 }
             }
         };
@@ -566,11 +706,44 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
             />
             <IntroOverlay 
                 show={showIntro} 
-                onStart={() => setShowIntro(false)} 
+                onStart={(skip) => {
+                    setShowIntro(false);
+                    setSkipStoryline(skip);
+                    if (skip) {
+                        setCurrentYear(2026);
+                        setIsPlaying(false);
+                        setIsStorylineComplete(true);
+                    } else {
+                        // Wait for fade out
+                        setTimeout(() => {
+                            // Reset zoom out flag
+                            hasZoomedOutRef.current = false;
+                            
+                            // Rewind animation
+                            const yearObj = { year: 2026 };
+                            new TWEEN.Tween(yearObj)
+                                .to({ year: 1400 }, 1500)
+                                .easing(TWEEN.Easing.Quadratic.InOut)
+                                .onUpdate(() => {
+                                    setCurrentYear(Math.round(yearObj.year));
+                                })
+                                .onComplete(() => {
+                                    setIsPlaying(true);
+                                })
+                                .start();
+                        }, 1500);
+                    }
+                }} 
                 isLoading={isLoading}
                 progress={loadingProgress}
             />
             <LoadingOverlay isLoading={isLoading} showIntro={showIntro} progress={loadingProgress} />
+            {storylineMode === 'focus' && storylinesData[storylineIndex] && (
+                <StorylineOverlay 
+                    event={storylinesData[storylineIndex]} 
+                    onNext={handleNextStoryline} 
+                />
+            )}
             {!showIntro && !isLoading && (
                 <TimelineOverlay
                     minYear={1400}
@@ -579,6 +752,8 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                     onYearChange={setCurrentYear}
                     isPlaying={isPlaying}
                     onPlayPause={setIsPlaying}
+                    isStorylineActive={storylineMode === 'focus'}
+                    isStorylineComplete={isStorylineComplete}
                 />
             )}
         </>
