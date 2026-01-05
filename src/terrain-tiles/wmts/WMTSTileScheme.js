@@ -14,7 +14,10 @@ export class WMTSTileScheme extends BaseTileScheme {
 		this.url = url;
 		this.tileMatrixSetId = tileMatrixSetId;
 
-		const capabilitiesURL = this.url + "request=GetCapabilities&service=WMTS";
+		let capabilitiesURL = this.url;
+        if (!capabilitiesURL.endsWith('.xml')) {
+             capabilitiesURL += "request=GetCapabilities&service=WMTS";
+        }
         console.log("Fetching WMTS Capabilities:", capabilitiesURL);
 
 		this.fetchCapabilities( capabilitiesURL ).then( capabilities => {

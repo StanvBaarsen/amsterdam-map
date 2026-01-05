@@ -9,7 +9,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import TWEEN from '@tweenjs/tween.js';
 import { useLocation } from 'react-router-dom';
 import markerSprite from '../assets/locationmarker.png';
-import landmarkLocations from '../assets/landmark_locations.json';
+// import landmarkLocations from '../assets/landmark_locations.json';
 
 // Adjusts the three.js standard shader to include batchid highlight
 // function batchIdHighlightShaderMixin( shader: any ) {
@@ -57,6 +57,19 @@ import landmarkLocations from '../assets/landmark_locations.json';
 // 
 // }
 
+const getBuildingColor = (year: number) => {
+    if (!year) return new THREE.Color(0xdcdcdc); // Unknown: Warm Grey
+    
+    if (year < 1600) return new THREE.Color(0x591C0B); // < 1600: Darkest Historic Red
+    if (year < 1700) return new THREE.Color(0x782612); // 1600-1700: Golden Age Brick
+    if (year < 1800) return new THREE.Color(0x963219); // 1700-1800: 18th Century Red
+    if (year < 1900) return new THREE.Color(0xB34022); // 1800-1900: 19th Century Brick
+    if (year < 1940) return new THREE.Color(0xCC522C); // 1900-1940: Amsterdam School Red/Orange
+    if (year < 1980) return new THREE.Color(0xD96B42); // 1940-1980: Post-war Orange/Red
+    if (year < 2000) return new THREE.Color(0xE0855C); // 1980-2000: Late 20th Century
+    return new THREE.Color(0xE69E75); // > 2000: Modern Warm
+};
+
 interface ThreeViewerProps {
     tilesUrl?: string;
     basemapOptions?: any;
@@ -68,23 +81,13 @@ interface ThreeViewerProps {
 }
 
 export const ThreeViewer: React.FC<ThreeViewerProps> = ({
-    tilesUrl = 'https://data.3dbag.nl/v20250903/3dtiles/lod22/tileset.json',
+    tilesUrl = '/amsterdam_3dtiles_lod22/tileset.json',
     basemapOptions = {
         type: "wmts",
         options: {
-            // Removed 'url' from options to prevent double inclusion in query params
-            // The WMTSTilesRenderer seems to iterate over all options and append them
-            // We will pass the base URL separately if needed, or rely on the renderer to handle it
-            // But looking at the code, it uses options.url as base AND iterates options.
-            // So we should probably NOT include 'url' in the options object if we can help it,
-            // OR we should fix the renderer. 
-            // For now, let's try to fix the URL in the options to NOT include the '?' 
-            // and see if that helps, or just remove the 'url' key from the iteration in the renderer (which we can't easily do).
-            // Actually, the renderer code does: `if ( k != Object.keys( this.wmtsOptions )[ 0 ] )`
-            // It assumes the first key is NOT to be appended? Or something?
-            // Let's just disable the basemap for a moment to clear the logs and focus on 3D tiles.
-            // url: 'https://service.pdok.nl/brt/achtergrondkaart/wmts/v2_0?',
-            layer: 'standaard',
+            url: '/basemap/capabilities.xml',
+            template: '/basemap/tiles/{TileMatrix}/{TileCol}/{TileRow}.png',
+            layer: 'pastel',
             style: 'default',
             tileMatrixSet: "EPSG:28992",
             service: "WMTS",
@@ -117,10 +120,12 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     
     const location = useLocation();
     const needsRerender = useRef(0);
+    const keepAliveFrames = useRef(0);
 
     // Materials
     const materialRef = useRef<THREE.Material | null>(null);
     const highlightMaterialRef = useRef<THREE.Material | null>(null);
+    const coloredMaterialRef = useRef<THREE.Material | null>(null);
 
     const markerName = "LocationMarker";
 
@@ -241,12 +246,26 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         offsetParentRef.current = offsetParent;
 
         // Materials
-        // Use a standard material first to ensure we can control the appearance
-        const material = new THREE.MeshLambertMaterial({ color: 0xff4444 }); // Clean light blue
+        // Use MeshLambertMaterial with flatShading for a clean, solid look
+        const material = new THREE.MeshLambertMaterial({ 
+            color: 0xdcdcdc, 
+            flatShading: true 
+        });
         materialRef.current = material;
 
-        const highlightMaterial = new THREE.MeshLambertMaterial({ color: 0xffcc00 });
+        const highlightMaterial = new THREE.MeshLambertMaterial({ 
+            color: 0xffcc00, 
+            flatShading: true 
+        });
         highlightMaterialRef.current = highlightMaterial;
+
+        // Add colored material
+        const coloredMaterial = new THREE.MeshLambertMaterial({ 
+            vertexColors: true,
+            side: THREE.DoubleSide,
+            flatShading: true
+        });
+        coloredMaterialRef.current = coloredMaterial;
 
         // Events
         window.addEventListener( 'resize', onWindowResize, false );
@@ -364,17 +383,142 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         }
 
         if (tilesRef.current) {
-            tilesRef.current.update();
+            // Update tiles and check if a re-render is needed
+            if (tilesRef.current.update()) {
+                needsRerender.current = Math.max(needsRerender.current, 1);
+            }
             
             // Force material update on every frame to ensure new tiles get the material
             // This is a bit expensive but ensures consistency for now
-            tilesRef.current.forEachLoadedModel((scene: THREE.Object3D) => {
+            /*
+            tilesRef.current.forEachLoadedModel((scene: THREE.Object3D, tile: any) => {
+                // Lazy-load colors if missing
+                // Check if we've already processed this tile to avoid re-parsing every frame
+                // @ts-ignore
+                if (!tile._colorsProcessed) {
+                    // Try to find batch table in various locations
+                    const batchTable = tile.batchTable || 
+                                     tile.content?.batchTable || 
+                                     // @ts-ignore
+                                     scene.batchTable ||
+                                     // @ts-ignore
+                                     tile.cached?.batchTable;
+
+                    if (batchTable) {
+                        // Helper to get data with fallback for deprecated API
+                        const getData = (key: string) => {
+                            // 3d-tiles-renderer v0.3+ uses getPropertyArray
+                            if (batchTable.getPropertyArray) return batchTable.getPropertyArray(key);
+                            // Fallback for older versions
+                            if (batchTable.getData) return batchTable.getData(key);
+                            return null;
+                        };
+
+                        // Parse construction years
+                        let constructionYears: any = null;
+                        
+                        // 1. Try direct access
+                        constructionYears = getData('bouwjaar') || 
+                                          getData('construction_year') ||
+                                          getData('oorspronkelijkbouwjaar');
+                        
+                        // 2. If not found, check for 'attributes'
+                        if (!constructionYears) {
+                            let attributes = getData('attributes');
+                            if (!attributes && batchTable.json && batchTable.json.attributes) {
+                                attributes = batchTable.json.attributes;
+                            }
+
+                            if (attributes) {
+                                constructionYears = attributes.map((attr: any) => {
+                                    let data = attr;
+                                    if (typeof attr === 'string') {
+                                        try {
+                                            data = JSON.parse(attr);
+                                        } catch (e) { return 0; }
+                                    }
+                                    return data?.oorspronkelijkbouwjaar || data?.bouwjaar || 0;
+                                });
+                            }
+                        }
+
+                        if (constructionYears) {
+                            scene.traverse((c: any) => {
+                                if (c.isMesh) {
+                                    let geometry = c.geometry;
+                                    
+                                    // Ensure geometry is non-indexed to support per-face coloring (hard edges)
+                                    // If vertices are shared between buildings, we need to split them.
+                                    if (geometry.index) {
+                                        geometry = geometry.toNonIndexed();
+                                        c.geometry = geometry;
+                                    }
+
+                                    const batchIdAttr = geometry.getAttribute('_batchid');
+                                    if (batchIdAttr) {
+                                        const count = geometry.attributes.position.count;
+                                        const colors = new Float32Array(count * 3);
+                                        const batchIds = batchIdAttr.array;
+                                        
+                                        let debugLogCount = 0;
+
+                                        // DEBUG: Analyze Batch IDs
+                                        let minB = Infinity, maxB = -Infinity;
+                                        let isInt = true;
+                                        for(let k=0; k<count; k++) {
+                                            const val = batchIds[k];
+                                            if(val < minB) minB = val;
+                                            if(val > maxB) maxB = val;
+                                            if(Math.abs(val - Math.round(val)) > 0.001) isInt = false;
+                                        }
+                                        if (debugLogCount < 1) {
+                                            console.log(`DEBUG TILE: Count=${count}, MinBatch=${minB}, MaxBatch=${maxB}, IsInteger=${isInt}`);
+                                            console.log("Sample BatchIDs:", batchIds.slice(0, 20));
+                                        }
+
+                                        for (let i = 0; i < count; i++) {
+                                            // FIX: Round batchId to handle floating point jitter in Float32Array
+                                            const batchId = Math.round(batchIds[i]);
+                                            const year = (batchId >= 0 && batchId < constructionYears.length) ? constructionYears[batchId] : 0;
+                                            
+                                            if (debugLogCount < 3 && i % 100 === 0) {
+                                                console.log(`DEBUG: Vertex ${i}, BatchID raw: ${batchIds[i]}, rounded: ${batchId}, Year: ${year}`);
+                                                debugLogCount++;
+                                            }
+
+                                            const color = getBuildingColor(year);
+                                            colors[i * 3] = color.r;
+                                            colors[i * 3 + 1] = color.g;
+                                            colors[i * 3 + 2] = color.b;
+                                        }
+                                        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                                        // Remove existing normals to ensure flat shading works correctly
+                                        geometry.deleteAttribute('normal');
+                                        c.material = coloredMaterialRef.current;
+                                    }
+                                }
+                            });
+                            // Only mark processed if we successfully applied colors
+                            // @ts-ignore
+                            tile._colorsProcessed = true;
+                        }
+                    }
+                }
+
                 scene.traverse((c: any) => {
-                    if (c.isMesh && c.material !== materialRef.current && c.material !== highlightMaterialRef.current) {
+                    if (c.isMesh && 
+                        c.material !== materialRef.current && 
+                        c.material !== highlightMaterialRef.current &&
+                        c.material !== coloredMaterialRef.current) {
+                        
+                        // Fallback to red material for any mesh that wasn't explicitly colored
+                        // We ignore existing vertex colors (which might be gradients/normals) 
+                        // unless we generated them ourselves.
                         c.material = materialRef.current;
                     }
                 });
             });
+            */
 
             // Center the tileset using root sphere
             if (!tilesCentered.current && tilesRef.current.root) {
@@ -402,7 +546,10 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                     }
 
                     tilesRef.current.group.position.copy(center).multiplyScalar(-1);
+                    tilesRef.current.group.updateMatrixWorld(true);
                     tilesCentered.current = true;
+                    needsRerender.current = 1;
+                    keepAliveFrames.current = 60; // Force render for 1 second to ensure tiles load
                     console.log("Tiles centered at:", tilesRef.current.group.position);
 
                     // Initial Camera Positioning
@@ -410,22 +557,8 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                         const q = new URLSearchParams(location.search);
                         if (q.has("rdx") && q.has("rdy")) {
                             setCameraPosFromRoute(q);
-                        } else {
-                            // Random landmark
-                            const keys = Object.keys(landmarkLocations);
-                            const landmark = (landmarkLocations as any)[keys[keys.length * Math.random() << 0]];
-                            
-                            if (onShowLocationBox) onShowLocationBox(`DEBUG: Loaded. Moving to ${landmark.name}`);
-                            
-                            setCameraPosFromRoute(new URLSearchParams({
-                                rdx: landmark.rdx,
-                                rdy: landmark.rdy,
-                                ox: landmark.ox,
-                                oy: landmark.oy,
-                                oz: landmark.oz
-                            }));
+                            cameraPositionedRef.current = true;
                         }
-                        cameraPositionedRef.current = true;
                     }
                 }
             }
@@ -534,6 +667,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
 
                 if (radius > 50000) {
                     // Amsterdam Central Station RD Coordinates: X: 121500, Y: 487500
+                    // Adjusted to be more South: Y: 485000
                     // We need Local Coordinates.
                     // Local = RD - Offset.
                     // We need the Offset.
@@ -547,7 +681,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                     
                     const localX = 121500 - offsetX;
                     const localY = 0;
-                    const localZ = -(487500 - offsetY); // RD Y -> Local Z (flipped)
+                    const localZ = -(486800 - offsetY); // RD Y -> Local Z (flipped)
                     
                     target = new THREE.Vector3(localX, localY, localZ);
                     
@@ -556,7 +690,8 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
 
                 // Since we rotated -90 deg X, Y is UP, Z is South.
                 // We want to be UP (Y) and South (Z)
-                const camPos = target.clone().add(new THREE.Vector3(0, dist, dist));
+                // Adjusted to be slightly less top-down
+                const camPos = target.clone().add(new THREE.Vector3(0, dist * 1.0, dist * 0.8));
                 
                 if (cameraRef.current && controlsRef.current) {
                     cameraRef.current.position.copy(camPos);
@@ -605,11 +740,12 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
             terrainTilesRef.current.update(sceneTransformRef.current, cameraRef.current);
         }
 
-        if (needsRerender.current > 0) {
+        if (needsRerender.current > 0 || keepAliveFrames.current > 0) {
             if (rendererRef.current && sceneRef.current && cameraRef.current) {
                 rendererRef.current.render( sceneRef.current, cameraRef.current );
             }
-            needsRerender.current--;
+            if (needsRerender.current > 0) needsRerender.current--;
+            if (keepAliveFrames.current > 0) keepAliveFrames.current--;
         }
         
         if (onCamRotationZ && cameraRef.current) {
@@ -646,12 +782,15 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         // tiles.group.rotation.x = - Math.PI / 2;
         tiles.displayBoxBounds = false;
         tiles.colorMode = 0; // None (Use material color)
-        tiles.lruCache.minSize = 85;
-        tiles.lruCache.maxSize = 115;
-        tiles.errorTarget = 6;
+        
+        // Preload settings: Increase cache and detail to load all buildings
+        tiles.lruCache.minSize = 3000;
+        tiles.lruCache.maxSize = 4000;
+        tiles.errorTarget = 0; // Force highest detail
+        
         // tiles.errorThreshold = 60;
-        tiles.loadSiblings = false;
-        tiles.maxDepth = 15;
+        tiles.loadSiblings = true;
+        tiles.maxDepth = 30;
         tiles.showEmptyTiles = true;
         
         // @ts-ignore
@@ -663,6 +802,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         tiles.onLoadTileSet = () => {
             console.log("onLoadTileSet fired (root ready)");
             if (onShowLocationBox) onShowLocationBox("DEBUG: Tileset Loaded");
+            keepAliveFrames.current = 60; // Force render for 1 second
 
             if (init && !cameraPositionedRef.current) {
                 // Moved to animate loop to ensure tiles are centered first
@@ -702,15 +842,116 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
             needsRerender.current = 2;
         };
 
-        tiles.onLoadModel = (s: any) => {
-            console.log("onLoadModel fired", s);
-            s.traverse((c: any) => {
-                if (c.material) {
-                    // c.material.dispose();
-                    c.material = materialRef.current; // Apply custom material
+        tiles.onLoadModel = (scene: THREE.Group, tile: any) => {
+            // Try to find batch table in various locations
+            const batchTable = tile.batchTable || 
+                             tile.content?.batchTable || 
+                             // @ts-ignore
+                             scene.batchTable ||
+                             // @ts-ignore
+                             tile.cached?.batchTable;
+
+            if (batchTable) {
+                // Helper to get data with fallback for deprecated API
+                const getData = (key: string) => {
+                    // 3d-tiles-renderer v0.3+ uses getPropertyArray
+                    if (batchTable.getPropertyArray) return batchTable.getPropertyArray(key);
+                    // Fallback for older versions
+                    if (batchTable.getData) return batchTable.getData(key);
+                    return null;
+                };
+
+                // Parse construction years
+                let constructionYears: any = null;
+                
+                // 1. Try direct access
+                constructionYears = getData('bouwjaar') || 
+                                  getData('construction_year') ||
+                                  getData('oorspronkelijkbouwjaar');
+                
+                // 2. If not found, check for 'attributes'
+                if (!constructionYears) {
+                    let attributes = getData('attributes');
+                    if (!attributes && batchTable.json && batchTable.json.attributes) {
+                        attributes = batchTable.json.attributes;
+                    }
+
+                    if (attributes) {
+                        constructionYears = attributes.map((attr: any) => {
+                            let data = attr;
+                            if (typeof attr === 'string') {
+                                try {
+                                    data = JSON.parse(attr);
+                                } catch (e) { return 0; }
+                            }
+                            return data?.oorspronkelijkbouwjaar || data?.bouwjaar || 0;
+                        });
+                    }
+                }
+
+                if (constructionYears) {
+                    scene.traverse((c: any) => {
+                        if (c.isMesh) {
+                            let geometry = c.geometry;
+                            
+                            // Ensure geometry is non-indexed to support per-face coloring (hard edges)
+                            if (geometry.index) {
+                                geometry = geometry.toNonIndexed();
+                                c.geometry = geometry;
+                            }
+
+                            const batchIdAttr = geometry.getAttribute('_batchid');
+                            if (batchIdAttr) {
+                                const count = geometry.attributes.position.count;
+                                const colors = new Float32Array(count * 3);
+                                const batchIds = batchIdAttr.array;
+                                
+                                let foundValidYear = false;
+                                for (let i = 0; i < count; i++) {
+                                    const batchId = Math.round(batchIds[i]);
+                                    const year = (batchId >= 0 && batchId < constructionYears.length) ? constructionYears[batchId] : 0;
+                                    
+                                    if (year > 0) foundValidYear = true;
+                                    const color = getBuildingColor(year);
+                                    
+                                    colors[i * 3] = color.r;
+                                    colors[i * 3 + 1] = color.g;
+                                    colors[i * 3 + 2] = color.b;
+                                }
+                                
+                                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                                geometry.deleteAttribute('normal');
+                                c.material = coloredMaterialRef.current;
+                                
+                                if (!foundValidYear) {
+                                    console.warn("No valid years found for this tile, but attributes existed.");
+                                }
+                            } else {
+                                 console.warn("Mesh has no _batchid attribute");
+                                 c.material = materialRef.current;
+                            }
+                        }
+                    });
+                    // @ts-ignore
+                    tile._colorsProcessed = true;
+                } else {
+                    console.warn("No construction years found for tile");
+                }
+            } else {
+                console.warn("No batch table found for tile");
+            }
+            
+            // Ensure bounding box is computed
+            scene.traverse((c: any) => {
+                if (c.isMesh) {
                     if (c.geometry) c.geometry.computeBoundingBox();
+                    // Fallback material if not colored
+                    if (c.material !== coloredMaterialRef.current && c.material !== highlightMaterialRef.current) {
+                        c.material = materialRef.current;
+                    }
                 }
             });
+
             needsRerender.current = 1;
         };
 
@@ -798,7 +1039,9 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         cameraRef.current.position.y = world_y + oy;
         cameraRef.current.position.z = world_z + oz;
         
+        cameraRef.current.updateMatrixWorld();
         controlsRef.current.update();
+        needsRerender.current = 1;
 
         // Debug Cube
         if (sceneRef.current) {
