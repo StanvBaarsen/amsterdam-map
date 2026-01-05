@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Map Data
+public/basemap/
+public/amsterdam_3dtiles*/
+
+.env*

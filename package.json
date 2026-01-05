@@ -1,5 +1,5 @@
 {
-  "name": "temp-react-app",
+  "name": "amsterdam-2030",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,12 +10,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.962.0",
     "@types/proj4": "^2.5.6",
     "@types/three": "^0.182.0",
     "3d-tiles-renderer": "^0.4.19",
     "bulma": "^0.9.4",
     "debounce": "^3.0.0",
+    "dotenv": "^17.2.3",
     "i18next": "^25.7.3",
+    "mime-types": "^3.0.2",
     "ol": "^10.7.0",
     "proj4": "^2.20.2",
     "react": "^19.2.0",
