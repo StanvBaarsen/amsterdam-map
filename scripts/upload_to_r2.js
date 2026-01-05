@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import fs from 'fs';
 import path from 'path';
 import mime from 'mime-types';
@@ -31,14 +31,16 @@ const s3 = new S3Client({
 });
 
 const foldersToUpload = [
-    'public/amsterdam_3dtiles_lod12',
-    'public/amsterdam_3dtiles_lod13',
-    'public/amsterdam_3dtiles_lod22',
-    'public/basemap'
+    'data/amsterdam_3dtiles_lod12',
+    'data/amsterdam_3dtiles_lod13',
+    'data/amsterdam_3dtiles_lod22',
+    'data/basemap'
 ];
 
 // Set to store existing keys
 const existingKeys = new Set();
+// Set to store local keys (files that should exist)
+const localKeys = new Set();
 
 async function fetchExistingFiles() {
     console.log("🔍 Checking for existing files in bucket...");
@@ -101,12 +103,49 @@ async function processDirectory(directory) {
         if (stat.isDirectory()) {
             await processDirectory(fullPath);
         } else {
-            // Calculate key relative to public/
-            // e.g. public/basemap/tiles/x/y/z.png -> basemap/tiles/x/y/z.png
-            const relativePath = path.relative(path.join(process.cwd(), 'public'), fullPath);
+            // Calculate key relative to data/
+            // e.g. data/basemap/tiles/x/y/z.png -> basemap/tiles/x/y/z.png
+            const relativePath = path.relative(path.join(process.cwd(), 'data'), fullPath);
             // Ensure forward slashes for S3 keys
             const key = relativePath.split(path.sep).join('/');
+            localKeys.add(key);
             await uploadFile(fullPath, key);
+        }
+    }
+}
+
+async function deleteExtraneousFiles() {
+    const keysToDelete = [];
+    for (const key of existingKeys) {
+        if (!localKeys.has(key)) {
+            keysToDelete.push({ Key: key });
+        }
+    }
+
+    if (keysToDelete.length === 0) {
+        console.log("✨ No extraneous files to delete.");
+        return;
+    }
+
+    console.log(`🗑️  Found ${keysToDelete.length} files to delete from R2...`);
+await deleteExtraneousFiles();
+
+    
+    // Batch delete in chunks of 1000
+    const chunkSize = 1000;
+    for (let i = 0; i < keysToDelete.length; i += chunkSize) {
+        const chunk = keysToDelete.slice(i, i + chunkSize);
+        try {
+            const command = new DeleteObjectsCommand({
+                Bucket: BUCKET_NAME,
+                Delete: {
+                    Objects: chunk,
+                },
+            });
+            await s3.send(command);
+            console.log(`🗑️  Deleted batch ${Math.floor(i / chunkSize) + 1}/${Math.ceil(keysToDelete.length / chunkSize)} (${chunk.length} files)`);
+        } catch (err) {
+            console.error("❌ Error deleting files:", err);
         }
     }
 }

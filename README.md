@@ -1,73 +1,56 @@
-# React + TypeScript + Vite
+# Amsterdam 2030 Map
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A 3D map viewer for Amsterdam using 3D Tiles and React.
 
-Currently, two official plugins are available:
+## Prerequisites
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Node.js (v18 or later recommended)
+- Python 3.x
 
-## React Compiler
+## Setup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1.  **Install Dependencies**
 
-## Expanding the ESLint configuration
+    ```bash
+    npm install
+    ```
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+2.  **Configure Environment Variables**
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+    Create a `.env` file in the root directory with the following variables. You will need Cloudflare R2 credentials to upload the map tiles.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+    ```dotenv
+    # URL where tiles will be hosted (e.g. your R2 bucket public URL)
+    VITE_TILE_HOST=https://pub-b7e9f888ec4543df94637d8bae9ce3c5.r2.dev
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+    # Cloudflare R2 Credentials (required for setup script to upload tiles)
+    R2_ACCOUNT_ID=your_account_id
+    R2_ACCESS_KEY_ID=your_access_key_id
+    R2_SECRET_ACCESS_KEY=your_secret_access_key
+    ```
+
+3.  **Run Setup Script**
+
+    This script will download the necessary map data (Basemap, LOD 2.2, LOD 1.2/1.3) and upload it to your configured R2 bucket.
+
+    ```bash
+    python3 scripts/setup.py
+    ```
+
+    *Note: This script checks for the required environment variables before proceeding.*
+
+## Development
+
+To start the development server:
+
+```bash
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Build
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+To build for production:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build
 ```
