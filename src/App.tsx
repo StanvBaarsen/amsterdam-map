@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThreeViewer } from './components/ThreeViewer';
 import { BuildingInformation } from './components/BuildingInformation';
+import './App.css';
 
 const ViewerPage: React.FC = () => {
 
@@ -102,9 +103,11 @@ const ViewerPage: React.FC = () => {
         return `${TILES_HOST}/amsterdam_3dtiles_lod12/tileset.json`;
     };
 
+    const [isStorylineActive, setIsStorylineActive] = useState(false);
+
     return (
         <div id="viewer" style={{ width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative' }}>
-            <div style={{ position: 'absolute', top: '2rem', width: '100%', textAlign: 'center', zIndex: 10, pointerEvents: 'none' }}>
+            <div className={`app-header ${isStorylineActive ? 'storyline-active' : ''}`}>
                 <div style={{
                     display: 'inline-block',
                     padding: '1rem 2.5rem',
@@ -154,6 +157,7 @@ const ViewerPage: React.FC = () => {
                     setPickedBuilding(obj);
                     setShowBuildingInfo(true);
                 }}
+                onStorylineToggle={setIsStorylineActive}
             />
         </div>
     );

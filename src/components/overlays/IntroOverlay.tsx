@@ -2,12 +2,14 @@ import React from 'react';
 
 interface IntroOverlayProps {
     show: boolean;
-    onStart: () => void;
+    onStart: (skipStoryline: boolean) => void;
     isLoading: boolean;
     progress: number;
 }
 
 export const IntroOverlay: React.FC<IntroOverlayProps> = ({ show, onStart, isLoading, progress }) => {
+    const [skipStoryline, setSkipStoryline] = React.useState(false);
+
     return (
         <div style={{
             position: 'absolute',
@@ -77,8 +79,21 @@ export const IntroOverlay: React.FC<IntroOverlayProps> = ({ show, onStart, isLoa
                     </div>
                 )}
 
+                <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                    <input 
+                        type="checkbox" 
+                        id="skipStoryline" 
+                        checked={skipStoryline} 
+                        onChange={(e) => setSkipStoryline(e.target.checked)}
+                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                    />
+                    <label htmlFor="skipStoryline" style={{ color: '#444', fontSize: '1rem', cursor: 'pointer', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}>
+                        Sla geschiedenis over
+                    </label>
+                </div>
+
                 <button 
-                    onClick={onStart}
+                    onClick={() => onStart(skipStoryline)}
                     disabled={isLoading}
                     style={{
                         padding: '1rem 3rem',
