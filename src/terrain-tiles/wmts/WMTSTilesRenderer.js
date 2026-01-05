@@ -28,6 +28,17 @@ export class WMTSTilesRenderer extends TilesRenderer {
 
 	getRequestURL( tile ) {
 
+        if (this.wmtsOptions.template) {
+            let url = this.wmtsOptions.template;
+            const level = tile.tileMatrix.level;
+            const levelStr = level < 10 ? `0${level}` : `${level}`;
+            
+            url = url.replace('{TileMatrix}', levelStr);
+            url = url.replace('{TileCol}', tile.col.toString());
+            url = url.replace('{TileRow}', tile.row.toString());
+            return url;
+        }
+
 		let requestURL = this.url;
         if (requestURL.indexOf('?') === -1) {
             requestURL += '?';

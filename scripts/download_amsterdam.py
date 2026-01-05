@@ -3,20 +3,25 @@ import os
 import requests
 import math
 from pathlib import Path
+try:
+    from config import get_amsterdam_bounds
+except ImportError:
+    import sys
+    sys.path.append(str(Path(__file__).parent))
+    from config import get_amsterdam_bounds
 
 # Configuration
-AMSTERDAM_BOUNDS = {
-    "min_x": 110000, # Expanded slightly to be safe
-    "max_x": 135000,
-    "min_y": 475000,
-    "max_y": 500000
-}
+AMSTERDAM_BOUNDS = get_amsterdam_bounds(buffer_percent=0.5)
+print(f"Using bounds: {AMSTERDAM_BOUNDS}")
 
 BASE_URL = "https://data.3dbag.nl/v20250903/3dtiles/lod22/"
 TILESET_URL = BASE_URL + "tileset.json"
-OUTPUT_DIR = "public/amsterdam_3dtiles"
+OUTPUT_DIR = "public/amsterdam_3dtiles_lod22"
 
 def download_file(url, dest_path):
+    if os.path.exists(dest_path):
+        return True
+
     response = requests.get(url, stream=True)
     if response.status_code == 200:
         with open(dest_path, 'wb') as f:
@@ -188,9 +193,9 @@ def main():
 
     if prune(root):
         tileset["root"] = root
-        with open(os.path.join(OUTPUT_DIR, "tileset_amsterdam.json"), 'w') as f:
+        with open(os.path.join(OUTPUT_DIR, "tileset.json"), 'w') as f:
             json.dump(tileset, f, indent=2)
-        print("Saved pruned tileset to tileset_amsterdam.json")
+        print("Saved pruned tileset to tileset.json")
     else:
         print("Error: Root node was pruned! Check bounds.")
 

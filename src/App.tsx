@@ -5,7 +5,11 @@ import { BuildingInformation } from './components/BuildingInformation';
 
 const ViewerPage: React.FC = () => {
 
-    const [basemapPreset] = useState('brtachtergrondkaartgrijs');
+    // Configuration for external tile hosting (e.g. Cloudflare R2, AWS S3)
+    // If empty, it will look for files in the local public/ folder
+    const TILE_HOST = import.meta.env.VITE_TILE_HOST || '';
+
+    const [basemapPreset] = useState('local');
     const [, setCamRotationZ] = useState(0);
     const [showLocationBox, setShowLocationBox] = useState(false);
     const [locationBoxText, setLocationBoxText] = useState('');
@@ -14,6 +18,20 @@ const ViewerPage: React.FC = () => {
     
     const basemapOptions = useMemo(() => {
         const sources: any = {
+            local: {
+                type: "wmts",
+                options: {
+                    url: `${TILE_HOST}/basemap/capabilities.xml`,
+                    template: `${TILE_HOST}/basemap/tiles/{TileMatrix}/{TileCol}/{TileRow}.png`,
+                    layer: 'pastel',
+                    style: 'default',
+                    tileMatrixSet: "EPSG:28992",
+                    service: "WMTS",
+                    request: "GetTile",
+                    version: "1.0.0",
+                    format: "image/png"
+                }
+            },
             brtachtergrondkaart: {
                 type: "wmts",
                 options: {
@@ -58,9 +76,7 @@ const ViewerPage: React.FC = () => {
     }, [basemapPreset]);
 
     const getTilesUrl = () => {
-        // Use local tileset if available
-        return '/amsterdam_3dtiles/tileset_amsterdam.json';
-        // return BAG3DVersionData['3DTilesets']['lod12'];
+        return `${TILE_HOST}/amsterdam_3dtiles_lod22/tileset.json`;
     };
 
     return (
@@ -84,7 +100,7 @@ const ViewerPage: React.FC = () => {
                         textTransform: 'uppercase',
                         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
                     }}>
-                        Amsterdam 2035
+                        Amsterdam 2030
                     </h1>
                 </div>
             </div>
