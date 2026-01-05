@@ -8,54 +8,7 @@ import { WMSTilesRenderer, WMTSTilesRenderer } from '../terrain-tiles';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import TWEEN from '@tweenjs/tween.js';
 import { useLocation } from 'react-router-dom';
-import markerSprite from '../assets/locationmarker.png';
-// import landmarkLocations from '../assets/landmark_locations.json';
-
-// Adjusts the three.js standard shader to include batchid highlight
-// function batchIdHighlightShaderMixin( shader: any ) {
-// 
-// 	const newShader = { ...shader };
-// 	newShader.uniforms = {
-// 		highlightedBatchId: { value: - 1 },
-// 		highlightColor: { value: new THREE.Color( 0x00FF00 ).convertSRGBToLinear() }, // DEBUG: Green
-// 		...THREE.UniformsUtils.clone( shader.uniforms ),
-// 	};
-// 	newShader.extensions = {
-// 		derivatives: true,
-// 	};
-// 	newShader.lights = true;
-// 	newShader.fog = true;
-// 	newShader.vertexShader =
-// 		`
-// 			attribute float _batchid;
-// 			varying float batchid;
-// 		` +
-// 		newShader.vertexShader.replace(
-// 			/#include <uv_vertex>/,
-// 			`
-// 			#include <uv_vertex>
-// 			batchid = _batchid;
-// 			`
-// 		);
-// 	newShader.fragmentShader =
-// 		`
-// 			varying float batchid;
-// 			uniform float highlightedBatchId;
-// 			uniform vec3 highlightColor;
-// 		` +
-// 		newShader.fragmentShader.replace(
-// 			/vec4 diffuseColor = vec4\( diffuse, opacity \);/,
-// 			`
-// 			vec4 diffuseColor =
-// 				abs( batchid - highlightedBatchId ) < 0.5 ?
-// 				vec4( highlightColor, opacity ) :
-// 				vec4( diffuse, opacity );
-// 			`
-// 		);
-// 
-// 	return newShader;
-// 
-// }
+import { useState } from 'react';
 
 const getBuildingColor = (year: number) => {
     if (!year) return new THREE.Color(0xeeeeee); // Unknown: Light Grey
@@ -97,10 +50,12 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         }
     },
     onObjectPicked,
-    onCamRotationZ,
-    // onShowLocationBox,
-    // onHideLocationBox
+    onCamRotationZ
 }) => {
+    const [isLoading, setIsLoading] = useState(true);
+    const [loadingProgress, setLoadingProgress] = useState(0);
+    const [showIntro, setShowIntro] = useState(true);
+    
     // const boxRef = useRef<THREE.Box3>(new THREE.Box3());
     const containerRef = useRef<HTMLDivElement>(null);
     const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -117,6 +72,10 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     const requestRef = useRef<number>(0);
     const cameraPositionedRef = useRef(false);
     const tilesCentered = useRef(false);
+    const tilesetLoadedRef = useRef(false);
+    const stableFramesRef = useRef(0);
+    const isFinishingLoadRef = useRef(false);
+    const isLoadingRef = useRef(true); // Ref to track loading state inside animate loop
 
     const location = useLocation();
     const needsRerender = useRef(0);
@@ -343,6 +302,37 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
             // Update tiles and check if a re-render is needed
             if (tilesRef.current.update()) {
                 needsRerender.current = Math.max(needsRerender.current, 1);
+            }
+
+            // Loading Logic
+            if (isLoadingRef.current) {
+                const stats = tilesRef.current.stats;
+                const isStable = stats.downloading === 0 && stats.parsing === 0;
+                
+                if (tilesRef.current.root && isStable) {
+                    stableFramesRef.current++;
+                    if (stableFramesRef.current > 15 && !isFinishingLoadRef.current) { // Wait ~0.25s of stability
+                        isFinishingLoadRef.current = true;
+                        setLoadingProgress(100);
+                        
+                        // Delay hiding to let user see 100%
+                        setTimeout(() => {
+                            setIsLoading(false);
+                            isLoadingRef.current = false;
+                        }, 500);
+                    }
+                } else {
+                    stableFramesRef.current = 0;
+                    // Fake progress: Asymptotically approach 90% while loading
+                    if (!isFinishingLoadRef.current) {
+                        setLoadingProgress(prev => {
+                            const target = 90;
+                            const next = prev + (target - prev) * 0.01; // Slow approach
+                            if (next - prev < 0.1) return prev; // Skip small updates
+                            return next;
+                        });
+                    }
+                }
             }
 
             // Force material update on every frame to ensure new tiles get the material
@@ -735,6 +725,13 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     };
 
     const reinitTiles = (init: boolean) => {
+        setIsLoading(true);
+        isLoadingRef.current = true;
+        setLoadingProgress(0);
+        tilesetLoadedRef.current = false;
+        stableFramesRef.current = 0;
+        isFinishingLoadRef.current = false;
+
         tilesCentered.current = false; // Reset centering flag
         if (!offsetParentRef.current || !rendererRef.current || !dummyCameraRef.current) {
             console.error("Missing refs in reinitTiles");
@@ -781,6 +778,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         tiles.setResolutionFromRenderer(cameraRef.current, rendererRef.current);
 
         tiles.onLoadTileSet = () => {
+            tilesetLoadedRef.current = true;
             keepAliveFrames.current = 60; // Force render for 1 second
 
             if (init && !cameraPositionedRef.current) {
@@ -1034,7 +1032,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         if (existingMarker) sceneRef.current.remove(existingMarker);
 
         const textureLoader = new THREE.TextureLoader();
-        const map = textureLoader.load(markerSprite);
+        const map = textureLoader.load('');
         const material = new THREE.SpriteMaterial({ map: map });
         const sprite = new THREE.Sprite(material);
 
@@ -1064,7 +1062,15 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
 
     useEffect(() => {
         reinitTiles(true);
+        
+        // Fallback timeout to ensure loading screen disappears even if stats are weird
+        const timeout = setTimeout(() => {
+            setIsLoading(false);
+            isLoadingRef.current = false;
+        }, 15000); // 15 seconds max
+
         return () => {
+            clearTimeout(timeout);
             if (tilesRef.current) {
                 if (offsetParentRef.current) offsetParentRef.current.remove(tilesRef.current.group);
                 if (tilesRef.current.dispose) tilesRef.current.dispose();
@@ -1082,5 +1088,135 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         };
     }, [basemapOptions]);
 
-    return <div id="canvas" ref={containerRef} style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, zIndex: 0 }} />;
+    return (
+        <>
+            <div 
+                id="canvas" 
+                ref={containerRef} 
+                style={{ 
+                    width: '100%', 
+                    height: '100%', 
+                    position: 'absolute', 
+                    top: 0, 
+                    left: 0, 
+                    zIndex: 0,
+                    opacity: isLoading ? 0 : 1,
+                    transition: 'opacity 1.5s ease-in-out'
+                }} 
+            />
+            
+            {/* Intro Overlay */}
+            <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: 'rgba(240, 240, 240, 0.8)',
+                backdropFilter: 'blur(8px)',
+                zIndex: 20,
+                opacity: showIntro ? 1 : 0,
+                pointerEvents: showIntro ? 'auto' : 'none',
+                transition: 'opacity 0.5s ease-out'
+            }}>
+                <div style={{
+                    maxWidth: '600px',
+                    padding: '3rem',
+                    backgroundColor: 'white',
+                    borderRadius: '16px',
+                    boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+                    textAlign: 'center'
+                }}>
+                    <h1 style={{
+                        fontSize: '2.5rem',
+                        marginBottom: '1.5rem',
+                        color: '#1a1a1a',
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+                        fontWeight: '700'
+                    }}>
+                        Amsterdam 2030
+                    </h1>
+                    <p style={{
+                        fontSize: '1.1rem',
+                        lineHeight: '1.6',
+                        color: '#444',
+                        marginBottom: '2.5rem',
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
+                    }}>
+                        Ontdek wat innovatie voor Amsterdam heeft betekend door de eeuwen heen. 
+                        Deze interactieve 3D-kaart toont de groei van de stad, waarbij gebouwen zijn gekleurd op basis van hun bouwjaar.
+                    </p>
+                    <button 
+                        onClick={() => setShowIntro(false)}
+                        style={{
+                            padding: '1rem 3rem',
+                            fontSize: '1.1rem',
+                            backgroundColor: '#ff4444',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            transition: 'transform 0.1s, background-color 0.2s',
+                            fontWeight: '600',
+                            boxShadow: '0 4px 12px rgba(255, 68, 68, 0.3)'
+                        }}
+                        onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#ff2222'}
+                        onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#ff4444'}
+                        onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
+                        onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                    >
+                        Start met verkennen
+                    </button>
+                </div>
+            </div>
+
+            {/* Loading Overlay */}
+            <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: '#f0f0f0',
+                zIndex: 10,
+                opacity: (isLoading && !showIntro) ? 1 : 0,
+                pointerEvents: (isLoading && !showIntro) ? 'auto' : 'none',
+                transition: 'opacity 0.8s ease-out'
+            }}>
+                <div style={{
+                    fontSize: '1.2rem',
+                    marginBottom: '1rem',
+                    color: '#333',
+                    fontFamily: 'sans-serif'
+                }}>
+                    Amsterdam 2030 laden... {Math.round(loadingProgress)}%
+                </div>
+                <div style={{
+                    width: '200px',
+                    height: '4px',
+                    backgroundColor: '#ddd',
+                    borderRadius: '2px',
+                    overflow: 'hidden'
+                }}>
+                    <div style={{
+                        width: `${loadingProgress}%`,
+                        height: '100%',
+                        backgroundColor: '#ff4444',
+                        transition: 'width 0.2s ease-out'
+                    }} />
+                </div>
+                <style>{`
+                    /* Removed keyframes as we use width transition now */
+                `}</style>
+            </div>
+        </>
+    );
 };
