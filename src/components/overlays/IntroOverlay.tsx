@@ -24,7 +24,7 @@ export const IntroOverlay: React.FC<IntroOverlayProps> = ({ show, onStart, isLoa
             zIndex: 20,
             opacity: show ? 1 : 0,
             pointerEvents: show ? 'auto' : 'none',
-            transition: 'opacity 0.5s ease-out'
+            transition: 'opacity 1.5s ease-in-out'
         }}>
             <div style={{
                 maxWidth: '600px',
