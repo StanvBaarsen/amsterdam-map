@@ -16,12 +16,13 @@ print(f"Using bounds: {AMSTERDAM_BOUNDS}")
 
 LODS = {
     "lod12": "https://data.3dbag.nl/v20250903/3dtiles/lod12/",
-    "lod13": "https://data.3dbag.nl/v20250903/3dtiles/lod13/"
+    "lod13": "https://data.3dbag.nl/v20250903/3dtiles/lod13/",
+    "lod22": "https://data.3dbag.nl/v20250903/3dtiles/lod22/"
 }
 
 def download_file(url, dest_path):
     if os.path.exists(dest_path):
-        return True
+        return False # Skipped
         
     try:
         response = requests.get(url, stream=True, timeout=30)
@@ -89,7 +90,7 @@ def process_node(node, offset_x, offset_y, content_urls, base_url):
 
 def process_lod(lod_name, base_url):
     print(f"Processing {lod_name}...")
-    output_dir = Path(f"public/amsterdam_3dtiles_{lod_name}")
+    output_dir = Path(f"data/amsterdam_3dtiles_{lod_name}")
     output_dir.mkdir(parents=True, exist_ok=True)
     
     tileset_url = base_url + "tileset.json"
@@ -126,8 +127,11 @@ def process_lod(lod_name, base_url):
             json.dump(tileset, f, indent=2)
             
         # Download content files
-        count = 0
-        for uri in content_urls:
+        downloaded_count = 0
+        skipped_count = 0
+        total_files = len(content_urls)
+        
+        for i, uri in enumerate(content_urls):
             file_url = base_url + uri
             file_path = output_dir / uri
             
@@ -135,11 +139,14 @@ def process_lod(lod_name, base_url):
             file_path.parent.mkdir(parents=True, exist_ok=True)
             
             if download_file(file_url, file_path):
-                count += 1
-                if count % 10 == 0:
-                    print(f"Downloaded {count}/{len(content_urls)} tiles...")
+                downloaded_count += 1
+            else:
+                skipped_count += 1
+                
+            if (i + 1) % 50 == 0:
+                print(f"Progress: {downloaded_count} downloaded, {skipped_count} skipped / {total_files} total...")
         
-        print(f"Finished {lod_name}: {count} tiles downloaded.")
+        print(f"Finished {lod_name}: {downloaded_count} new, {skipped_count} skipped.")
     else:
         print(f"No tiles found in bounds for {lod_name}.")
 

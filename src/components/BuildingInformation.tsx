@@ -19,15 +19,15 @@ export const BuildingInformation: React.FC<BuildingInformationProps> = ({ buildi
     const h_clicked = building.attributes && building.attributes['h_dak_50p'] ? building.attributes['h_dak_50p'] : '-';
 
     return (
-        <div id="building-info" className="field has-addons" style={{ zIndex: 1, position: 'absolute', bottom: '2rem', left: '50%', transform: 'translateX(-50%)' }}>
-            <div className={`control dropdown is-up ${isActive ? 'is-active' : ''}`}>
+        <div id="building-info" className="building-info-container" style={{ zIndex: 1, position: 'absolute', bottom: '2rem', left: '50%', transform: 'translateX(-50%)' }}>
+            <div className={`building-info-control dropdown-container ${isActive ? 'is-active' : ''}`}>
                 <div className="dropdown-trigger">
-                    <button className="button is-warning" aria-haspopup="true" aria-controls="dropdown-menu" onClick={() => setIsActive(!isActive)}>
-                        <span className="icon is-small">
+                    <button className="btn btn-warning" aria-haspopup="true" aria-controls="dropdown-menu" onClick={() => setIsActive(!isActive)}>
+                        <span className="icon">
                             <MdTableChart />
                         </span>
-                        <span className="is-hidden-mobile" style={{marginLeft: '0.5em', marginRight: '0.5em'}}>{t("attributes")}</span>
-                        <span className="icon is-small">
+                        <span className="hidden-mobile" style={{marginLeft: '0.5em', marginRight: '0.5em'}}>{t("attributes")}</span>
+                        <span className="icon">
                             {isActive ? <MdKeyboardArrowDown /> : <MdKeyboardArrowUp />}
                         </span>
                     </button>
@@ -36,7 +36,7 @@ export const BuildingInformation: React.FC<BuildingInformationProps> = ({ buildi
                     <div className="dropdown-content">
                         <div className="dropdown-item">
                             <div className="table-container" style={{ maxHeight: '350px', overflow: 'scroll' }}>
-                                <table className="table is-fullwidth is-striped has-text-left" style={{ marginBottom: '0.75rem' }}>
+                                <table className="info-table" style={{ marginBottom: '0.75rem' }}>
                                     <thead>
                                         <tr>
                                             <th>{t("attribute")}</th>
@@ -47,8 +47,8 @@ export const BuildingInformation: React.FC<BuildingInformationProps> = ({ buildi
                                         <tr>
                                             <td>{t("tilenumber")}</td>
                                             <td>
-                                                <span className="tag is-primary">
-                                                    <span className="icon is-small mr-1">
+                                                <span className="tag tag-primary">
+                                                    <span className="icon mr-1">
                                                         <MdDownload />
                                                     </span>
                                                     {building.tileID}
@@ -74,7 +74,7 @@ export const BuildingInformation: React.FC<BuildingInformationProps> = ({ buildi
                                 {t("BuildingInfo.attr1")} <a href={`https://docs.3dbag.nl/${i18n.language}/schema/attributes/`}>{t("documentation")}</a>.
                             </p>
                             <p>
-                                <a className="tag is-danger" onClick={onReportData}>
+                                <a className="tag tag-danger" onClick={onReportData}>
                                     {t("viewer.issue")}
                                 </a>
                             </p>
@@ -82,17 +82,17 @@ export const BuildingInformation: React.FC<BuildingInformationProps> = ({ buildi
                     </div>
                 </div>
             </div>
-            <div className="control">
-                <button className="button is-static">
-                    <span className="icon is-small mr-1">
+            <div className="building-info-control">
+                <button className="btn btn-static">
+                    <span className="icon mr-1">
                         <MdHeight />
                     </span>
                     <b>{h_clicked}</b> m
                 </button>
             </div>
-            <div className="control">
-                <button className="button is-danger" onClick={onCloseInfo}>
-                    <span className="icon is-small">
+            <div className="building-info-control">
+                <button className="btn btn-danger" onClick={onCloseInfo}>
+                    <span className="icon">
                         <MdClose />
                     </span>
                 </button>

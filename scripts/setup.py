@@ -1,11 +1,44 @@
 import subprocess
 import sys
+import os
+import shutil
 from pathlib import Path
 
-def run_script(script_name):
+def load_env_file():
+    env_path = Path(__file__).parent.parent / '.env'
+    if env_path.exists():
+        print(f"Loading environment variables from {env_path}")
+        with open(env_path, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                if '=' in line:
+                    key, value = line.split('=', 1)
+                    os.environ[key.strip()] = value.strip()
+
+def check_env_vars():
+    required_vars = ['R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY']
+    missing_vars = [var for var in required_vars if var not in os.environ]
+    
+    if missing_vars:
+        print("Error: Missing required environment variables:")
+        for var in missing_vars:
+            print(f"  - {var}")
+        print("\nPlease set them in your .env file or environment.")
+        sys.exit(1)
+    print("Environment variables check passed.")
+
+def run_script(script_name, is_node=False):
     print(f"--- Running {script_name} ---")
     script_path = Path(__file__).parent / script_name
-    result = subprocess.run([sys.executable, str(script_path)], check=False)
+    
+    if is_node:
+        cmd = ["node", str(script_path)]
+    else:
+        cmd = [sys.executable, str(script_path)]
+        
+    result = subprocess.run(cmd, check=False)
     if result.returncode != 0:
         print(f"Error running {script_name}")
         sys.exit(result.returncode)
@@ -13,6 +46,9 @@ def run_script(script_name):
 
 def main():
     print("Starting setup...")
+    
+    load_env_file()
+    check_env_vars()
     
     # 1. Download Basemap
     run_script("download_basemap.py")
@@ -23,7 +59,29 @@ def main():
     # 3. Download LOD 1.2/1.3
     run_script("download_amsterdam_lods.py")
     
-    print("Setup complete! Map data is ready.")
+    # 4. Upload to R2
+    # ask if user wants to upload
+    user_input = input("Do you want to upload the map data to R2 now? (y/n): ")
+    if user_input.lower() == 'y':
+        run_script("upload_to_r2.js", is_node=True)
+    else:
+        print("Skipping upload to R2.")
+
+
+    # 5. Cleanup
+    # ask if user wants to cleanup
+    user_input = input("Do you want to clean up downloaded files? (y/n): ")
+    if user_input.lower() == 'y':
+        print("Cleaning up downloaded files...")
+        data_dir = Path(__file__).parent.parent / "data"
+        if data_dir.exists():
+            shutil.rmtree(data_dir)
+            print(f"Removed {data_dir}")
+    else:
+        print("Skipping cleanup.")
+    
+    
+    print("Setup complete! Map data is ready and uploaded.")
 
 if __name__ == "__main__":
     main()

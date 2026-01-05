@@ -14,10 +14,10 @@ except ImportError:
 
 # PDOK BRT Achtergrondkaart
 WMTS_BASE_URL = "https://service.pdok.nl/brt/achtergrondkaart/wmts/v2_0"
-LAYER_NAME = "pastel" # Options: standaard, grijs, pastel, water
+LAYERS = ["pastel", "grijs"] # Options: standaard, grijs, pastel, water
 TILE_MATRIX_SET = "EPSG:28992"
-OUTPUT_DIR = Path("public/basemap/tiles")
-CAPABILITIES_FILE = Path("public/basemap/capabilities.xml")
+OUTPUT_DIR = Path("data/basemap/tiles")
+CAPABILITIES_FILE = Path("data/basemap/capabilities.xml")
 
 NAMESPACES = {
     "wmts": "http://www.opengis.net/wmts/1.0",
@@ -35,7 +35,7 @@ def get_buffer_for_level(level_id):
     elif level == 10:
         return 1.5 # 150%
     elif level == 11:
-        return 0.5 # 50%
+        return 1.0 # 100% - Increased from 50% to fix missing tiles
     elif level == 12:
         return 0.25 # 25%
     else:
@@ -81,7 +81,7 @@ def parse_tile_matrices(tms_element):
 
 def download_tile(layer, tms, matrix, col, row, output_path):
     if output_path.exists():
-        return # Skip if already exists
+        return False # Skipped
     
     url = f"{WMTS_BASE_URL}/{layer}/{tms}/{matrix}/{col}/{row}.png"
     try:
@@ -92,15 +92,31 @@ def download_tile(layer, tms, matrix, col, row, output_path):
                 f.write(response.content)
             # print(f"Downloaded {url}")
             time.sleep(0.05) # Be nice to the server
+            return True
         else:
             print(f"Failed to download {url}: {response.status_code}")
+            return False
     except Exception as e:
         print(f"Error downloading {url}: {e}")
+        return False
 
 def main():
     if not CAPABILITIES_FILE.exists():
-        print(f"Capabilities file not found at {CAPABILITIES_FILE}")
-        return
+        print(f"Capabilities file not found at {CAPABILITIES_FILE}. Downloading...")
+        CAPABILITIES_FILE.parent.mkdir(parents=True, exist_ok=True)
+        cap_url = f"{WMTS_BASE_URL}/WMTSCapabilities.xml"
+        try:
+            response = requests.get(cap_url)
+            if response.status_code == 200:
+                with open(CAPABILITIES_FILE, "wb") as f:
+                    f.write(response.content)
+                print(f"Downloaded capabilities file to {CAPABILITIES_FILE}")
+            else:
+                print(f"Failed to download capabilities from {cap_url}: {response.status_code}")
+                return
+        except Exception as e:
+            print(f"Error downloading capabilities: {e}")
+            return
 
     tree = ET.parse(CAPABILITIES_FILE)
     root = tree.getroot()
@@ -141,17 +157,28 @@ def main():
         
         print(f"  Tile range: Col {min_col}-{max_col}, Row {min_row}-{max_row}")
         
-        count = 0
+        downloaded_count = 0
+        skipped_count = 0
+        total_tiles = (max_col - min_col + 1) * (max_row - min_row + 1) * len(LAYERS)
+        
         for col in range(min_col, max_col + 1):
             for row in range(min_row, max_row + 1):
-                file_path = OUTPUT_DIR / level_id / str(col) / f"{row}.png"
-                download_tile(LAYER_NAME, TILE_MATRIX_SET, level_id, col, row, file_path)
-                count += 1
-                if count % 100 == 0:
-                    print(f"  Downloaded {count} tiles...")
+                for layer_name in LAYERS:
+                    # Structure: data/basemap/tiles/{layer_name}/{level}/{col}/{row}.png
+                    # Note: Original structure was data/basemap/tiles/{level}/{col}/{row}.png (always 'pastel')
+                    
+                    file_path = OUTPUT_DIR / layer_name / level_id / str(col) / f"{row}.png"
+                    if download_tile(layer_name, TILE_MATRIX_SET, level_id, col, row, file_path):
+                        downloaded_count += 1
+                    else:
+                        skipped_count += 1
+                
+                current_total = downloaded_count + skipped_count
+                if current_total % 100 == 0:
+                    print(f"  Progress: {downloaded_count} downloaded, {skipped_count} skipped / {total_tiles} total...")
         
-        print(f"  Finished level {level_id}: {count} tiles")
-        total_downloaded += count
+        print(f"  Finished level {level_id}: {downloaded_count} new, {skipped_count} skipped")
+        total_downloaded += downloaded_count
 
     print(f"Total tiles downloaded: {total_downloaded}")
 

@@ -7,7 +7,16 @@ const ViewerPage: React.FC = () => {
 
     // Configuration for external tile hosting (e.g. Cloudflare R2, AWS S3)
     // If empty, it will look for files in the local public/ folder
-    const TILE_HOST = import.meta.env.VITE_TILE_HOST || '';
+    // If __USE_LOCAL_DATA__ is true (dev mode with local data), use /data
+    const REMOTE_TILE_HOST = import.meta.env.VITE_TILE_HOST || '';
+    
+    const BASEMAP_HOST = (import.meta.env.DEV && typeof __USE_LOCAL_BASEMAP__ !== 'undefined' && __USE_LOCAL_BASEMAP__) 
+        ? '/data' 
+        : REMOTE_TILE_HOST;
+
+    const TILES_HOST = (import.meta.env.DEV && typeof __USE_LOCAL_TILES__ !== 'undefined' && __USE_LOCAL_TILES__) 
+        ? '/data' 
+        : REMOTE_TILE_HOST;
 
     const [basemapPreset] = useState('local');
     const [, setCamRotationZ] = useState(0);
@@ -21,9 +30,23 @@ const ViewerPage: React.FC = () => {
             local: {
                 type: "wmts",
                 options: {
-                    url: `${TILE_HOST}/basemap/capabilities.xml`,
-                    template: `${TILE_HOST}/basemap/tiles/{TileMatrix}/{TileCol}/{TileRow}.png`,
+                    url: `${BASEMAP_HOST}/basemap/capabilities.xml`,
+                    template: `${BASEMAP_HOST}/basemap/tiles/grijs/{TileMatrix}/{TileCol}/{TileRow}.png`,
                     layer: 'pastel',
+                    style: 'default',
+                    tileMatrixSet: "EPSG:28992",
+                    service: "WMTS",
+                    request: "GetTile",
+                    version: "1.0.0",
+                    format: "image/png"
+                }
+            },
+            local_grijs: {
+                type: "wmts",
+                options: {
+                    url: `${BASEMAP_HOST}/basemap/capabilities.xml`,
+                    template: `${BASEMAP_HOST}/basemap/tiles/grijs/{TileMatrix}/{TileCol}/{TileRow}.png`,
+                    layer: 'grijs',
                     style: 'default',
                     tileMatrixSet: "EPSG:28992",
                     service: "WMTS",
@@ -76,7 +99,7 @@ const ViewerPage: React.FC = () => {
     }, [basemapPreset]);
 
     const getTilesUrl = () => {
-        return `${TILE_HOST}/amsterdam_3dtiles_lod22/tileset.json`;
+        return `${TILES_HOST}/amsterdam_3dtiles_lod12/tileset.json`;
     };
 
     return (
