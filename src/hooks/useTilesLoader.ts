@@ -70,8 +70,10 @@ export const useTilesLoader = ({
         tiles.fetchOptions = { mode: 'cors' };
         tiles.displayBoxBounds = false;
         tiles.colorMode = 0;
-        tiles.lruCache.minSize = 3000;
-        tiles.lruCache.maxSize = 4000;
+        tiles.lruCache.minSize = 6000;
+        tiles.lruCache.maxSize = 8000;
+        // @ts-ignore
+        tiles.lruCache.unloadPercent = 0; // Prevent unloading
         tiles.errorTarget = 10;
         tiles.loadSiblings = true;
         tiles.maxDepth = 30;
