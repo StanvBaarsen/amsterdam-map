@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 
 interface TimelineOverlayProps {
     minYear: number;
@@ -46,6 +46,11 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
     };
 
     // Using a simpler interval approach for the "Play" functionality to avoid complex state/ref sync issues in this simple component
+    /* 
+       Logic moved to ThreeViewer to handle complex rewind/camera animations.
+       This component is now purely UI.
+    */
+    /*
     useEffect(() => {
         let interval: ReturnType<typeof setInterval>;
         if (isPlaying) {
@@ -63,6 +68,7 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
         }
         return () => clearInterval(interval);
     }, [isPlaying, maxYear, minYear, onYearChange, onPlayPause]);
+    */
 
     return (
         <div style={{
@@ -80,7 +86,9 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
             alignItems: 'center',
             gap: '20px',
             zIndex: 100,
-            backdropFilter: 'blur(10px)'
+            backdropFilter: 'blur(10px)',
+            opacity: 0,
+            animation: 'fadeInSlideUp 1s ease-out 800ms forwards'
         }}>
             <button
                 onClick={() => onPlayPause(!isPlaying)}
