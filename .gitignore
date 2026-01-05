@@ -24,7 +24,6 @@ dist-ssr
 *.sw?
 
 # Map Data
-public/basemap/
-public/amsterdam_3dtiles*/
+data/
 
 .env*

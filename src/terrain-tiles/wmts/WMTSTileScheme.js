@@ -18,13 +18,10 @@ export class WMTSTileScheme extends BaseTileScheme {
         if (!capabilitiesURL.endsWith('.xml')) {
              capabilitiesURL += "request=GetCapabilities&service=WMTS";
         }
-        console.log("Fetching WMTS Capabilities:", capabilitiesURL);
 
 		this.fetchCapabilities( capabilitiesURL ).then( capabilities => {
-            console.log("WMTS Capabilities loaded");
 			this.capabilities = capabilities;
 			this.getTileMatrixSet();
-            console.log("TileMatrixSet loaded:", this.tileMatrixSet.length);
 			if (onLoadTileScheme) onLoadTileScheme();
 
 		} ).catch(err => {

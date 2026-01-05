@@ -16,7 +16,7 @@ print(f"Using bounds: {AMSTERDAM_BOUNDS}")
 
 BASE_URL = "https://data.3dbag.nl/v20250903/3dtiles/lod22/"
 TILESET_URL = BASE_URL + "tileset.json"
-OUTPUT_DIR = "public/amsterdam_3dtiles_lod22"
+OUTPUT_DIR = "data/amsterdam_3dtiles_lod22"
 
 def download_file(url, dest_path):
     if os.path.exists(dest_path):
