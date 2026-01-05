@@ -43,7 +43,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     const [isLoading, setIsLoading] = useState(true);
     const [loadingProgress, setLoadingProgress] = useState(0);
     const [showIntro, setShowIntro] = useState(true);
-    const [currentYear, setCurrentYear] = useState(1300);
+    const [currentYear, setCurrentYear] = useState(2026);
     const [isPlaying, setIsPlaying] = useState(false);
     
     const containerRef = useRef<HTMLDivElement>(null);
@@ -52,6 +52,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     const needsRerender = useRef(0);
     const tilesCentered = useRef(false);
     const cameraPositionedRef = useRef(false);
+    const initialCameraStateRef = useRef<{ position: THREE.Vector3, target: THREE.Vector3 } | null>(null);
     const sceneTransformRef = useRef<THREE.Vector3 | null>(null);
     const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2());
     const pointerCasterRef = useRef({ startClientX: 0, startClientY: 0 });
@@ -65,9 +66,8 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
 
     useEffect(() => {
         coloredMaterialRef.current.onBeforeCompile = (shader) => {
-            shader.uniforms.currentYear = { value: 1300 };
+            shader.uniforms.currentYear = { value: 2026 };
             shader.vertexShader = `
-                attribute float constructionYear;
                 attribute float constructionYear;
                 varying float vConstructionYear;
                 ${shader.vertexShader}
@@ -133,6 +133,89 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     useEffect(() => {
         reinitBasemapRef.current = reinitBasemap;
     }, [reinitBasemap]);
+
+    const isRewindingRef = useRef(false);
+
+    // Playback Loop
+    useEffect(() => {
+        let interval: ReturnType<typeof setInterval>;
+        if (isPlaying) {
+            interval = setInterval(() => {
+                if (isRewindingRef.current) return;
+
+                setCurrentYear(prev => {
+                    const next = prev + 1; // 1 year per 20ms = 50 years/sec
+                    if (next >= 2026) {
+                        setIsPlaying(false);
+                        return 2026;
+                    }
+                    return next;
+                });
+            }, 20);
+        }
+        return () => clearInterval(interval);
+    }, [isPlaying]);
+
+    useEffect(() => {
+        if (isPlaying && controlsRef.current && cameraRef.current) {
+            // Only zoom out and reset if we are at the end (2026)
+            if (currentYear >= 2026) {
+                isRewindingRef.current = true;
+                
+                // Smoothly rewind year
+                const yearObj = { year: 2026 };
+                new TWEEN.Tween(yearObj)
+                    .to({ year: 1400 }, 1000)
+                    .easing(TWEEN.Easing.Quadratic.Out)
+                    .onUpdate(() => {
+                        setCurrentYear(Math.round(yearObj.year));
+                    })
+                    .onComplete(() => {
+                        isRewindingRef.current = false;
+                    })
+                    .start();
+
+                const controls = controlsRef.current;
+                const camera = cameraRef.current;
+                
+                if (initialCameraStateRef.current) {
+                    const { position, target } = initialCameraStateRef.current;
+                    
+                    new TWEEN.Tween(camera.position)
+                        .to({ x: position.x, y: position.y, z: position.z }, 1000)
+                        .easing(TWEEN.Easing.Quadratic.Out)
+                        .start();
+
+                    new TWEEN.Tween(controls.target)
+                        .to({ x: target.x, y: target.y, z: target.z }, 1000)
+                        .easing(TWEEN.Easing.Quadratic.Out)
+                        .onUpdate(() => {
+                            controls.update();
+                            needsRerender.current = 1;
+                        })
+                        .start();
+                } else {
+                    const currentDist = camera.position.distanceTo(controls.target);
+                    const targetDist = controls.maxDistance * 0.8;
+                    
+                    if (currentDist < targetDist) {
+                        const startPos = camera.position.clone();
+                        const direction = startPos.clone().sub(controls.target).normalize();
+                        const targetPos = controls.target.clone().add(direction.multiplyScalar(targetDist));
+                        
+                        new TWEEN.Tween(camera.position)
+                            .to({ x: targetPos.x, y: targetPos.y, z: targetPos.z }, 1000)
+                            .easing(TWEEN.Easing.Quadratic.Out)
+                            .onUpdate(() => {
+                                controls.update();
+                                needsRerender.current = 1;
+                            })
+                            .start();
+                    }
+                }
+            }
+        }
+    }, [isPlaying]);
 
     const markerName = "LocationMarker";
 
@@ -280,7 +363,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
 
     const positionCameraDefault = (center: THREE.Vector3, _radius: number) => {
         const amsterdamRDX = 121500;
-        const amsterdamRDY = 487500;
+        const amsterdamRDY = 486500;
         const dX = amsterdamRDX - center.x;
         const dY = amsterdamRDY - center.y;
         const localTarget = new THREE.Vector3(dX, dY, 0);
@@ -300,6 +383,11 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
             dummyCameraRef.current.position.copy(camPos);
             dummyCameraRef.current.lookAt(target);
             dummyCameraRef.current.updateMatrixWorld();
+
+            initialCameraStateRef.current = {
+                position: camPos.clone(),
+                target: target.clone()
+            };
         }
         cameraPositionedRef.current = true;
     };
@@ -472,7 +560,8 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                     left: 0, 
                     zIndex: 0,
                     opacity: isLoading ? 0 : 1,
-                    transition: 'opacity 1.5s ease-in-out'
+                    filter: isLoading ? 'blur(10px)' : 'blur(0px)',
+                    transition: 'opacity 1.5s ease-in-out, filter 1.5s ease-in-out'
                 }} 
             />
             <IntroOverlay 
@@ -484,7 +573,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
             <LoadingOverlay isLoading={isLoading} showIntro={showIntro} progress={loadingProgress} />
             {!showIntro && !isLoading && (
                 <TimelineOverlay
-                    minYear={1300}
+                    minYear={1400}
                     maxYear={2026}
                     currentYear={currentYear}
                     onYearChange={setCurrentYear}

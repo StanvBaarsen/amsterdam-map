@@ -30,7 +30,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isLoading, showI
                 color: '#333',
                 fontFamily: 'sans-serif'
             }}>
-                Amsterdam 2030 laden... {Math.round(progress)}%
+                Laden... {Math.round(progress)}%
             </div>
             <div style={{
                 width: '200px',
