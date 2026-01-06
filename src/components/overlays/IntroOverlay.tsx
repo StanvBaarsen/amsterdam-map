@@ -9,6 +9,19 @@ interface IntroOverlayProps {
 
 export const IntroOverlay: React.FC<IntroOverlayProps> = ({ show, onStart, isLoading, progress }) => {
     const [skipStoryline, setSkipStoryline] = React.useState(false);
+    const [hasVisited, setHasVisited] = React.useState(false);
+
+    React.useEffect(() => {
+        const visited = localStorage.getItem('hasVisited');
+        if (visited) {
+            setHasVisited(true);
+        }
+    }, []);
+
+    const handleStart = () => {
+        localStorage.setItem('hasVisited', 'true');
+        onStart(skipStoryline);
+    };
 
     return (
         <div style={{
@@ -56,44 +69,54 @@ export const IntroOverlay: React.FC<IntroOverlayProps> = ({ show, onStart, isLoa
                     Deze interactieve 3D-kaart toont de groei van de stad, en neemt je mee door verschillende innovatieprojecten.
                 </p>
 
-                {isLoading && (
-                    <div style={{ marginBottom: '1.5rem', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <div style={{ marginBottom: '0.5rem', color: '#666', fontSize: '0.9rem', fontFamily: 'sans-serif' }}>
-                            Laden... {Math.round(progress)}%
-                        </div>
+                <div style={{
+                    marginBottom: isLoading ? '1.5rem' : '0',
+                    width: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    maxHeight: isLoading ? '100px' : '0px',
+                    opacity: isLoading ? 1 : 0,
+                    overflow: 'hidden',
+                    transition: 'max-height 0.5s ease-in-out, opacity 0.5s ease-in-out, margin-bottom 0.5s ease-in-out'
+                }}>
+                    <div style={{ marginBottom: '0.5rem', color: '#666', fontSize: '0.9rem', fontFamily: 'sans-serif' }}>
+                        Laden... {Math.round(progress)}%
+                    </div>
+                    <div style={{
+                        width: '100%',
+                        maxWidth: '300px',
+                        height: '4px',
+                        backgroundColor: '#eee',
+                        borderRadius: '2px',
+                        overflow: 'hidden'
+                    }}>
                         <div style={{
-                            width: '100%',
-                            maxWidth: '300px',
-                            height: '4px',
-                            backgroundColor: '#eee',
-                            borderRadius: '2px',
-                            overflow: 'hidden'
-                        }}>
-                            <div style={{
-                                width: `${progress}%`,
-                                height: '100%',
-                                backgroundColor: '#ff4444',
-                                transition: 'width 0.2s ease-out'
-                            }} />
-                        </div>
+                            width: `${progress}%`,
+                            height: '100%',
+                            backgroundColor: '#ff4444',
+                            // transition: 'width 0.2s ease-out' // Removed transition to prevent lag behind text
+                        }} />
+                    </div>
+                </div>
+
+                {hasVisited && (
+                    <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                        <input 
+                            type="checkbox" 
+                            id="skipStoryline" 
+                            checked={skipStoryline} 
+                            onChange={(e) => setSkipStoryline(e.target.checked)}
+                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                        />
+                        <label htmlFor="skipStoryline" style={{ color: '#444', fontSize: '1rem', cursor: 'pointer', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}>
+                            Sla geschiedenis over
+                        </label>
                     </div>
                 )}
 
-                <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                    <input 
-                        type="checkbox" 
-                        id="skipStoryline" 
-                        checked={skipStoryline} 
-                        onChange={(e) => setSkipStoryline(e.target.checked)}
-                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                    />
-                    <label htmlFor="skipStoryline" style={{ color: '#444', fontSize: '1rem', cursor: 'pointer', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}>
-                        Sla geschiedenis over
-                    </label>
-                </div>
-
                 <button 
-                    onClick={() => onStart(skipStoryline)}
+                    onClick={handleStart}
                     disabled={isLoading}
                     style={{
                         padding: '1rem 3rem',
