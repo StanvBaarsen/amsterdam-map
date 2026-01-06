@@ -167,24 +167,47 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
 
         const target = new THREE.Vector3(world_x, world_y, world_z);
         
-        // Zoom in position
+        // Final Zoom in position
         const dist = 600; 
-        const camPos = target.clone().add(new THREE.Vector3(dist, dist, dist));
+        const finalCamPos = target.clone().add(new THREE.Vector3(dist, dist, dist));
 
+        // High altitude position (maintain current height or go high) but centered on target
+        // We use current camera height but align X/Z to the target offset
+        const currentHeight = cameraRef.current.position.y;
+        const highDist = Math.max(currentHeight, 2000); 
+        
+        // Position directly above/aligned with the target but high up
+        const highPos = target.clone().add(new THREE.Vector3(dist, highDist, dist)); 
+
+        // Sequence:
+        // 1. Move Camera X/Z to align with target, while keeping high Y. Also move Controls Target to new center. (Rotation/Pan)
+        // 2. Drop Camera Y to zoom in.
+
+        const duration1 = 3000;
+        const duration2 = 2500;
+
+        // Phase 1: Rotate/Pan
         new TWEEN.Tween(cameraRef.current.position)
-            .to({ x: camPos.x, y: camPos.y, z: camPos.z }, 4000)
-            .easing(TWEEN.Easing.Quadratic.Out)
+            .to({ x: highPos.x, y: highPos.y, z: highPos.z }, duration1)
+            .easing(TWEEN.Easing.Quadratic.InOut)
+            .chain(
+                // Phase 2: Zoom In
+                new TWEEN.Tween(cameraRef.current.position)
+                    .to({ x: finalCamPos.x, y: finalCamPos.y, z: finalCamPos.z }, duration2)
+                    .easing(TWEEN.Easing.Cubic.Out)
+                    .onComplete(() => {
+                        if (onComplete) onComplete();
+                    })
+            )
             .start();
 
+        // Target moves during Phase 1
         new TWEEN.Tween(controlsRef.current.target)
-            .to({ x: target.x, y: target.y, z: target.z }, 4000)
-            .easing(TWEEN.Easing.Quadratic.Out)
+            .to({ x: target.x, y: target.y, z: target.z }, duration1)
+            .easing(TWEEN.Easing.Quadratic.InOut) 
             .onUpdate(() => {
                 controlsRef.current?.update();
                 needsRerender.current = 1;
-            })
-            .onComplete(() => {
-                if (onComplete) onComplete();
             })
             .start();
     };
@@ -264,20 +287,38 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                 if (isRewindingRef.current) return;
 
                 setCurrentYear(prev => {
-                    const next = prev + 1; 
+                    let increment = 1;
                     
-                    // Check for storyline events if not skipped
+                    // Logic to speed up early years (before 1600)
+                    if (prev < 1600) {
+                        increment = 2.5; // Faster in early history
+                    }
+
+                    // Ease out speed near storyline events
                     if (!skipStoryline) {
+                         // Find the next upcoming event
                         const nextEvent = storylinesData[storylineIndex];
-                        if (nextEvent && next >= nextEvent.year) {
-                            setIsPlaying(false);
-                            animateCameraToStoryline(nextEvent.coordinate, () => {
-                                setStorylineMode('focus');
-                            });
-                            isOrbitingRef.current = true;
-                            return nextEvent.year;
+                        if (nextEvent) {
+                            const dist = nextEvent.year - prev;
+                            if (dist > 0 && dist < 30) {
+                                // Slow down as we approach (lerp from increment to 0.8)
+                                increment = Math.max(0.8, increment * (dist / 30)); 
+                            }
+                        
+                            const next = prev + increment;
+                            if (next >= nextEvent.year) {
+                                setIsPlaying(false);
+                                animateCameraToStoryline(nextEvent.coordinate, () => {
+                                    setStorylineMode('focus');
+                                });
+                                isOrbitingRef.current = true;
+                                return nextEvent.year;
+                            }
+                            return next;
                         }
                     }
+
+                    const next = prev + increment;
 
                     if (next >= 1850 && !hasZoomedOutRef.current) {
                         hasZoomedOutRef.current = true;
@@ -413,15 +454,23 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                         setIsLoading(false);
                         isLoadingRef.current = false;
                     }, 500);
+                } else if (!isFinishingLoadRef.current) {
+                   // Continue inching towards 100 while verifying stability
+                   setLoadingProgress((prev: number) => {
+                        const target = 99;
+                        const step = (target - prev) * 0.1; // Faster approach
+                        return prev + Math.max(0.1, step);
+                   });
                 }
             } else {
                 stableFramesRef.current = 0;
                 if (!isFinishingLoadRef.current) {
                     setLoadingProgress((prev: number) => {
-                        const target = 90;
-                        const next = prev + (target - prev) * 0.01;
-                        if (next - prev < 0.1) return prev;
-                        return next;
+                        // While downloading/parsing, move towards 80%
+                        const target = 80;
+                        const step = (target - prev) * 0.08; // Significantly faster than 0.01
+                         // Ensure we always move at least a little bit if we are far from target
+                        return prev + Math.max(0.2, step); 
                     });
                 }
             }
@@ -713,6 +762,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                         setCurrentYear(2026);
                         setIsPlaying(false);
                         setIsStorylineComplete(true);
+                        animateCameraToOverview();
                     } else {
                         // Wait for fade out
                         setTimeout(() => {
@@ -722,13 +772,15 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                             // Rewind animation
                             const yearObj = { year: 2026 };
                             new TWEEN.Tween(yearObj)
-                                .to({ year: 1400 }, 1500)
-                                .easing(TWEEN.Easing.Quadratic.InOut)
+                                .to({ year: 1275 }, 6000)
+                                .easing(TWEEN.Easing.Quadratic.In) // Start slow (at 2026), speed up towards 1275
                                 .onUpdate(() => {
                                     setCurrentYear(Math.round(yearObj.year));
                                 })
                                 .onComplete(() => {
-                                    setIsPlaying(true);
+                                    setTimeout(() => {
+                                        setIsPlaying(true);
+                                    }, 500);
                                 })
                                 .start();
                         }, 1500);
@@ -742,11 +794,17 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                 <StorylineOverlay 
                     event={storylinesData[storylineIndex]} 
                     onNext={handleNextStoryline} 
+                    onSkip={() => {
+                        setSkipStoryline(true);
+                        setStorylineMode('overview');
+                        setIsPlaying(true);
+                         // Optional: reset camera if you want, or just let it fly
+                    }}
                 />
             )}
             {!showIntro && !isLoading && (
                 <TimelineOverlay
-                    minYear={1400}
+                    minYear={1275}
                     maxYear={2026}
                     currentYear={currentYear}
                     onYearChange={setCurrentYear}
