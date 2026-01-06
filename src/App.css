@@ -54,7 +54,7 @@
 }
 
 .app-header.storyline-active {
-  transform: translate(-225px, 0);
+  transform: translate(-245px, 0);
 }
 
 @media (max-width: 768px) {

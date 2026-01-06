@@ -109,25 +109,29 @@ const ViewerPage: React.FC = () => {
         <div id="viewer" style={{ width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative' }}>
             <div className={`app-header ${isStorylineActive ? 'storyline-active' : ''}`}>
                 <div style={{
-                    display: 'inline-block',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '1.5rem',
                     padding: '1rem 2.5rem',
-                    background: 'rgba(255, 255, 255, 0.85)',
+                    background: 'rgba(239, 240, 235, 0.85)',
                     backdropFilter: 'blur(12px)',
                     borderRadius: '24px',
                     boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
                     pointerEvents: 'auto'
                 }}>
+                    <img src="/delta_logo.webp" alt="Delta Institute" style={{ height: '32px', width: 'auto' }} />
                     <h1 style={{ 
                         margin: 0,
-                        color: '#1a1a1a',
+                        color: '#231F20',
                         fontSize: '1.25rem',
                         fontWeight: '600',
                         letterSpacing: '0.2em',
                         textTransform: 'uppercase',
-                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
+                        fontFamily: "'Lora', serif"
                     }}>
                         Amsterdam 2030
                     </h1>
+                    <img src="/amsterdam.webp" alt="Amsterdam" style={{ height: '32px', width: 'auto' }} />
                 </div>
             </div>
 
