@@ -32,6 +32,7 @@
 
 .timeline-overlay.storyline-active {
     left: calc(50% - 225px);
+    width: calc(100% - 480px); /* Ensure it fits when sidebar is open */
 }
 
 .timeline-play-button-container {
@@ -93,6 +94,7 @@
     .timeline-overlay.storyline-active {
         left: 50%;
         transform: translate(-50%, 200%);
+        width: 80%;
     }
     
     .current-year {
