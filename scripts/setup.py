@@ -67,19 +67,6 @@ def main():
     else:
         print("Skipping upload to R2.")
 
-
-    # 5. Cleanup
-    # ask if user wants to cleanup
-    user_input = input("Do you want to clean up downloaded files? (y/n): ")
-    if user_input.lower() == 'y':
-        print("Cleaning up downloaded files...")
-        data_dir = Path(__file__).parent.parent / "data"
-        if data_dir.exists():
-            shutil.rmtree(data_dir)
-            print(f"Removed {data_dir}")
-    else:
-        print("Skipping cleanup.")
-    
     
     print("Setup complete! Map data is ready and uploaded.")
 

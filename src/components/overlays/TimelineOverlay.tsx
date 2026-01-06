@@ -1,4 +1,5 @@
 import React from 'react';
+import { MdPlayArrow, MdPause } from 'react-icons/md';
 import './TimelineOverlay.css';
 
 interface TimelineOverlayProps {
@@ -70,7 +71,7 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
                     }}
                     className="timeline-play-button"
                 >
-                    {isPlaying ? '⏸' : '▶'}
+                    {isPlaying ? <MdPause /> : <MdPlayArrow />}
                 </button>
             </div>
 

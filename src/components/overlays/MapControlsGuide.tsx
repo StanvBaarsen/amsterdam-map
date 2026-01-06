@@ -31,7 +31,7 @@ export const MapControlsGuide: React.FC<MapControlsGuideProps> = ({ visible, has
         if (show && hasPanned && hasRotated) {
             const timer = setTimeout(() => {
                 setIsFadingOut(true);
-            }, 2000);
+            }, 800);
             return () => clearTimeout(timer);
         }
     }, [show, hasPanned, hasRotated]);
