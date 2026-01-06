@@ -22,6 +22,41 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
     isStorylineActive = false,
     isStorylineComplete = false
 }) => {
+    const [isEditing, setIsEditing] = React.useState(false);
+    const [editValue, setEditValue] = React.useState('');
+    const inputRef = React.useRef<HTMLInputElement>(null);
+
+    React.useEffect(() => {
+        if (isEditing && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [isEditing]);
+
+    const handleYearClick = () => {
+        if (isStorylineActive) return;
+        if (isPlaying) {
+            onPlayPause(false);
+        }
+        setIsEditing(true);
+        setEditValue(Math.floor(currentYear).toString());
+    };
+
+    const handleYearSubmit = () => {
+        setIsEditing(false);
+        const newYear = parseInt(editValue);
+        if (!isNaN(newYear)) {
+            // Clamp value between min and max
+            const clampedYear = Math.max(minYear, Math.min(newYear, maxYear));
+            onYearChange(clampedYear);
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            handleYearSubmit();
+        }
+    };
+
     return (
         <div className={`timeline-overlay ${isStorylineActive ? 'storyline-active' : ''}`}>
             <div className="timeline-play-button-container" style={{
@@ -29,7 +64,10 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
                 opacity: isStorylineComplete ? 1 : 0
             }}>
                 <button
-                    onClick={() => onPlayPause(!isPlaying)}
+                    onClick={() => {
+                        setIsEditing(false);
+                        onPlayPause(!isPlaying);
+                    }}
                     className="timeline-play-button"
                 >
                     {isPlaying ? '⏸' : '▶'}
@@ -39,7 +77,26 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
             <div className="timeline-content">
                 <div className="timeline-labels">
                     <span>{minYear}</span>
-                    <span className="current-year">{Math.floor(currentYear)}</span>
+                    {isEditing ? (
+                         <input
+                            ref={inputRef}
+                            type="text"
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            onBlur={handleYearSubmit}
+                            onKeyDown={handleKeyDown}
+                            className="current-year-input"
+                        />
+                    ) : (
+                        <span 
+                            className="current-year" 
+                            onClick={handleYearClick}
+                            style={{ cursor: isStorylineActive ? 'default' : 'pointer' }}
+                            title={isStorylineActive ? "" : "Click to edit year"}
+                        >
+                            {Math.floor(currentYear)}
+                        </span>
+                    )}
                     <span>{maxYear}</span>
                 </div>
                 <input
@@ -47,7 +104,10 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
                     min={minYear}
                     max={maxYear}
                     value={currentYear}
-                    onChange={(e) => onYearChange(Number(e.target.value))}
+                    onChange={(e) => {
+                        onYearChange(Number(e.target.value));
+                        if (isPlaying) onPlayPause(false);
+                    }}
                     disabled={!isStorylineComplete}
                     className="timeline-slider"
                     style={{

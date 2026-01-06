@@ -1,4 +1,5 @@
 import React from 'react';
+import './IntroOverlay.css';
 
 interface IntroOverlayProps {
     show: boolean;
@@ -23,93 +24,42 @@ export const IntroOverlay: React.FC<IntroOverlayProps> = ({ show, onStart, isLoa
         onStart(skipStoryline);
     };
 
+    // Clamp progress at 100%
+    const displayProgress = Math.min(100, Math.round(progress));
+
     return (
-        <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'rgba(240, 240, 240, 0.8)',
-            backdropFilter: 'blur(8px)',
-            zIndex: 20,
-            opacity: show ? 1 : 0,
-            pointerEvents: show ? 'auto' : 'none',
-            transition: 'opacity 1.5s ease-in-out'
-        }}>
-            <div style={{
-                maxWidth: '600px',
-                padding: '3rem',
-                backgroundColor: 'white',
-                borderRadius: '16px',
-                boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
-                textAlign: 'center'
-            }}>
-                <h1 style={{
-                    fontSize: '2.5rem',
-                    marginBottom: '1.5rem',
-                    color: '#1a1a1a',
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-                    fontWeight: '700'
-                }}>
+        <div className={`intro-overlay ${show ? 'visible' : ''}`}>
+            <div className="intro-card">
+                <h1 className="intro-title">
                     Amsterdam 2030
                 </h1>
-                <p style={{
-                    fontSize: '1.1rem',
-                    lineHeight: '1.6',
-                    color: '#444',
-                    marginBottom: '2.5rem',
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
-                }}>
+                <p className="intro-description">
                     Ontdek wat innovatie voor Amsterdam heeft betekend door de eeuwen heen. 
                     Deze interactieve 3D-kaart toont de groei van de stad, en neemt je mee door verschillende innovatieprojecten.
                 </p>
 
-                <div style={{
-                    marginBottom: isLoading ? '1.5rem' : '0',
-                    width: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    maxHeight: isLoading ? '100px' : '0px',
-                    opacity: isLoading ? 1 : 0,
-                    overflow: 'hidden',
-                    transition: 'max-height 0.5s ease-in-out, opacity 0.5s ease-in-out, margin-bottom 0.5s ease-in-out'
-                }}>
-                    <div style={{ marginBottom: '0.5rem', color: '#666', fontSize: '0.9rem', fontFamily: 'sans-serif' }}>
-                        Laden... {Math.round(progress)}%
+                <div className={`loading-container ${isLoading ? 'loading' : ''}`}>
+                    <div className="loading-text">
+                        Laden... {displayProgress}%
                     </div>
-                    <div style={{
-                        width: '100%',
-                        maxWidth: '300px',
-                        height: '4px',
-                        backgroundColor: '#eee',
-                        borderRadius: '2px',
-                        overflow: 'hidden'
-                    }}>
-                        <div style={{
-                            width: `${progress}%`,
-                            height: '100%',
-                            backgroundColor: '#ff4444',
-                            // transition: 'width 0.2s ease-out' // Removed transition to prevent lag behind text
-                        }} />
+                    <div className="loading-track">
+                        <div 
+                            className="loading-bar" 
+                            style={{ width: `${displayProgress}%` }} 
+                        />
                     </div>
                 </div>
 
                 {hasVisited && (
-                    <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                    <div className="checkbox-container">
                         <input 
                             type="checkbox" 
-                            id="skipStoryline" 
+                            id="skipStoryline"
+                            className="checkbox-custom" 
                             checked={skipStoryline} 
                             onChange={(e) => setSkipStoryline(e.target.checked)}
-                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                         />
-                        <label htmlFor="skipStoryline" style={{ color: '#444', fontSize: '1rem', cursor: 'pointer', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}>
+                        <label htmlFor="skipStoryline" className="checkbox-label">
                             Sla geschiedenis over
                         </label>
                     </div>
@@ -118,23 +68,7 @@ export const IntroOverlay: React.FC<IntroOverlayProps> = ({ show, onStart, isLoa
                 <button 
                     onClick={handleStart}
                     disabled={isLoading}
-                    style={{
-                        padding: '1rem 3rem',
-                        fontSize: '1.1rem',
-                        backgroundColor: '#ff4444',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: isLoading ? 'not-allowed' : 'pointer',
-                        transition: 'transform 0.1s, background-color 0.2s, opacity 0.2s',
-                        fontWeight: '600',
-                        boxShadow: isLoading ? 'none' : '0 4px 12px rgba(255, 68, 68, 0.3)',
-                        opacity: isLoading ? 0.5 : 1
-                    }}
-                    onMouseOver={(e) => !isLoading && (e.currentTarget.style.backgroundColor = '#ff2222')}
-                    onMouseOut={(e) => !isLoading && (e.currentTarget.style.backgroundColor = '#ff4444')}
-                    onMouseDown={(e) => !isLoading && (e.currentTarget.style.transform = 'scale(0.98)')}
-                    onMouseUp={(e) => !isLoading && (e.currentTarget.style.transform = 'scale(1)')}
+                    className={`start-button ${!isLoading ? 'ready' : ''}`}
                 >
                     {isLoading ? 'Even geduld...' : 'Start met verkennen'}
                 </button>
