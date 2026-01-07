@@ -5,8 +5,9 @@ import './TimelineOverlay.css';
 interface TimelineOverlayProps {
     minYear: number;
     maxYear: number;
+    presentYear?: number;
     currentYear: number;
-    onYearChange: React.Dispatch<React.SetStateAction<number>>;
+    onYearChange: (year: number) => void;
     isPlaying: boolean;
     onPlayPause: (playing: boolean) => void;
     isStorylineActive?: boolean;
@@ -16,6 +17,7 @@ interface TimelineOverlayProps {
 export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
     minYear,
     maxYear,
+    presentYear = new Date().getFullYear(),
     currentYear,
     onYearChange,
     isPlaying,
@@ -57,6 +59,8 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
             handleYearSubmit();
         }
     };
+
+    const isFuture = currentYear > presentYear;
 
     return (
         <div className={`timeline-overlay ${isStorylineActive ? 'storyline-active' : ''}`}>
@@ -103,22 +107,50 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
                     )}
                     <span>{maxYear}</span>
                 </div>
-                <input
-                    type="range"
-                    min={minYear}
-                    max={maxYear}
-                    value={currentYear}
-                    onChange={(e) => {
-                        onYearChange(Number(e.target.value));
-                        if (isPlaying) onPlayPause(false);
-                    }}
-                    disabled={!isStorylineComplete}
-                    className="timeline-slider"
-                    style={{
-                        cursor: isStorylineComplete ? 'pointer' : 'default',
-                        opacity: isStorylineComplete ? 1 : 0.7
-                    }}
-                />
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
+                    <input
+                        type="range"
+                        min={minYear}
+                        max={presentYear}
+                        value={Math.min(currentYear, presentYear)}
+                        onChange={(e) => {
+                            onYearChange(Number(e.target.value));
+                            if (isPlaying) onPlayPause(false);
+                        }}
+                        disabled={!isStorylineComplete}
+                        className="timeline-slider"
+                        style={{
+                            cursor: isStorylineComplete ? 'pointer' : 'default',
+                            opacity: isStorylineComplete ? 1 : 0.7,
+                            flex: 1
+                        }}
+                    />
+                    
+                    {/* Future / 2030 Separator */}
+                    {maxYear > presentYear && (
+                         <div 
+                            onClick={() => {
+                                if (isStorylineComplete) {
+                                    onYearChange(maxYear);
+                                    if (isPlaying) onPlayPause(false);
+                                }
+                            }}
+                            style={{ 
+                                width: '16px', 
+                                height: '16px', 
+                                borderRadius: '50%', 
+                                background: isFuture ? '#ff4444' : '#ddd', 
+                                border: '2px solid white',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                cursor: isStorylineComplete ? 'pointer' : 'default',
+                                transition: 'all 0.3s ease',
+                                flexShrink: 0
+                            }}
+                            title={`Innovatieprojecten in ${maxYear}`}
+                        />
+                    )}
+                </div>
             </div>
         </div>
     );

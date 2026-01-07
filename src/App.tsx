@@ -119,7 +119,6 @@ const ViewerPage: React.FC = () => {
                     boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
                     pointerEvents: 'auto'
                 }}>
-                    <img src="/delta_logo.webp" alt="Delta Institute" style={{ height: '32px', width: 'auto' }} />
                     <h1 style={{ 
                         margin: 0,
                         color: '#231F20',

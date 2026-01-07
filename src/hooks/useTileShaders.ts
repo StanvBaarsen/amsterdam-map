@@ -20,7 +20,7 @@ export const useTileShaders = (
 
     useEffect(() => {
         coloredMaterialRef.current.onBeforeCompile = (shader) => {
-            shader.uniforms.currentYear = { value: 2026 };
+            shader.uniforms.currentYear = { value: new Date().getFullYear() };
             shader.uniforms.saturation = { value: 1.0 };
             
             // Add palette texture uniform
@@ -81,7 +81,7 @@ export const useTileShaders = (
         const shader = coloredMaterialRef.current?.userData?.shader;
         if (shader) {
             if (shader.uniforms.currentYear) {
-                shader.uniforms.currentYear.value = typeof currentYear === 'number' ? currentYear : 2026;
+                shader.uniforms.currentYear.value = typeof currentYear === 'number' ? currentYear : new Date().getFullYear();
             }
             
             let sat = 1.0;

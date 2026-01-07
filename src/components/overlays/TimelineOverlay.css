@@ -32,11 +32,33 @@
 
 .timeline-overlay.storyline-active {
     transform: translateX(calc(-50% - 245px));
+    width: 400px; /* Force smaller width when sidebar is open */
 }
 
-.timeline-play-button-container {
-    overflow: hidden;
-    transition: width 0.5s ease-in-out, opacity 0.5s ease-in-out;
+@media (max-width: 1200px) {
+    /* If screen isn't wide enough for offset logic, just center and shrink */
+    .timeline-overlay.storyline-active {
+        transform: translateX(-50%);
+        width: calc(100% - 480px); /* Subtract sidebar width approx */
+        left: calc(50% - 225px); /* Shift left to avoid sidebar overlap */
+        /* Actually simpler logic: anchor to left side */
+        left: 20px;
+        transform: none;
+        width: 40%;
+    }
+}
+
+@media (max-width: 768px) {
+    .timeline-overlay.storyline-active {
+        left: 50%;
+        transform: translate(-50%, 0); 
+        width: 80%;
+        bottom: 80px; 
+    }
+    
+    .current-year {
+        font-size: 2rem;
+    }
 }
 
 .timeline-play-button {
@@ -110,11 +132,13 @@
     accent-color: #ff4444;
 }
 
+/* Mobile override needs to be robust */
 @media (max-width: 768px) {
     .timeline-overlay.storyline-active {
         left: 50%;
-        transform: translate(-50%, 200%);
+        transform: translate(-50%, 0); 
         width: 80%;
+        bottom: 80px; 
     }
     
     .current-year {
