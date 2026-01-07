@@ -6,8 +6,8 @@ interface InnovationProject {
     id: string;
     name: string;
     description: string;
-    year: number;
-    coordinate: { x: number, y: number };
+    coordinate: { x: number, y: number } | { lat: number, lng: number };
+    image?: string;
 }
 
 interface InnovationListProps {

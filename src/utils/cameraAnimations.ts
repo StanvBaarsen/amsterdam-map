@@ -7,7 +7,9 @@ export const animateCameraToLocation = (
     targetRD: { x: number, y: number },
     groupPosition: THREE.Vector3,
     onNeedsRerender: () => void,
-    onComplete?: () => void
+    onComplete?: () => void,
+    cameraAngle?: number, // in degrees, 180 = looking South
+    cameraDistance?: number // distance/radius from target
 ) => {
     if (!controls || !camera) return;
 
@@ -22,8 +24,48 @@ export const animateCameraToLocation = (
     const target = new THREE.Vector3(world_x, world_y, world_z);
     
     // Final Zoom in position
-    const dist = 600; 
-    const finalCamPos = target.clone().add(new THREE.Vector3(dist, dist, dist));
+    // Default distances
+    const dist = cameraDistance ? cameraDistance : 600; 
+    let finalCamPos;
+
+    if (cameraAngle !== undefined) {
+        // Calculate position based on angle
+        // 180 deg = looking South. 
+        // In our coord system: -Z is North, +Z is South.
+        // Looking South means looking towards +Z.
+        // Camera must be at North (-Z) of target.
+        
+        const rad = cameraAngle * (Math.PI / 180);
+        // If distance provided, use it as radius directly. 
+        // If not, use 850 (approx diagonal of 600,600)
+        const radius = cameraDistance ? cameraDistance : 850; 
+
+        // 0 deg = Looking North (Camera at South/+Z) -> z = +r
+        // 180 deg = Looking South (Camera at North/-Z) -> z = -r
+        // 90 deg = Looking East (Camera at West/-X) -> x = -r
+        
+        const offsetX = -radius * Math.sin(rad);
+        const offsetZ = radius * Math.cos(rad);
+        
+        finalCamPos = target.clone().add(new THREE.Vector3(offsetX, dist, offsetZ));
+        
+        // If specific distance provided, we might want to adjust the Y height? 
+        // For now, let's assume 'dist' variable is used for Y if angle is NOT set, 
+        // but if angle IS set, we need a height component.
+        // The previous logic used 'dist' (600) as height. 
+        // Let's use the provided distance as both radius and height for 'angled' view 
+        // OR keep height fixed/derived.
+        // Let's assume 'cameraDistance' means "distance from target center".
+        
+        // However, existing logic passed 600 for (dist, dist, dist).
+        // Let's stick to using 'radius' for horizontal offset and 'dist' for height.
+        // If the user provides 'cameraDistance', use that for both roughly.
+        finalCamPos.y = target.y + (cameraDistance ? cameraDistance * 0.7 : 600);
+
+    } else {
+        // Default (North-East-ish look)
+        finalCamPos = target.clone().add(new THREE.Vector3(dist, dist, dist));
+    }
 
     // Calculate distance to determine duration
     const currentPos = camera.position.clone();

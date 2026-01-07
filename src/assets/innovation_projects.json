@@ -3,21 +3,21 @@
     "id": "project-1",
     "name": "Marineterrein",
     "description": "Living lab for urban challenges, testing sustainable living solutions.",
-    "coordinate": { "x": 122500, "y": 487800 },
-    "year": 2030
+    "coordinate": { "lat": 52.377109, "lng": 4.909920 },
+    "image": "/amsterdam-2026.webp"
   },
   {
     "id": "project-2",
     "name": "Schoonschip",
     "description": "Floating sustainable neighborhood in Amsterdam North.",
-    "coordinate": { "x": 123500, "y": 489000 },
-    "year": 2030
+    "coordinate": { "lat": 52.387952, "lng": 4.924493 },
+    "image": "/amsterdam-2026.webp"
   },
   {
     "id": "project-3",
     "name": "The Valley",
     "description": "Green, mixed-use building complex in Zuidas.",
-    "coordinate": { "x": 118800, "y": 483500 },
-    "year": 2030
+    "coordinate": { "lat": 52.338232, "lng": 4.856048 },
+    "image": "/amsterdam-2026.webp"
   }
 ]

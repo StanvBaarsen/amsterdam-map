@@ -60,36 +60,85 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
         }
     };
 
-    // removed unused isFuture
+    // Gap size matches distance to act as a buffer. 
+    // We want the visual gap to be substantial.
+    const GAP_SIZE = 50;
+    const sliderMax = presentYear + GAP_SIZE;
 
-    // Local state for smooth slider dragging (optimization)
-    const [localSliderValue, setLocalSliderValue] = React.useState(currentYear);
-    
+    // Determine visual slider position from current year
+    const getSliderValue = (year: number) => {
+        if (year >= maxYear) return sliderMax;
+        // If year is "2026" (present), it is at 2026.
+        return Math.min(year, presentYear);
+    };
+
+    const [internalValue, setInternalValue] = React.useState(getSliderValue(currentYear));
+    const [isDragging, setIsDragging] = React.useState(false);
+
+    // Sync internal value when external props change (e.g. playback), but ONLY if not dragging
     React.useEffect(() => {
-        setLocalSliderValue(currentYear);
-    }, [currentYear]);
+        if (!isDragging) {
+            setInternalValue(getSliderValue(currentYear));
+        }
+    }, [currentYear, isDragging, maxYear, presentYear]);
 
     const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = Number(e.target.value);
-        setLocalSliderValue(val);
         
-        // "Magnetic" logic: 
-        // If we drag past presentYear, snap to maxYear (2030)
-        // detailed logic: "secretly continue to 2027" -> means short drag distance
-        // We set input max to presentYear + 3 (approx 2028). 
-        // If val > presentYear, we treat it as 2030.
-        
+        // Logical Snapping
+        let newYear = val;
+        let snapVisual = val;
+
         if (val > presentYear) {
-            onYearChange(maxYear);
-        } else {
-            onYearChange(val);
+             // In the gap
+             const gapProgress = (val - presentYear) / GAP_SIZE;
+             
+             // Hysteresis/Latch logic:
+             // If we are closer to finish (2030), snap year AND visual to 2030 (maxYear/sliderMax)
+             // If we are closer to start (2026), snap year AND visual to 2026 (presentYear)
+             
+             if (gapProgress > 0.5) {
+                 newYear = maxYear;
+                 snapVisual = sliderMax;
+             } else {
+                 newYear = presentYear;
+                 snapVisual = presentYear;
+             }
         }
 
+        // Apply visual snap immediately so slider doesn't "float" in the gap
+        setInternalValue(snapVisual);
+        
+        // Notify parent only if year changed
+        if (newYear !== currentYear) {
+            onYearChange(newYear);
+        }
+        
         if (isPlaying) onPlayPause(false);
     };
 
-    // Calculate max value for the slider input: present + small buffer to simulate the 'gap'
-    const sliderMax = presentYear + 2; 
+    const handlePointerDown = () => setIsDragging(true);
+    const handlePointerUp = () => {
+        setIsDragging(false);
+        // Force final sync
+        setInternalValue(getSliderValue(currentYear));
+    };
+
+    // Calculate percentage for gradient stop
+    // presentYear represents the end of the solid line
+    // sliderMax represents the end of the total track
+    
+    // We want RED color for the years passed.
+    // Gradient: 
+    // Red from 0% to (current / total)%
+    // Gray from (current / total)% to (present / total)% ??
+    // User said: "timeline part that has passed should be red not gray"
+    // Previously: CurrentColor (Red) -> ... -> Gray
+    // Now: Red -> ... -> Gray
+    
+    const totalRange = sliderMax - minYear;
+    const currentPercent = ((Math.min(internalValue, presentYear) - minYear) / totalRange) * 100;
+    const presentPercent = ((presentYear - minYear) / totalRange) * 100;
 
     return (
         <div className={`timeline-overlay ${isStorylineActive ? 'storyline-active' : ''}`}>
@@ -142,19 +191,21 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
                         type="range"
                         min={minYear}
                         max={sliderMax}
-                        value={currentYear > presentYear ? sliderMax : localSliderValue}
+                        value={internalValue}
                         onChange={handleSliderChange}
+                        onPointerDown={handlePointerDown}
+                        onPointerUp={handlePointerUp}
                         disabled={!isStorylineComplete}
                         className="timeline-slider"
                         style={{
                             cursor: isStorylineComplete ? 'pointer' : 'default',
                             opacity: isStorylineComplete ? 1 : 0.7,
                             background: `linear-gradient(to right, 
-                                currentColor 0%, 
-                                currentColor ${(Math.min(localSliderValue, presentYear) - minYear) / (sliderMax - minYear) * 100}%, 
-                                #ddd ${(Math.min(localSliderValue, presentYear) - minYear) / (sliderMax - minYear) * 100}%, 
-                                #ddd ${(presentYear - minYear) / (sliderMax - minYear) * 100}%,
-                                transparent ${(presentYear - minYear) / (sliderMax - minYear) * 100}%
+                                #ff4444 0%, 
+                                #ff4444 ${currentPercent}%, 
+                                #ddd ${currentPercent}%, 
+                                #ddd ${presentPercent}%,
+                                transparent ${presentPercent}%
                             )`
                         }}
                     />
@@ -166,6 +217,14 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
                             width: `${(sliderMax - presentYear) / (sliderMax - minYear) * 100}%`
                         }}
                     />
+                    {/* 2030 Marker Dot */}
+                    <div
+                        className="timeline-gap-dot"
+                        style={{
+                            left: '100%',
+                            opacity: internalValue >= sliderMax ? 1 : 0.5
+                        }}
+                     />
                 </div>
             </div>
         </div>

@@ -10,6 +10,7 @@ import { useTileShaders } from '../hooks/useTileShaders';
 import { useMarkers } from '../hooks/useMarkers';
 import { useStorylineLogic } from '../hooks/useStorylineLogic';
 import * as CameraAnims from '../utils/cameraAnimations';
+import { wgs84ToRd } from '../utils/coords';
 
 import { IntroOverlay } from './overlays/IntroOverlay';
 import { TimelineOverlay } from './overlays/TimelineOverlay';
@@ -22,7 +23,6 @@ import { AboutMap } from './overlays/AboutMap';
 import { MapControls } from './overlays/MapControls';
 
 import { processTileColors } from '../utils/tiles';
-import { wgs84ToRd } from '../utils/coords';
 // import { createPaletteTexture } from '../utils/colors'; // Now in useTileShaders
 import storylinesData from '../assets/storylines.json';
 import innovationProjects from '../assets/innovation_projects.json';
@@ -31,7 +31,9 @@ import innovationProjects from '../assets/innovation_projects.json';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const parsedStorylinesData = storylinesData.map((s: any) => ({
     ...s,
-    year: (s.year === "current") ? new Date().getFullYear() : s.year
+    year: (s.year === "current") ? new Date().getFullYear() : s.year,
+    cameraAngle: s.cameraAngle, // Ensure this property is passed through if present
+    cameraDistance: s.cameraDistance
 }));
 
 interface ThreeViewerProps {
@@ -101,20 +103,12 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     const controlsLearnedRef = useRef(false);
 
     useEffect(() => {
-        const learnedDate = localStorage.getItem('amsterdam_map_controls_learned');
-        if (learnedDate) {
-            const timestamp = parseInt(learnedDate, 10);
-            const daysSince = (Date.now() - timestamp) / (1000 * 60 * 60 * 24);
-            if (daysSince < 60) {
-                setControlsGuideDismissed(true);
-                controlsLearnedRef.current = true;
-            }
-        }
+        // Clear old storage if exists
+        localStorage.removeItem('amsterdam_map_controls_learned');
     }, []);
 
     useEffect(() => {
         if (!controlsLearnedRef.current && userHasPanned && userHasRotated) {
-             localStorage.setItem('amsterdam_map_controls_learned', Date.now().toString());
              controlsLearnedRef.current = true;
         }
     }, [userHasPanned, userHasRotated]);
@@ -270,26 +264,32 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
 
 
 
-    const animateCameraToStoryline = useCallback((targetIn: { x: number, y: number }, onComplete?: () => void) => {
+    const animateCameraToStoryline = useCallback((targetIn: { x: number, y: number } | { lat: number, lng: number }, onComplete?: () => void, cameraAngle?: number, cameraDistance?: number) => {
         if (!tilesRef.current || !controlsRef.current || !cameraRef.current) return;
         
         // Reset interaction flags so markers/UI reset their "user interacted" state
         setUserHasPanned(false);
         setUserHasRotated(false);
 
-        // Convert Lat/Long to RD if necessary
-        let targetRD = targetIn;
-        // Rough check: RD coords are > 10000. WGS84 are < 180.
-        if (Math.abs(targetIn.x) < 1000 && Math.abs(targetIn.y) < 1000) {
-             // Determine Lat vs Lon based on Netherlands context
-             // Lat ~ 50-53, Lon ~ 4-7
-             if (targetIn.x > 40 && targetIn.y < 20) {
-                 // x is Lat, y is Lon
-                 targetRD = wgs84ToRd(targetIn.x, targetIn.y);
-             } else {
-                 // x is Lon, y is Lat (GeoJSON standard)
-                 targetRD = wgs84ToRd(targetIn.y, targetIn.x);
-             }
+        // Convert Lat/Long to RD
+        let targetRD = { x: 0, y: 0 };
+        
+        if ('lat' in targetIn && 'lng' in targetIn) {
+            targetRD = wgs84ToRd((targetIn as any).lat, (targetIn as any).lng);
+        } else {
+            targetRD = targetIn as { x: number, y: number };
+            
+            // Legacy rough check: RD coords are > 10000. WGS84 are < 180.
+            // If someone passed lat/long as x/y
+            if (Math.abs(targetRD.x) < 1000 && Math.abs(targetRD.y) < 1000) {
+                 // Determine Lat vs Lon based on Netherlands context
+                 // Lat ~ 50-53, Lon ~ 4-7
+                 if (targetRD.x > 40 && targetRD.y < 20) {
+                     targetRD = wgs84ToRd(targetRD.x, targetRD.y);
+                 } else {
+                     targetRD = wgs84ToRd(targetRD.y, targetRD.x);
+                 }
+            }
         }
 
         CameraAnims.animateCameraToLocation(
@@ -298,7 +298,9 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
             targetRD,
             tilesRef.current.group.position,
             () => { needsRerender.current = 1; },
-            onComplete
+            onComplete,
+            cameraAngle,
+            cameraDistance
         );
     }, [cameraRef, controlsRef, tilesRef, needsRerender]);
 
@@ -327,7 +329,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     const { 
         handleNextStoryline: _ignoredHandleNextStoryline, 
         hasZoomedOutRef, 
-        // isRewindingRef, 
+        isRewindingRef, 
         isOrbitingRef 
     } = useStorylineLogic({
         isPlaying,
@@ -356,13 +358,13 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
             if (nextProj) {
                  setInnovationEvent({
                     ...nextProj,
-                    year: nextProj.year || 2030,
+                    year: 2030,
                     description: `# ${nextProj.name}\n\n${nextProj.description}`,
                     coordinate: nextProj.coordinate,
-                    image: '/amsterdam-2026.webp'
+                    image: nextProj.image || '/amsterdam-2026.webp'
                 });
                 // Update year if needed (though likely all 2030)
-                if (nextProj.year) setCurrentYear(nextProj.year);
+                // if (nextProj.year) setCurrentYear(nextProj.year);
                 
                 animateCameraToStoryline(nextProj.coordinate);
             } else {
@@ -405,20 +407,28 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                         // After timeline finishes, update index & zoom in
                         setStorylineIndex(nextIdx); 
 
-                        animateCameraToStoryline(nextEvent.coordinate, () => {
-                            // 3. Arrived
-                            setTimeout(() => {
-                                setStorylineMode('focus');
-                                // setIsPlaying(true); // Don't auto-play immediately when arriving at a chapter
-                                setIsTransitioning(false);
-                                
-                                if (controlsRef.current) {
-                                    isOrbitingRef.current = true;
-                                    controlsRef.current.autoRotate = true;
-                                    controlsRef.current.autoRotateSpeed = -1.5;
-                                }
-                            }, 300);
-                        });
+                        animateCameraToStoryline(
+                            nextEvent.coordinate,
+                            () => {
+                                // 3. Arrived
+                                setTimeout(() => {
+                                    setStorylineMode('focus');
+                                    // setIsPlaying(true); // Don't auto-play immediately when arriving at a chapter
+                                    setIsTransitioning(false);
+                                    
+                                    if (controlsRef.current) {
+                                        // Auto-rotate only if no cameraAngle specified
+                                        if (nextEvent.cameraAngle === undefined) {
+                                            isOrbitingRef.current = true;
+                                            controlsRef.current.autoRotate = true;
+                                            controlsRef.current.autoRotateSpeed = -1.5;
+                                        }
+                                    }
+                                }, 300);
+                            },
+                            nextEvent.cameraAngle,
+                            nextEvent.cameraDistance
+                        );
                     })
                     .start();
             }, 2000); 
@@ -447,10 +457,10 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                         const p = innovationProjects[0];
                         setInnovationEvent({
                            ...p,
-                           year: p.year || 2030,
+                           year: 2030,
                            description: `# ${p.name}\n\n${p.description}`,
                            coordinate: p.coordinate,
-                           image: '/amsterdam-2026.webp'
+                           image: p.image || '/amsterdam-2026.webp'
                        });
                        animateCameraToStoryline(p.coordinate);
                      }
@@ -468,29 +478,30 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     const handlePlayPause = useCallback((shouldPlay: boolean) => {
         if (!shouldPlay) {
             setIsPlaying(false);
+            isRewindingRef.current = false;
             return;
         }
 
-        setIsPlaying(false);
+        setIsPlaying(true);
+        isRewindingRef.current = true;
         setIsTransitioning(true);
         // Reset zoom out flag so it triggers again at 1850
         hasZoomedOutRef.current = false;
 
+        // Force reset isStorylineComplete just in case, though play button usually only appears at end
+        // But if user manually scrubbed to 2030 then hit play, we need this flow.
+
         // 1. Rewind/Zoom Animation
-        if (cameraRef.current && controlsRef.current && streetLevelCameraPositionRef.current) {
-             CameraAnims.animateResetToStart(
-                cameraRef.current,
-                controlsRef.current,
-                streetLevelCameraPositionRef.current,
-                () => { needsRerender.current = 1; }
-            );
-        } else if (cameraRef.current && controlsRef.current && initialCameraStateRef.current) {
-             CameraAnims.animateResetToStart(
-                cameraRef.current,
-                controlsRef.current,
-                initialCameraStateRef.current,
-                () => { needsRerender.current = 1; }
-            );
+        if (cameraRef.current && controlsRef.current) {
+             const targetCam = streetLevelCameraPositionRef.current || initialCameraStateRef.current;
+             if (targetCam) {
+                CameraAnims.animateResetToStart(
+                    cameraRef.current,
+                    controlsRef.current,
+                    targetCam,
+                    () => { needsRerender.current = 1; }
+                );
+             }
         }
 
         // Wait for rewind (1000ms) before starting year animation
@@ -502,18 +513,14 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                 .onUpdate(() => {
                     const y = Math.round(yearObj.year);
                     setCurrentYear(y);
-                    if (y >= 1850 && !hasZoomedOutRef.current) {
-                        hasZoomedOutRef.current = true;
-                        zoomOutToMax();
-                    }
                 })
                 .onComplete(() => {
-                    setIsPlaying(true);
+                    isRewindingRef.current = false;
                     setIsTransitioning(false);
                 })
                 .start();
         }, 1000);
-    }, [cameraRef, controlsRef, initialCameraStateRef, currentYear, minYear, setIsPlaying, hasZoomedOutRef, needsRerender]);
+    }, [cameraRef, controlsRef, initialCameraStateRef, currentYear, minYear, setIsPlaying, hasZoomedOutRef, isRewindingRef, needsRerender]);
 
 
     const { placeMarkerOnPoint } = useMarkers(sceneRef, needsRerender, userHasPanned);
@@ -997,10 +1004,10 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                                          const p = innovationProjects[0];
                                          setInnovationEvent({
                                             ...p,
-                                            year: p.year,
+                                            year: 2030,
                                             description: `# ${p.name}\n\n${p.description}`,
                                             coordinate: p.coordinate,
-                                            image: '/amsterdam-2026.webp'
+                                            image: p.image || '/amsterdam-2026.webp'
                                         });
                                         animateCameraToStoryline(p.coordinate);
                                      }
@@ -1088,13 +1095,13 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                         const nextIdx = currentIdx + 1;
                         if (nextIdx < innovationProjects.length) {
                              const nextProject = innovationProjects[nextIdx];
-                             const year = nextProject.year || 2030;
+                             const year = 2030;
                              setInnovationEvent({
                                 ...nextProject,
                                  year: year,
                                  description: `# ${nextProject.name}\n\n${nextProject.description}`,
                                  coordinate: nextProject.coordinate,
-                                 image: '/amsterdam-2026.webp'
+                                 image: nextProject.image || '/amsterdam-2026.webp'
                             });
                             
                             // Also jump timeline to project year (2030+)
@@ -1114,6 +1121,11 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                                          controlsRef.current.autoRotateSpeed = -1.5;
                                  }
                             });
+                        } else {
+                            // Finished innovation projects
+                            setInnovationEvent(null);
+                            setStorylineMode('overview');
+                            animateCameraToOverview();
                         }
                     }}
                     onSkip={() => {
@@ -1161,41 +1173,52 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                         isOrbitingRef.current = false;
                         setStorylineMode('overview'); 
                         setIsPlaying(false);
+                        
+                        // 1. Zoom out first
+                        const overviewPromise = new Promise<void>((resolve) => {
+                             if (cameraRef.current && controlsRef.current && initialCameraStateRef.current) {
+                                CameraAnims.animateCameraToOverview(
+                                    cameraRef.current,
+                                    controlsRef.current,
+                                    initialCameraStateRef.current,
+                                    () => { needsRerender.current = 1; }
+                                );
+                                // Wait for visible zoom out
+                                setTimeout(resolve, 1000);
+                             } else {
+                                 resolve();
+                             }
+                        });
+
+                        await overviewPromise;
+                        await new Promise(r => setTimeout(r, 400));
+                        
                         setIsStorylineComplete(true);
                         
                         // Go to first innovation project
                         if (innovationProjects.length > 0) {
                              const firstProj = innovationProjects[0];
-                             setInnovationEvent({
-                                ...firstProj,
-                                 year: firstProj.year || 2030,
-                                 description: `# ${firstProj.name}\n\n${firstProj.description}`,
-                                 coordinate: firstProj.coordinate,
-                                 image: '/amsterdam-2026.webp'
-                             });
-                             
+
                              // Smoothly animate year to project year
                              const yearObj = { year: currentYear };
                              new TWEEN.Tween(yearObj)
-                                .to({ year: firstProj.year || 2030 }, 2000)
+                                .to({ year: 2030 }, 2000)
                                 .easing(TWEEN.Easing.Quadratic.InOut)
                                 .onUpdate(() => {
                                     setCurrentYear(Math.round(yearObj.year));
                                 })
+                                .onComplete(() => {
+                                     setInnovationEvent({
+                                        ...firstProj,
+                                         year: 2030,
+                                         description: `# ${firstProj.name}\n\n${firstProj.description}`,
+                                         coordinate: firstProj.coordinate,
+                                         image: firstProj.image || '/amsterdam-2026.webp'
+                                     });
+                                     animateCameraToStoryline(firstProj.coordinate);
+                                })
                                 .start();
-
-                             animateCameraToStoryline(firstProj.coordinate, () => {
-                                 // Auto-rotate on arrival at innovation project
-                                 if (controlsRef.current) {
-                                     isOrbitingRef.current = true;
-                                     controlsRef.current.autoRotate = true;
-                                     controlsRef.current.autoRotateSpeed = -1.5;
-                                 }
-                             });
-                        } else {
-                            // Fallback if no projects
-                            animateCameraToOverview(); 
-                        }
+                         }
                     }}
                     onStartStoryline={() => {
                         // Immediately snap to start context
@@ -1205,7 +1228,19 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                         setCurrentYear(startEvent.year); // Force year to match chapter 1
                         
                         // Animate camera and start playing
-                        animateCameraToStoryline(startEvent.coordinate);
+                        animateCameraToStoryline(
+                            startEvent.coordinate,
+                            () => {
+                                // Only auto-rotate if no specific angle was set
+                                if (startEvent.cameraAngle === undefined && controlsRef.current) {
+                                    isOrbitingRef.current = true;
+                                    controlsRef.current.autoRotate = true;
+                                    controlsRef.current.autoRotateSpeed = -1.5;
+                                }
+                            },
+                            startEvent.cameraAngle,
+                            startEvent.cameraDistance
+                        );
                         
                         // Force active index update in progress component by ensuring state is consistent across render cycle
                         // The component uses 'activeIndex' prop passed from 'storylinesData[storylineIndex]' equivalent logic?
@@ -1243,7 +1278,18 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                                 })
                                 .start();
 
-                            animateCameraToStoryline(prevEvent.coordinate);
+                            animateCameraToStoryline(
+                                prevEvent.coordinate,
+                                () => {
+                                    if (prevEvent.cameraAngle === undefined && controlsRef.current) {
+                                        isOrbitingRef.current = true;
+                                        controlsRef.current.autoRotate = true;
+                                        controlsRef.current.autoRotateSpeed = -1.5;
+                                    }
+                                },
+                                prevEvent.cameraAngle,
+                                prevEvent.cameraDistance
+                            );
                         }
                     }}
                     onSkip={() => {
@@ -1272,15 +1318,19 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                              const event = parsedStorylinesData[index];
                              setCurrentYear(event.year);
                              setStorylineMode('focus');
-                             animateCameraToStoryline(event.coordinate, () => {
-
-                                 // Enable rotation after arriving
-                                 if (controlsRef.current) {
-                                     isOrbitingRef.current = true;
-                                     controlsRef.current.autoRotate = true;
-                                     controlsRef.current.autoRotateSpeed = -1.5;
-                                 }
-                             });
+                             animateCameraToStoryline(
+                                 event.coordinate, 
+                                 () => {
+                                     // Enable rotation after arriving ONLY if no fixed angle
+                                     if (event.cameraAngle === undefined && controlsRef.current) {
+                                         isOrbitingRef.current = true;
+                                         controlsRef.current.autoRotate = true;
+                                         controlsRef.current.autoRotateSpeed = -1.5;
+                                     }
+                                 },
+                                 event.cameraAngle,
+                                 event.cameraDistance
+                             );
                         }
                     }}
                     nextProjectName={innovationProjects[0]?.name}
@@ -1300,10 +1350,10 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                                         setStorylineMode('overview'); // Exit story mode
                                         setInnovationEvent({
                                             ...project, // Keep all props including name
-                                            year: project.year || 2030,
+                                            year: 2030,
                                             description: `# ${project.name}\n\n${project.description}`,
                                             coordinate: project.coordinate,
-                                            image: '/amsterdam-2026.webp'
+                                            image: project.image || '/amsterdam-2026.webp'
                                         });
                                         setIsPlaying(false);
                                         // Animate year to 2030 if not already close
@@ -1317,7 +1367,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                                                 })
                                                 .start();
                                         } else {
-                                            setCurrentYear(project.year);
+                                            setCurrentYear(2030);
                                         }
                                         
                                         animateCameraToStoryline(project.coordinate);
@@ -1359,10 +1409,10 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                                          const p = innovationProjects[0];
                                          setInnovationEvent({
                                             ...p,
-                                            year: p.year || 2030,
+                                            year: 2030,
                                             description: `# ${p.name}\n\n${p.description}`,
                                             coordinate: p.coordinate,
-                                            image: '/amsterdam-2026.webp'
+                                            image: p.image || '/amsterdam-2026.webp'
                                         });
                                         animateCameraToStoryline(p.coordinate);
                                         
