@@ -7,6 +7,7 @@ interface StorylineProgressProps {
     activeIndex: number;
     currentYear?: number;
     mode: 'overview' | 'focus';
+    isProjectCompleted?: boolean;
     onJump: (index: number) => void;
     onSkipToFuture: () => void;
     onStartStoryline?: () => void;
@@ -17,6 +18,7 @@ export const StorylineProgress: React.FC<StorylineProgressProps> = ({
     activeIndex,
     currentYear,
     mode,
+    isProjectCompleted,
     onJump,
     onSkipToFuture,
     onStartStoryline
@@ -65,7 +67,8 @@ export const StorylineProgress: React.FC<StorylineProgressProps> = ({
             }
             return `${Math.min(100, Math.max(0, percentage))}%`;
         }
-
+if (isProjectCompleted) return '100%';
+        
         // Fallback to activeIndex
         const totalVisualStepsFallback = mode === 'focus' ? chapters.length : Math.max(1, chapters.length - 1);
         if (activeIndex < 0) return '0%';
@@ -78,12 +81,20 @@ export const StorylineProgress: React.FC<StorylineProgressProps> = ({
         <div className={`storyline-progress-container ${mode}`}>
             <div className="storyline-progress-pill">
                 {mode === 'overview' && (
-                    <button 
-                        className="storyline-start-btn-inline"
-                        onClick={() => onStartStoryline && onStartStoryline()}
-                    >
-                        ▶ Innovatie-geschiedenis van Amsterdam bekijken
-                    </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                         <button 
+                            className="storyline-start-btn-inline"
+                            onClick={() => onStartStoryline && onStartStoryline()}
+                        >
+                            ▶ Innovatie-geschiedenis van Amsterdam bekijken
+                        </button>
+                        <button 
+                            className="storyline-start-btn-inline secondary"
+                            onClick={onSkipToFuture}
+                        >
+                            Direct naar innovatieprojecten in 2030 »
+                        </button>
+                    </div>
                 )}
 
                 <div className="storyline-dots-list">
@@ -91,10 +102,9 @@ export const StorylineProgress: React.FC<StorylineProgressProps> = ({
                         <div className="dots-line-bg" />
                         <div className="dots-line-progress" style={{ height: progressHeight }} />
                     </div>
-
                     {chapters.map((chapter, index) => {
-                        const isPast = index < activeIndex;
-                        const isActive = mode === 'focus' && index === activeIndex;
+                        const isPast = isProjectCompleted || index < activeIndex || (currentYear && currentYear >= new Date().getFullYear());
+                        const isActive = !isProjectCompleted && mode === 'focus' && index === activeIndex;
                         
                         return (
                             <div 

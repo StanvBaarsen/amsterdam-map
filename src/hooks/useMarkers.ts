@@ -4,8 +4,7 @@ import * as THREE from 'three';
 export const useMarkers = (
     sceneRef: React.MutableRefObject<THREE.Scene | undefined | null> | React.RefObject<THREE.Scene | undefined | null>,
     needsRerender: React.MutableRefObject<number>,
-    userHasPanned: boolean,
-    userHasRotated: boolean
+    userHasPanned: boolean
 ) => {
     const markerName = "LocationMarker"; 
     const removeLocationMarkerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -60,16 +59,16 @@ export const useMarkers = (
         needsRerender.current = 1;
     };
 
-    // Remove marker on user interaction (Pan/Rotate)
+    // Remove marker on user interaction (Pan only)
     useEffect(() => {
-        if ((userHasPanned || userHasRotated) && sceneRef.current) {
+        if (userHasPanned && sceneRef.current) {
              const m = sceneRef.current.getObjectByName(markerName);
              if (m) {
                  sceneRef.current.remove(m);
                  needsRerender.current = 1;
              }
         }
-    }, [userHasPanned, userHasRotated]);
+    }, [userHasPanned]);
 
     return { placeMarkerOnPoint };
 };

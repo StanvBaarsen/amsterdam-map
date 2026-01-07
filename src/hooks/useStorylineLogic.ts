@@ -15,6 +15,7 @@ interface UseStorylineLogicProps {
     setIsStorylineComplete: React.Dispatch<React.SetStateAction<boolean>>;
     animateCameraToStoryline: (coordinate: { x: number, y: number }, onComplete?: () => void) => void;
     zoomOutToMax: () => void;
+    isTransitioning: boolean;
 }
 
 export const useStorylineLogic = ({
@@ -29,7 +30,8 @@ export const useStorylineLogic = ({
     setStorylineIndex,
     setIsStorylineComplete,
     animateCameraToStoryline,
-    zoomOutToMax
+    zoomOutToMax,
+    isTransitioning
 }: UseStorylineLogicProps) => {
 
     const hasZoomedOutRef = useRef(false);
@@ -68,22 +70,25 @@ export const useStorylineLogic = ({
                         return nextEvent.year;
                     }
 
-                    if (next >= 1850 && !hasZoomedOutRef.current) {
-                        hasZoomedOutRef.current = true;
-                        zoomOutToMax();
-                    }
-
-                    if (next >= 2026) {
+                    if (next >= new Date().getFullYear()) {
                         setIsPlaying(false);
                         setIsStorylineComplete(true);
-                        return 2026;
+                        return new Date().getFullYear();
                     }
                     return next;
                 });
             }, 50);
         }
         return () => clearInterval(interval);
-    }, [isPlaying, storylineIndex, skipStoryline, animateCameraToStoryline, zoomOutToMax]);
+    }, [isPlaying, storylineIndex, skipStoryline, animateCameraToStoryline]);
+
+    // Independent zoom out check
+    useEffect(() => {
+        if (!isTransitioning && currentYear >= 1850 && !hasZoomedOutRef.current && !isStorylineComplete) {
+            hasZoomedOutRef.current = true;
+            zoomOutToMax();
+        }
+    }, [currentYear, zoomOutToMax, isTransitioning, isStorylineComplete]);
 
 
     const handleNextStoryline = () => {

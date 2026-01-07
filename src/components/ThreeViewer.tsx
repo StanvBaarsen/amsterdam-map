@@ -64,12 +64,14 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     const [isLoading, setIsLoading] = useState(true);
     const [loadingProgress, setLoadingProgress] = useState(0);
     const [showIntro, setShowIntro] = useState(true);
-    const [currentYear, setCurrentYear] = useState(2026);
+    const PRESENT_YEAR = new Date().getFullYear();
+    const [currentYear, setCurrentYear] = useState(PRESENT_YEAR);
     const [isPlaying, setIsPlaying] = useState(false);
     const [storylineIndex, setStorylineIndex] = useState(0);
     const [storylineMode, setStorylineMode] = useState<'overview' | 'focus'>('overview');
     const [innovationEvent, setInnovationEvent] = useState<any>(null);
     const [controlsGuideDismissed, setControlsGuideDismissed] = useState(false);
+    const [isTransitioning, setIsTransitioning] = useState(false);
 
     // Load saved progress on mount
     useEffect(() => {
@@ -171,6 +173,40 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         needsRerender
     });
 
+    // Loading Rotation
+    useEffect(() => {
+        if (isLoading && controlsRef.current && isReady) {
+            const interval = setInterval(() => {
+                if (controlsRef.current) {
+                    controlsRef.current.autoRotate = true;
+                    controlsRef.current.autoRotateSpeed = 2.0;
+                    // Lower the angle to look more towards horizon (respecting the limit)
+                    const currentPolar = controlsRef.current.getPolarAngle();
+                    const targetPolar = controlsRef.current.maxPolarAngle; 
+                    
+                    if (currentPolar < targetPolar - 0.05 && cameraRef.current) {
+                        // Drift phi towards target maxPolarAngle
+                         const offset = new THREE.Vector3().subVectors(cameraRef.current.position, controlsRef.current.target);
+                         const spherical = new THREE.Spherical().setFromVector3(offset);
+                         
+                         // Slowly increase phi (downwards)
+                         spherical.phi = THREE.MathUtils.lerp(spherical.phi, targetPolar, 0.05);
+                         spherical.makeSafe();
+                         
+                         offset.setFromSpherical(spherical);
+                         cameraRef.current.position.copy(controlsRef.current.target).add(offset);
+                         cameraRef.current.lookAt(controlsRef.current.target);
+                         controlsRef.current.update();
+                         needsRerender.current = 1;
+                    }
+                }
+            }, 50);
+            return () => clearInterval(interval);
+        } else if (!isLoading && controlsRef.current && !isOrbitingRef.current) {
+             controlsRef.current.autoRotate = false;
+        }
+    }, [isLoading, isReady]);
+
     // Double click to zoom
     useEffect(() => {
         if (!isReady || !rendererRef.current) return;
@@ -228,9 +264,28 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
 
 
 
-    const animateCameraToStoryline = useCallback((targetRD: { x: number, y: number }, onComplete?: () => void) => {
+    const animateCameraToStoryline = useCallback((targetIn: { x: number, y: number }, onComplete?: () => void) => {
         if (!tilesRef.current || !controlsRef.current || !cameraRef.current) return;
         
+        // Reset interaction flags so markers/UI reset their "user interacted" state
+        setUserHasPanned(false);
+        setUserHasRotated(false);
+
+        // Convert Lat/Long to RD if necessary
+        let targetRD = targetIn;
+        // Rough check: RD coords are > 10000. WGS84 are < 180.
+        if (Math.abs(targetIn.x) < 1000 && Math.abs(targetIn.y) < 1000) {
+             // Determine Lat vs Lon based on Netherlands context
+             // Lat ~ 50-53, Lon ~ 4-7
+             if (targetIn.x > 40 && targetIn.y < 20) {
+                 // x is Lat, y is Lon
+                 targetRD = wgs84ToRd(targetIn.x, targetIn.y);
+             } else {
+                 // x is Lon, y is Lat (GeoJSON standard)
+                 targetRD = wgs84ToRd(targetIn.y, targetIn.x);
+             }
+        }
+
         CameraAnims.animateCameraToLocation(
             cameraRef.current,
             controlsRef.current,
@@ -264,7 +319,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     }, [cameraRef, controlsRef, initialCameraStateRef, needsRerender]);
 
     const { 
-        handleNextStoryline, 
+        handleNextStoryline: _ignoredHandleNextStoryline, 
         hasZoomedOutRef, 
         // isRewindingRef, 
         isOrbitingRef 
@@ -280,8 +335,96 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         setStorylineIndex,
         setIsStorylineComplete,
         animateCameraToStoryline,
-        zoomOutToMax
+        zoomOutToMax,
+        isTransitioning
     });
+
+    const handleNextStoryline = () => {
+        if (isTransitioning) return;
+        
+        isOrbitingRef.current = false;
+        
+        const nextIdx = storylineIndex + 1;
+        
+        // If next chapter exists
+        if (storylinesData[nextIdx]) {
+            setStorylineMode('overview'); // Show timeline
+            setIsTransitioning(true);
+            
+            // 1. Zoom Out to Overview (Using the full overview animation - approx 2000ms)
+            animateCameraToOverview();
+
+            const nextEvent = storylinesData[nextIdx];
+
+            // Wait for 2000ms zoom out to finish before starting year animation
+            setTimeout(() => {
+                const yearObj = { year: currentYear };
+                // Year animation duration
+                const yearDuration = 2500;
+                
+                new TWEEN.Tween(yearObj)
+                    .to({ year: nextEvent.year }, yearDuration) 
+                    .easing(TWEEN.Easing.Quadratic.InOut)
+                    .onUpdate(() => {
+                        setCurrentYear(Math.round(yearObj.year));
+                    })
+                    .onComplete(() => {
+                        // After timeline finishes, update index & zoom in
+                        setStorylineIndex(nextIdx); 
+
+                        animateCameraToStoryline(nextEvent.coordinate, () => {
+                            // 3. Arrived
+                            setTimeout(() => {
+                                setStorylineMode('focus');
+                                // setIsPlaying(true); // Don't auto-play immediately when arriving at a chapter
+                                setIsTransitioning(false);
+                                
+                                if (controlsRef.current) {
+                                    isOrbitingRef.current = true;
+                                    controlsRef.current.autoRotate = true;
+                                    controlsRef.current.autoRotateSpeed = -1.5;
+                                }
+                            }, 300);
+                        });
+                    })
+                    .start();
+            }, 2000); 
+        } else {
+             // Reached the end of the storyline, jump to innovation projects
+             setStorylineMode('overview');
+             setIsPlaying(false);
+             setIsStorylineComplete(true);
+
+             // 1. Zoom Out first
+             animateCameraToOverview();
+             setIsTransitioning(true);
+
+             // 2. Animate Year to 2030
+             const yearObj = { year: currentYear };
+             new TWEEN.Tween(yearObj)
+                .to({ year: 2030 }, 2500)
+                .easing(TWEEN.Easing.Quadratic.InOut)
+                .onUpdate(() => {
+                    setCurrentYear(Math.round(yearObj.year));
+                })
+                .onComplete(() => {
+                     // 3. Open First Innovation Project
+                     setIsTransitioning(false);
+                     if (innovationProjects.length > 0) {
+                        const p = innovationProjects[0];
+                        setInnovationEvent({
+                           ...p,
+                           year: p.year || 2030,
+                           description: `# ${p.name}\n\n${p.description}`,
+                           coordinate: p.coordinate,
+                           image: '/amsterdam-2026.webp'
+                       });
+                       animateCameraToStoryline(p.coordinate);
+                     }
+                })
+                .start();
+        }
+    };
 
     const onUserInteraction = useCallback(() => {
         if (isOrbitingRef.current) {
@@ -296,11 +439,19 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         }
 
         setIsPlaying(false);
+        setIsTransitioning(true);
         // Reset zoom out flag so it triggers again at 1850
         hasZoomedOutRef.current = false;
 
         // 1. Rewind/Zoom Animation
-        if (cameraRef.current && controlsRef.current && initialCameraStateRef.current) {
+        if (cameraRef.current && controlsRef.current && streetLevelCameraPositionRef.current) {
+             CameraAnims.animateResetToStart(
+                cameraRef.current,
+                controlsRef.current,
+                streetLevelCameraPositionRef.current,
+                () => { needsRerender.current = 1; }
+            );
+        } else if (cameraRef.current && controlsRef.current && initialCameraStateRef.current) {
              CameraAnims.animateResetToStart(
                 cameraRef.current,
                 controlsRef.current,
@@ -309,21 +460,30 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
             );
         }
 
-        const yearObj = { year: currentYear };
-        new TWEEN.Tween(yearObj)
-            .to({ year: minYear }, 1000)
-            .easing(TWEEN.Easing.Quadratic.InOut)
-            .onUpdate(() => {
-                setCurrentYear(Math.round(yearObj.year));
-            })
-            .onComplete(() => {
-                setIsPlaying(true);
-            })
-            .start();
+        // Wait for rewind (1000ms) before starting year animation
+        setTimeout(() => {
+            const yearObj = { year: currentYear };
+            new TWEEN.Tween(yearObj)
+                .to({ year: minYear }, 2000)
+                .easing(TWEEN.Easing.Quadratic.InOut)
+                .onUpdate(() => {
+                    const y = Math.round(yearObj.year);
+                    setCurrentYear(y);
+                    if (y >= 1850 && !hasZoomedOutRef.current) {
+                        hasZoomedOutRef.current = true;
+                        zoomOutToMax();
+                    }
+                })
+                .onComplete(() => {
+                    setIsPlaying(true);
+                    setIsTransitioning(false);
+                })
+                .start();
+        }, 1000);
     }, [cameraRef, controlsRef, initialCameraStateRef, currentYear, minYear, setIsPlaying, hasZoomedOutRef, needsRerender]);
 
 
-    const { placeMarkerOnPoint } = useMarkers(sceneRef, needsRerender, userHasPanned, userHasRotated);
+    const { placeMarkerOnPoint } = useMarkers(sceneRef, needsRerender, userHasPanned);
 
     const setCameraPosFromRoute = (q: URLSearchParams) => {
         if (!tilesRef.current || !tilesRef.current.root || !controlsRef.current || !cameraRef.current) return;
@@ -692,11 +852,11 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         
         // Lock controls ONLY when automatically playing through the storyline
         // If paused, controls are free.
-        const isAutoPlayingStoryline = isPlaying && !isStorylineComplete && !skipStoryline;
+        const isAutoPlayingStoryline = (isPlaying || isTransitioning) && !isStorylineComplete && !skipStoryline;
 
         controlsRef.current.enabled = !isAutoPlayingStoryline;
 
-    }, [isPlaying, isStorylineComplete, skipStoryline, controlsRef]);
+    }, [isPlaying, isStorylineComplete, skipStoryline, controlsRef, isTransitioning]);
 
     useEffect(() => {
         if (!controlsRef.current) return;
@@ -778,15 +938,47 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
 
             <IntroOverlay 
                 show={showIntro} 
-                onStart={(skip, resume) => {
+                onStart={(skip, resume, goToInnovation) => {
                     setShowIntro(false);
                     setSkipStoryline(skip);
                     
                     if (skip) {
-                        setCurrentYear(2026);
                         setIsPlaying(false);
                         setIsStorylineComplete(true);
-                        animateCameraToOverview();
+
+                        if (goToInnovation) {
+                            // Immediately go to 2030 and open first project
+                            animateCameraToOverview(); // Start from overview for transition
+                            
+                            const yearObj = { year: PRESENT_YEAR }; // Start from now
+                            setCurrentYear(PRESENT_YEAR);
+                            
+                            new TWEEN.Tween(yearObj)
+                                .to({ year: 2030 }, 2000)
+                                .easing(TWEEN.Easing.Quadratic.InOut)
+                                .onUpdate(() => {
+                                    setCurrentYear(Math.round(yearObj.year));
+                                })
+                                .onComplete(() => {
+                                     if (innovationProjects.length > 0) {
+                                         const p = innovationProjects[0];
+                                         setInnovationEvent({
+                                            ...p,
+                                            year: p.year,
+                                            description: `# ${p.name}\n\n${p.description}`,
+                                            coordinate: p.coordinate,
+                                            image: '/amsterdam-2026.webp'
+                                        });
+                                        animateCameraToStoryline(p.coordinate);
+                                     }
+                                })
+                                .start();
+                            
+                        } else {
+                            // Free explore
+                            setCurrentYear(PRESENT_YEAR);
+                            animateCameraToOverview();
+                        }
                     } else if (resume) { 
                         // Resume logic
                         const savedIndex = parseInt(localStorage.getItem('amsterdam_map_storyline_index') || '0', 10);
@@ -805,6 +997,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                     } else {
                         // Start fresh logic (existing rewind logic)
                         setStorylineIndex(0); // Ensure start at 0
+                        setIsTransitioning(true);
                         // Wait for fade out
                         setTimeout(() => {
                             // Reset zoom out flag
@@ -832,17 +1025,18 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                             }
 
                             // Rewind animation
-                            const yearObj = { year: 2026 };
+                            const yearObj = { year: PRESENT_YEAR };
                             new TWEEN.Tween(yearObj)
                                 .to({ year: minYear }, 4000)
                                 .delay(1750)
-                                .easing(TWEEN.Easing.Quadratic.In) // Start slow (at 2026), speed up towards 1275
+                                .easing(TWEEN.Easing.Quadratic.In) // Start slow (at present), speed up towards 1275
                                 .onUpdate(() => {
                                     setCurrentYear(Math.round(yearObj.year));
                                 })
                                 .onComplete(() => {
                                     setTimeout(() => {
                                         setIsPlaying(true);
+                                        setIsTransitioning(false);
                                     }, 500);
                                 })
                                 .start();
@@ -858,19 +1052,37 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                 <StorylineOverlay
                     event={innovationEvent}
                     onNext={() => {
-                        // Find current index
-                        const idx = innovationProjects.findIndex(p => p.name === innovationEvent.name);
-                        const nextIdx = (idx + 1) % innovationProjects.length;
-                        const nextProject = innovationProjects[nextIdx];
-                        
-                        setInnovationEvent({
-                            ...nextProject,
-                             year: nextProject.year,
-                             description: `# ${nextProject.name}\n\n${nextProject.description}`,
-                             coordinate: nextProject.coordinate,
-                             image: '/amsterdam-2026.webp'
-                        });
-                        animateCameraToStoryline(nextProject.coordinate);
+                        const currentIdx = innovationProjects.findIndex(p => p.name === innovationEvent.name);
+                        const nextIdx = currentIdx + 1;
+                        if (nextIdx < innovationProjects.length) {
+                             const nextProject = innovationProjects[nextIdx];
+                             const year = nextProject.year || 2030;
+                             setInnovationEvent({
+                                ...nextProject,
+                                 year: year,
+                                 description: `# ${nextProject.name}\n\n${nextProject.description}`,
+                                 coordinate: nextProject.coordinate,
+                                 image: '/amsterdam-2026.webp'
+                            });
+                            
+                            // Also jump timeline to project year (2030+)
+                            const yearObj = { year: currentYear };
+                            new TWEEN.Tween(yearObj)
+                                .to({ year: year }, 1500)
+                                .easing(TWEEN.Easing.Quadratic.InOut)
+                                .onUpdate(() => {
+                                    setCurrentYear(Math.round(yearObj.year));
+                                })
+                                .start();
+
+                            animateCameraToStoryline(nextProject.coordinate, () => {
+                                 if (controlsRef.current) {
+                                         isOrbitingRef.current = true;
+                                         controlsRef.current.autoRotate = true;
+                                         controlsRef.current.autoRotateSpeed = -1.5;
+                                 }
+                            });
+                        }
                     }}
                     onSkip={() => {
                         setInnovationEvent(null);
@@ -880,8 +1092,6 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                     // Pass next project name for button text
                     currentIndex={innovationProjects.findIndex(p => p.name === innovationEvent.name)}
                     totalEvents={innovationProjects.length}
-                    // Hack to pass next name
-                    allEvents={innovationProjects.map(p => ({...p, image: ''})) as any}
                 />
             )}
 
@@ -890,6 +1100,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                 <StorylineProgress
                     chapters={storylinesData}
                     activeIndex={storylineIndex}
+                    isProjectCompleted={isStorylineComplete}
                     onJump={(index) => {
                         setIsPlaying(false); // Pause on manual jump
 
@@ -925,7 +1136,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                              const firstProj = innovationProjects[0];
                              setInnovationEvent({
                                 ...firstProj,
-                                 year: firstProj.year,
+                                 year: firstProj.year || 2030,
                                  description: `# ${firstProj.name}\n\n${firstProj.description}`,
                                  coordinate: firstProj.coordinate,
                                  image: '/amsterdam-2026.webp'
@@ -934,14 +1145,21 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                              // Smoothly animate year to project year
                              const yearObj = { year: currentYear };
                              new TWEEN.Tween(yearObj)
-                                .to({ year: firstProj.year }, 2000)
+                                .to({ year: firstProj.year || 2030 }, 2000)
                                 .easing(TWEEN.Easing.Quadratic.InOut)
                                 .onUpdate(() => {
                                     setCurrentYear(Math.round(yearObj.year));
                                 })
                                 .start();
 
-                             animateCameraToStoryline(firstProj.coordinate);
+                             animateCameraToStoryline(firstProj.coordinate, () => {
+                                 // Auto-rotate on arrival at innovation project
+                                 if (controlsRef.current) {
+                                     isOrbitingRef.current = true;
+                                     controlsRef.current.autoRotate = true;
+                                     controlsRef.current.autoRotateSpeed = -1.5;
+                                 }
+                             });
                         } else {
                             // Fallback if no projects
                             animateCameraToOverview(); 
@@ -976,13 +1194,23 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                 <StorylineOverlay 
                     event={storylinesData[storylineIndex]} 
                     isStorylineComplete={isStorylineComplete}
-                    onNext={handleNextStoryline} 
+                    onNext={handleNextStoryline}
                     onPrev={() => {
                         const prev = storylineIndex - 1;
                         if (prev >= 0) {
                             setStorylineIndex(prev);
+                            
+                            // Animate Year
                             const prevEvent = storylinesData[prev];
-                            setCurrentYear(prevEvent.year);
+                            const yearObj = { year: currentYear };
+                            new TWEEN.Tween(yearObj)
+                                .to({ year: prevEvent.year }, 1500)
+                                .easing(TWEEN.Easing.Quadratic.InOut)
+                                .onUpdate(() => {
+                                    setCurrentYear(Math.round(yearObj.year));
+                                })
+                                .start();
+
                             animateCameraToStoryline(prevEvent.coordinate);
                         }
                     }}
@@ -993,10 +1221,10 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                         setIsPlaying(false);
                         setIsStorylineComplete(true);
                         
-                        // Smoothly animate year to 2026
+                        // Smoothly animate year to PRESENT_YEAR
                         const yearObj = { year: currentYear };
                         new TWEEN.Tween(yearObj)
-                            .to({ year: 2026 }, 2500) // 2.5s duration for smoother transition
+                            .to({ year: PRESENT_YEAR }, 2500) // 2.5s duration for smoother transition
                             .easing(TWEEN.Easing.Quadratic.InOut)
                             .onUpdate(() => {
                                 setCurrentYear(Math.round(yearObj.year));
@@ -1039,13 +1267,26 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                                         setStorylineMode('overview'); // Exit story mode
                                         setInnovationEvent({
                                             ...project, // Keep all props including name
-                                            year: project.year,
+                                            year: project.year || 2030,
                                             description: `# ${project.name}\n\n${project.description}`,
                                             coordinate: project.coordinate,
                                             image: '/amsterdam-2026.webp'
                                         });
                                         setIsPlaying(false);
-                                        setCurrentYear(project.year);
+                                        // Animate year to 2030 if not already close
+                                        if (currentYear < 2030) {
+                                             const yearObj = { year: currentYear };
+                                             new TWEEN.Tween(yearObj)
+                                                .to({ year: 2030 }, 1000)
+                                                .easing(TWEEN.Easing.Quadratic.Out)
+                                                .onUpdate(() => {
+                                                    setCurrentYear(Math.round(yearObj.year));
+                                                })
+                                                .start();
+                                        } else {
+                                            setCurrentYear(project.year);
+                                        }
+                                        
                                         animateCameraToStoryline(project.coordinate);
                                         if (!controlsGuideDismissed) setControlsGuideDismissed(true);
                                     }}
@@ -1055,7 +1296,8 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                     )}
                     <TimelineOverlay
                         minYear={minYear}
-                        maxYear={2026}
+                        maxYear={2030} // Extends to 2030 for innovation
+                        presentYear={PRESENT_YEAR}
                         currentYear={currentYear}
                         onYearChange={(targetYear) => {
                              // Smooth scroll year if timeline clicked
@@ -1075,25 +1317,61 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                                 .start();
 
                              if (storylineMode !== 'focus') {
-                                setStorylineMode('focus');
-                                // Find closest chapter
-                                // let closestIndex = 0;
-                                let minDiff = Infinity;
-                                storylinesData.forEach((ch) => {
-                                    // @ts-ignore
-                                    const diff = Math.abs(ch.year - targetYear);
-                                    if (diff < minDiff) {
-                                        minDiff = diff;
-                                        // closestIndex = idx;
+                                // If target year is 2030 zone
+                                if (targetYear > PRESENT_YEAR && innovationProjects.length > 0) {
+                                     // Jump to innovation if not already there
+                                     if (!innovationEvent) {
+                                         // Pick first one
+                                         const p = innovationProjects[0];
+                                         setInnovationEvent({
+                                            ...p,
+                                            year: p.year || 2030,
+                                            description: `# ${p.name}\n\n${p.description}`,
+                                            coordinate: p.coordinate,
+                                            image: '/amsterdam-2026.webp'
+                                        });
+                                        animateCameraToStoryline(p.coordinate);
+                                        
+                                        // Also ensure button shows close icon
+                                     }
+                                } else if (innovationEvent) {
+                                    // If dragging back from 2030 to normal history, exit innovation mode
+                                    if (targetYear <= PRESENT_YEAR) {
+                                        setInnovationEvent(null);
+                                        animateCameraToOverview(); 
+                                        // This snaps back to overview cam
                                     }
-                                });
-                                // Don't snap logic index yet, just let user explore
-                                // setStorylineIndex(closestIndex);
-                                // animateCameraToStoryline(storylinesData[closestIndex].coordinate);
+                                }
+                                
+                                // setStorylineMode('focus'); // REMOVED: Don't force focus mode when scrubbing timeline
+                                // Logic: If scrubbing, user is exploring time, maybe keep in overview unless they stop?
+                                // For now, let's just update year.
+                                
+                                // Find closest chapter logic...
                              }
                         }}
                         isPlaying={isPlaying}
                         onPlayPause={(playing) => {
+                             // If user hits play while at end year (PRESENT_YEAR or 2030)
+                             if (playing && currentYear >= PRESENT_YEAR) {
+                                 // Reset to start
+                                 const yearObj = { year: currentYear };
+                                 setIsPlaying(false);
+                                 
+                                 // Rewind effect
+                                 new TWEEN.Tween(yearObj)
+                                    .to({ year: minYear }, 2000)
+                                    .easing(TWEEN.Easing.Quadratic.InOut)
+                                    .onUpdate(() => {
+                                        setCurrentYear(Math.round(yearObj.year));
+                                    })
+                                    .onComplete(() => {
+                                        setIsPlaying(true);
+                                    })
+                                    .start();
+                                return;
+                             }
+                             
                              if (storylineMode === 'focus') return; // Disable play in focus mode
                              handlePlayPause(playing);
                         }}
@@ -1106,7 +1384,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                         hasRotated={userHasRotated}
                     />
                     <MapControls 
-                        visible={!isLoading && !showIntro && !innovationEvent && storylineMode === 'overview' && storylineIndex < storylinesData.length}
+                        visible={isStorylineComplete && !isLoading && !showIntro && !innovationEvent && storylineMode === 'overview' && storylineIndex < storylinesData.length}
                         onResetNorth={() => {
                             // Stop auto-rotation
                             isOrbitingRef.current = false;
@@ -1143,9 +1421,9 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                                     const { x: rdX, y: rdY } = wgs84ToRd(latitude, longitude);
 
                                     // Check if within bounds (Amsterdam approx)
-                                    // X: 110000 - 135000, Y: 475000 - 500000 (roughly)
-                                    if (rdX < 100000 || rdX > 140000 || rdY < 460000 || rdY > 510000) {
-                                        if (onShowLocationBox) onShowLocationBox("Je bent buiten Amsterdam.");
+                                    // Using camera bounds: X: 119000 - 124000, Y: 484500 - 488000
+                                    if (rdX < 119000 || rdX > 124000 || rdY < 484500 || rdY > 488000) {
+                                        if (onShowLocationBox) onShowLocationBox("Niet binnen het kaartgebied");
                                         return;
                                     }
 
@@ -1155,7 +1433,6 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                                             controlsRef.current?.target.y || 0,
                                             controlsRef.current?.target.z || 0
                                         ));
-                                        // Location found msg removed
                                     });
 
                                 }, (err) => {
