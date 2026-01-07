@@ -1,40 +1,73 @@
 [
     {
-        "year": 1400,
-        "description": "# Amsterdam in 1400\n\nDit is Amsterdam in 1400. Een kleine nederzetting aan de Amstel. De stad is nog jong en bestaat voornamelijk uit houten huizen. De handel begint op gang te komen, maar het is nog lang niet de wereldstad die het later zal worden.\n\nDe Dam is het centrum van de stad, waar de Amstel wordt afgedamd. Hier vindt de handel plaats en ontmoeten mensen elkaar. De stad wordt beschermd door wallen en poorten, die de grenzen van de stad markeren.\n\nHet leven is eenvoudig maar hard. Visserij en scheepvaart zijn de belangrijkste bronnen van inkomsten. De stad groeit langzaam maar zeker, en de eerste stenen gebouwen verschijnen.",
+        "year": "1700",
+        "description": "# Heipalen in de modder (1000-1600)\n\nHet begint in de modder. Waar anderen in het jaar 1000 slechts een onbewoonbaar moeras zien, zien pioniers een kans. Van bovenaf is het landschap vloeibaar; land en water lopen in elkaar over. Amsterdam komt tot leven door menselijk vernuft: een dam in de rivier de Amstel (de Dam). Plotseling ontstaat er een veilige binnenhaven, het Rokin, en een zeehaven, het Damrak. De stad krijgt vorm.\n\nHet is innovatie uit pure noodzaak. Want hoe bouw je een stad op een moeras? De dam beschermt tegen overstromingen, maar wat te doen met die drassige grond? De Amsterdammers heien duizenden boomstammen de zompige bodem in, op zoek naar houvast in de diepte. Het is een onzichtbaar woud onder de grond dat zelfs tot nu toe grote delen van de stad draagt. Hier ontstaat de mentaliteit dat je de natuur niet gewillig ondergaat, maar naar je hand zet.\n\nNaast uitvindingen en ideeën begint Amsterdam zich te ontwikkelen door iets waar ze nog steeds sterk in is: financiële en juridische afspraken. Terwijl de concurrentie overal in Holland moet betalen, heeft Amsterdam een deal gesloten met de graaf van Holland. Het is een gouden ticket dat een klein vissersdorp in recordtempo tot een logistiek zwaartegewicht transformeert. Grachten worden gegraven, wallen gebouwd, pakhuizen neergezet. De stad wordt snel rijk van de handel in graan en hout uit de Oostzee. Amsterdam groeit in een paar eeuwen van 1000 naar 50 duizend inwoners.\n\nZo is het water voor de Amsterdammers niet langer alleen een vijand, maar een bondgenoot. Het water biedt bescherming, voedsel, werk en vormt de poort naar de rest van Europa.",
         "coordinate": {
-            "lat": 52.365341,
-            "lng": 4.889492
+            "lat": 52.3731449,
+            "lng": 4.8913363
         },
-        "image": "/amsterdam-1400.webp",
-        "cameraAngle": 180
+        "image": "/amsterdam-1700.webp",
+        "cameraDistance": 600
     },
     {
-        "year": 1650,
-        "description": "# De Gouden Eeuw\n\nAmsterdam groeit explosief in de 17e eeuw. De grachtengordel wordt aangelegd, een meesterwerk van stedenbouw en watermanagement. De stad wordt het centrum van de wereldhandel, met schepen die naar alle uithoeken van de aarde varen.\n\nRijke kooplieden laten prachtige grachtenpanden bouwen, die nog steeds het stadsbeeld bepalen. De kunst bloeit, met meesters als Rembrandt en Vermeer die in de stad werken. Amsterdam is een toevluchtsoord voor denkers en vluchtelingen uit heel Europa.\n\nDe bevolking groeit snel, en de stad barst uit haar voegen. Nieuwe wijken worden aangelegd, en de haven wordt steeds verder uitgebreid. Het is een tijd van ongekende welvaart en culturele bloei.",
+        "year": "1700",
+        "description": "# De Republiek (1600-1700)\n\nAls de Nederlanden in opstand komen tegen de Spaanse koning, probeert Amsterdam neutraal te blijven, uit angst voor het verlies van de handel (foreshadowing), tot het niet anders kan. Als in 1585 Antwerpen terug in de handen van de Spanjaarden valt, vlucht de helft van de stad. Er komen heel veel vluchtelingen naar Amsterdam. Ze brengen kapitaal, kennis en connecties met zich mee. Het is het einde van de glorietijd van Vlaanderen, maar het begin van die van Amsterdam. In een halve eeuw tijd wordt de kaart van Amsterdam volledig herschreven.\n\nAl die mensen moesten ergens wonen en gevoed worden. Je ziet vanuit de lucht het wonder van de stedenbouw. Amsterdam had hier geen organische groei, maar een geometrisch meesterwerk in de vorm van een hoefijzer. Alles is hier gericht op logistieke efficiëntie: wonen, werken en opslag in één systeem. Schepen varen tot aan de voordeur van de koopman. De pakhuizen puilen uit. Hoewel de specerijen uit de Oost en de West tot de verbeelding spreken (en de stad ook een donkere rol speelt in de slavenhandel) ontstaat de echte rijkdom nog steeds uit de massale handel in graan, hout, vis en andere goederen die opgeslagen en doorverhandeld worden.\n\nBuiten de stad wordt er net zo hard gewerkt om het land naar de hand van de Amsterdammers te zetten. Het meer 'de Beemster' wordt door landmeters met passer en liniaal ingetekend en leeggepompt tot een strak raster van vruchtbare grond.  Het is landbouw als innovatie; polders als voedselvoorziening voor de groeiende bevolking.",
         "coordinate": {
-            "lat": 52.374353,
-            "lng": 4.895265
+            "lat": 52.3671582,
+            "lng": 4.8861508
         },
-        "image": "/amsterdam-1600.webp"
+        "image": "/amsterdam-1700.webp",
+        "cameraDistance": 800
     },
     {
-        "year": 1800,
-        "description": "# Franse Tijd en Industrialisatie\n\nAmsterdam in de 19e eeuw. De stad verandert onder invloed van de industrialisatie. Stoommachines doen hun intrede, en fabrieken verrijzen aan de randen van de stad. De spoorwegen verbinden Amsterdam met de rest van Europa.\n\nHet is ook een tijd van sociale onrust en verandering. De arbeidersklasse groeit, en de leefomstandigheden in de volkswijken zijn vaak slecht. Tegelijkertijd worden er nieuwe culturele instellingen opgericht, zoals het Rijksmuseum en het Concertgebouw.\n\nDe stad breidt zich verder uit buiten de singelgracht. Nieuwe wijken zoals De Pijp en Oud-West worden gebouwd om de groeiende bevolking te huisvesten. Amsterdam is op weg naar de moderne tijd.",
+        "year": "1800",
+        "description": "# Het verval (1700-1800)\n\nAan het einde van de zeventiende eeuw komt er langzaam een einde aan de bloeiperiode. Drie landen vallen de Republiek aan. Het loopt niet goed af. Engeland brengt de vloot tot zinken. Frankrijk verslaat de legers. Veel kooplieden en rijke families vluchten naar andere landen, anderen kopiëren waar Amsterdam goed in was, en de handel verplaatst zich naar andere steden zoals Londen. Er is nog handel met de Oost, maar het echte kapitaal verdwijnt langzaam.\n\nJe kunt dat goed zien. De stad breidt zich bijna niet uit. Er zijn steeds minder innovaties of kunstwerken. Op een gegeven moment verzandt de haven letterlijk; schepen kunnen de stad nauwelijks meer bereiken zonder hulpmiddelen. De ooit zo drukke kades worden stiller. De wereld is complex geworden, vol oorlogen en onzekerheid. En er is één ding waar kapitaal een hekel aan heeft: onduidelijkheid.\n\nHet geld dat in de Gouden Eeuw is verdiend, zoekt nu veiligheid boven risico. De ondernemersgeest maakt plaats voor de renteniersmentaliteit. Rijke Amsterdammers trekken zich terug in hun grachtenpanden of op buitenplaatsen aan de Vecht. Het kapitaal wordt niet meer geïnvesteerd in nieuwe expedities of gewaagde ondernemingen, maar vloeit weg in buitenlandse staatsleningen. Amsterdam wordt de bankier van Europa, maar verliest haar eigen productiekracht.\n\nDe stad teert op haar vet. De pakhuizen staan vaker leeg, de werven vallen stil. Het is een tijd van consolidatie, niet van expansie. Innovatie gaat ondergronds, de salons in, waar wetenschap en kunst nog wel bloeien in gebouwen als Felix Meritis. Maar de fysieke stad ligt erbij als een slapende reus. Als Napoleon komt, is de fut er al lang uit. De scheepvaartroutes slibben dicht, net als de durf.",
         "coordinate": {
-            "lat": 52.378877,
-            "lng": 4.902558
+            "lat": 52.3569233,
+            "lng": 4.8974228
         },
         "image": "/amsterdam-1800.webp",
+        "cameraDistance": 2000,
         "colorFilter": "rgba(50, 65, 80, 0.45)"
     },
     {
-        "year": "current",
-        "description": "# Modern Amsterdam\n\nDe stad zoals we die nu kennen. Een metropool met een rijke historie, maar ook een stad die vooruit kijkt. Toerisme, technologie en creatieve industrieën zijn belangrijke pijlers van de economie.\n\nAmsterdam is een stad van diversiteit, waar mensen van over de hele wereld samenleven. De historische binnenstad is UNESCO werelderfgoed, maar de stad blijft zich vernieuwen. De Zuidas is het nieuwe zakelijke centrum, en aan de IJ-oevers verrijzen moderne woonwijken.\n\nDuurzaamheid en leefbaarheid staan hoog op de agenda. De stad streeft ernaar om klimaatneutraal te worden en de openbare ruimte te verbeteren voor fietsers en voetgangers. Amsterdam blijft een stad in beweging.",
+        "year": "1945",
+        "description": "# Opkrabbelen (1800-1945)\n\n",
         "coordinate": {
-            "lat": 52.369828,
-            "lng": 4.887973
+            "lat": 52.3571117,
+            "lng": 4.8915465
         },
-        "image": "/amsterdam-2026.webp"
+        "image": "/amsterdam-1945.webp",
+        "cameraDistance": 1000
+    },
+    {
+        "year": 1945,
+        "description": "# Wederopbouw (1945-nu)\n\nNa de oorlog moet er gebouwd worden. De blik gaat vooruit. Snel, efficiënt, grootschalig. Het Algemeen Uitbreidingsplan wordt uitgerold. Je ziet de stad als een olievlek uitdijen over de polders. Westelijke Tuinsteden. Buitenveldert. Beton, licht en groen in strakke lijnen. De auto krijgt ruim baan; tunnels duiken onder het IJ door, ringwegen omknellen de stad. De schaal verandert. De Bijlmer verrijst in de verte als een futuristische droom van honingraatflats.\n\nDe haven verschuift naar het westen, weg van de stad, naar het Westelijk Havengebied. Het oude centrum wordt het domein van de dienstensector en later het toerisme. En er verschijnt een nieuw zakencentrum: de Zuidas. Een cluster van licht en glas langs de ringweg en het spoor. Hier klopt nu het financiële hart, direct verbonden met de wereld via Schiphol en de datakabels van de AMS-IX. De stad transformeert van een havenstad naar een knooppunt van data en diensten. We zijn weer rijk, maar de vraag blijft: zijn we ook nog bouwers?",
+        "coordinate": {
+            "lat": 52.3676,
+            "lng": 4.9041
+        },
+        "image": "/amsterdam-1945.webp"
+    },
+    {
+        "year": "current",
+        "description": "# De Intelligente stad (2025-2035)\n\nKijk naar de stad van nu. Amsterdam is een levende stad waar de mens centraal staat. We zijn trots op onze drang om het goede te doen: van stadslandbouw tot armoedebestrijding. Precies dat morele kompas is onze grootste troef voor de toekomst. Want in een tijd van AI is brute rekenkracht niet genoeg; je hebt menselijke wijsheid nodig.\n\nEn die ligt hier voor het oprapen. Met een enorme rijkdom aan creatieven, consultants en kennisinstellingen hebben we alles al in huis. We hoeven onszelf niet te verliezen, maar slechts onze sociale waarden te koppelen aan de nieuwe techniek. Amsterdam wordt niet de serverruimte, maar het menselijke hart van de digitale revolutie. In deze vijf projecten komen die naar voren.",
+        "coordinate": {
+            "lat": 52.3412264,
+            "lng": 4.8899065
+        },
+        "image": "/amsterdam-2026.webp",
+        "cameraDistance": 5000
+    },
+    {
+        "year": "current",
+        "description": "# De vraag is nu:\n\nKijken we over tien jaar terug op deze tijd als het moment dat we vastliepen in onze eigen regels? Of als het moment dat we, net als onze voorouders in de modder, besloten om nieuwe heipalen te slaan voor een toekomst die we nog niet helemaal konden zien?\n\nDe kaart ligt voor je. De keuze is aan ons.",
+        "coordinate": {
+            "lat": 52.3412264,
+            "lng": 4.8899065
+        },
+        "image": "/amsterdam-2026.webp",
+        "cameraDistance": 5000,
+        "ending_text": true
     }
 ]

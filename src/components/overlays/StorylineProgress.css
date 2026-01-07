@@ -58,8 +58,8 @@
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    top: 12px; /* Center of first dot approx (24px row height / 2) */
-    bottom: 15px; /* Center of last dot approx */
+    top: 8px; /* Center of first dot (4px pad + 4px half-dot) */
+    bottom: 14px; /* Center of last dot (6px container pad + 4px pad + 4px half-dot) */
     width: 2px;
     z-index: 0;
 }
@@ -216,8 +216,8 @@
     font-size: 14px;
     color: #333;
     font-weight: 500;
-    white-space: normal; /* Allow title to wrap */
     line-height: 1.3;
+    display: none; /* Hide completely when collapsed to prevent height issues */
     opacity: 0;
     transform: translateX(10px);
     transition: all 0.2s ease-out; /* Faster transition */
@@ -226,6 +226,7 @@
 
 /* Show titles on hover */
 .storyline-progress-pill:hover .storyline-chapter-title {
+    display: block;
     opacity: 1;
     transform: translateX(0);
     pointer-events: auto;
@@ -299,14 +300,6 @@
     font-weight: 600;
 } 
 
-/* Improve hover-out transition */
-.storyline-chapter-title {
-    font-size: 14px;
-    color: #333;
-    font-weight: 500;
-    white-space: normal;
-    opacity: 0;
-    transform: translateX(10px);
-    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
-    pointer-events: none; 
-}
+
+/* Improve hover-out transition - REMOVED DUPLICATE */
+
