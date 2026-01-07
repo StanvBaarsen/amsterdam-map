@@ -3,7 +3,7 @@ import './IntroOverlay.css';
 
 interface IntroOverlayProps {
     show: boolean;
-    onStart: (skipStoryline: boolean, resume?: boolean) => void;
+    onStart: (skipStoryline: boolean, resume?: boolean, goToInnovation?: boolean) => void;
     isLoading: boolean;
     progress: number;
     hasSavedProgress?: boolean;
@@ -12,11 +12,11 @@ interface IntroOverlayProps {
 export const IntroOverlay: React.FC<IntroOverlayProps> = ({ show, onStart, isLoading, progress, hasSavedProgress }) => {
     const [showResumeParams, setShowResumeParams] = React.useState(false);
 
-    const handleStart = (skip: boolean) => {
+    const handleStart = (skip: boolean, goToInnovation: boolean = false) => {
         if (!skip && hasSavedProgress && !showResumeParams) {
              setShowResumeParams(true);
         } else {
-             onStart(skip, false);
+             onStart(skip, false, goToInnovation);
         }
     };
 
@@ -97,13 +97,13 @@ export const IntroOverlay: React.FC<IntroOverlayProps> = ({ show, onStart, isLoa
                         
                         <div className="start-options-row">
                             <button 
-                                onClick={() => handleStart(true)}
+                                onClick={() => handleStart(true, true)}
                                 className="start-button half-width"
                             >
                                 Direct naar innovatieprojecten 2030
                             </button>
                             <button 
-                                onClick={() => handleStart(true)}
+                                onClick={() => handleStart(true, false)}
                                 className="start-button half-width"
                             >
                                 Innovatie-kaart vrij verkennen

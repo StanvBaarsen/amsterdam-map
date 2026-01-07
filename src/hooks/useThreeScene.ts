@@ -39,7 +39,7 @@ export const useThreeScene = (containerRef: React.RefObject<HTMLDivElement | nul
         // Controls
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.screenSpacePanning = false;
-        controls.minDistance = 750;
+        controls.minDistance = 375;
         controls.maxDistance = 6000;
         controls.maxPolarAngle = 0.8;
         controls.enableDamping = true;

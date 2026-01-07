@@ -25,8 +25,14 @@ export const animateCameraToLocation = (
     const dist = 600; 
     const finalCamPos = target.clone().add(new THREE.Vector3(dist, dist, dist));
 
-    // Let's use a single duration for the combined movement to keep it snappy but smooth
-    const duration = 2500; 
+    // Calculate distance to determine duration
+    const currentPos = camera.position.clone();
+    const distanceToTarget = currentPos.distanceTo(finalCamPos);
+    
+    // Dynamic duration: min 800ms, max 2000ms based on distance
+    const baseDuration = 800;
+    const additionalDuration = Math.min(1200, (distanceToTarget / 5000) * 1500);
+    const duration = baseDuration + additionalDuration;
 
     // Animate X and Z (Pan/Rotate)
     new TWEEN.Tween(camera.position)

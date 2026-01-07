@@ -93,7 +93,7 @@
     background: #ff4444;
     color: white;
     border: none;
-    padding: 8px 12px;
+    padding: 8px 12px; /* fallback */
     border-radius: 8px;
     font-size: 13px;
     font-weight: 600;
@@ -102,6 +102,7 @@
     margin-bottom: 12px;
     white-space: nowrap;
     text-align: left;
+    box-sizing: border-box; /* Ensure padding is included in width */
     
     /* Fix jankiness: Don't display:none, instead hide visually but keep layout or absolute */
     /* Ideally, force it to be wide so it doesn't wrap when container is narrow */
@@ -111,7 +112,8 @@
     margin-bottom: 0;
     padding: 0;
     pointer-events: none;
-    transition: opacity 0.3s 0.1s, height 0.3s, margin 0.3s, padding 0.3s;
+    /* transition for expand + hover props */
+    transition: opacity 0.3s 0.1s, height 0.3s, margin 0.3s, padding 0.3s, background-color 0.2s, transform 0.2s, box-shadow 0.2s, border-color 0.2s, color 0.2s;
     overflow: hidden;
 }
 
@@ -119,13 +121,31 @@
     /* display: block;  <-- Removed */
     opacity: 1;
     height: auto; 
-    padding: 8px 12px;
+    padding: 12px 16px; /* Increased padding inside buttons */
     margin-bottom: 12px;
     pointer-events: auto;
 }
 
 .storyline-start-btn-inline:hover {
     background: #dd3333;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 68, 68, 0.25);
+}
+
+/* Secondary Button Styles */
+.storyline-start-btn-inline.secondary {
+    margin-top: 8px; /* Was inline */
+    font-size: 0.9em; /* Was inline */
+    background: transparent; /* Was inline */
+    border: 1px solid rgba(0,0,0,0.1); /* Was inline */
+    color: #666; /* Was inline */
+}
+
+.storyline-start-btn-inline.secondary:hover {
+    background: rgba(0,0,0,0.05);
+    border-color: rgba(0,0,0,0.3);
+    color: #333;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* Softer shadow for secondary */
 }
 
 .storyline-dot-row {
@@ -135,13 +155,16 @@
     cursor: pointer;
     width: 100%;
     opacity: 0.6;
-    transition: opacity 0.2s;
-    padding: 0 8px; /* Add padding to rows instead */
+    transition: opacity 0.2s, transform 0.2s ease, background-color 0.2s ease;
+    padding: 4px 8px; /* Slightly more vertical padding */
     box-sizing: border-box;
+    border-radius: 6px;
 }
 
 .storyline-dot-row:hover {
     opacity: 1;
+    background-color: rgba(0,0,0,0.03);
+    transform: translateX(2px);
 }
 
 .storyline-dot-row.active {
