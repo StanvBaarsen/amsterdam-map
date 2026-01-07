@@ -24,7 +24,8 @@
             "x": 122000,
             "y": 488000
         },
-        "image": "/amsterdam-1800.webp"
+        "image": "/amsterdam-1800.webp",
+        "colorFilter": "rgba(50, 65, 80, 0.45)"
     },
     {
         "year": 2026,
