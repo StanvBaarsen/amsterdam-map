@@ -612,20 +612,20 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
             
             if (tilesRef.current.root && isStable) {
                 stableFramesRef.current++;
-                // Wait for 60 frames (approx 1 sec) of stability to ensure everything is truly loaded
-                if (stableFramesRef.current > 60 && !isFinishingLoadRef.current) {
+                // Wait for 15 frames (approx 0.25 sec) of stability to ensure everything is truly loaded
+                if (stableFramesRef.current > 15 && !isFinishingLoadRef.current) {
                     isFinishingLoadRef.current = true;
                     setLoadingProgress(100);
                     setTimeout(() => {
                         setIsLoading(false);
                         isLoadingRef.current = false;
-                    }, 500);
+                    }, 200);
                 } else if (!isFinishingLoadRef.current) {
                    // Continue inching towards 100 while verifying stability
                    setLoadingProgress((prev: number) => {
                         const target = 99;
-                        const step = (target - prev) * 0.1; // Faster approach
-                        return prev + Math.max(0.1, step);
+                        const step = (target - prev) * 0.05; // Slower approach to 99 so it doesn't sit there as long
+                        return prev + Math.max(0.05, step);
                    });
                 }
             } else {

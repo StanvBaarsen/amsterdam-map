@@ -8,6 +8,7 @@ interface InnovationProject {
     description: string;
     coordinate: { x: number, y: number } | { lat: number, lng: number };
     image?: string;
+    ending_text?: boolean;
 }
 
 interface InnovationListProps {
@@ -17,6 +18,9 @@ interface InnovationListProps {
 
 export const InnovationList: React.FC<InnovationListProps> = ({ projects, onSelectProject }) => {
     const [isOpen, setIsOpen] = useState(false);
+    
+    // Filter out projects that are marked as ending text (should not show in list)
+    const visibleProjects = projects.filter(p => !p.ending_text);
 
     return (
         <div className="innovation-list-container">
@@ -36,7 +40,7 @@ export const InnovationList: React.FC<InnovationListProps> = ({ projects, onSele
                     <h3>Innovatieprojecten</h3>
                 </div>
                 <div className="innovation-items-scroll">
-                    {projects.map(project => (
+                    {visibleProjects.map(project => (
                         <button 
                             key={project.id}
                             className="innovation-item"
