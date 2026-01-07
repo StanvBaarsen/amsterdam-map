@@ -33,6 +33,13 @@ export const PALETTES: Record<string, ColorStop[]> = {
         { year: 1900, color: '#cccccc' },
         { year: 2000, color: '#ffffff' }
     ],
+    future: [
+        { year: 0, color: '#001133' },
+        { year: 1600, color: '#003366' },
+        { year: 1800, color: '#005599' },
+        { year: 1900, color: '#0077cc' },
+        { year: 2000, color: '#0099ff' }
+    ],
     // Example: Blueprint/Technical
     technical: [
         { year: 0, color: '#001133' },

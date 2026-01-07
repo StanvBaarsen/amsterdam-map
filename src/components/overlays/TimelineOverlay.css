@@ -193,16 +193,25 @@
     height: 6px;
     top: 50%;
     transform: translateY(-50%);
-    background-image: linear-gradient(to right, #ccc 33%, rgba(255,255,255,0) 0%);
-    background-position: bottom;
-    background-size: 6px 1px; /* Dotted line effect */
-    background-repeat: repeat-x;
     z-index: 1;
     pointer-events: none;
-    /* Adjust dotted style */
-    border-top: 2px dotted #aaa; 
-    border-bottom: 2px dotted #aaa;
-    /* Disable background-image approach if using border */
+    border-top: 2px dotted #bbb; 
+    border-bottom: 2px dotted #bbb;
     background: none;
     box-sizing: border-box;
+}
+
+.timeline-gap-dot {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px;
+    height: 8px;
+    background-color: #FF0000;
+    border: 2px solid white;
+    border-radius: 50%;
+    z-index: 1;
+    pointer-events: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    transition: opacity 0.2s ease;
 }

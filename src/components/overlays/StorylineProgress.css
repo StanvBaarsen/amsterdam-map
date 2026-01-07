@@ -21,11 +21,17 @@
     transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
     width: 24px; /* Collapsed width */
     height: auto;
-    overflow: hidden;
+    max-height: 80vh; /* Prevent vertical overflow */
+    overflow-y: auto; /* Allow internal scrolling if needed */
+    scrollbar-width: none; /* Hide scrollbar for cleaner look */
     display: flex;
     flex-direction: column;
     align-items: center;
     border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.storyline-progress-pill::-webkit-scrollbar {
+    display: none;
 }
 
 /* Hover state: Expand */
@@ -34,6 +40,7 @@
     padding: 24px; /* Increased padding */
     align-items: flex-start; /* Align content to left */
     border-radius: 16px;
+    overflow-y: auto;
 }
 
 /* The dots container */

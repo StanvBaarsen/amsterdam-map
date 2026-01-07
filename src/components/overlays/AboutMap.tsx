@@ -82,6 +82,10 @@ export const AboutMap: React.FC = () => {
                         <p style={{ lineHeight: '1.6', color: '#444', marginBottom: '1.5rem' }}>
                             Deze interactieve 3D-kaart visualiseert de ontwikkeling van Amsterdam door de eeuwen heen, met een focus op innovatie en groei.
                         </p>
+                        
+                        <p style={{ lineHeight: '1.6', color: '#444', marginBottom: '1.5rem', fontSize: '0.9em', fontStyle: 'italic' }}>
+                            Let op: De kaart toont de gebouwen zoals ze er zijn in 2025. Gebouwen worden ingekleurd op basis van hun bouwjaar. Historisch gezien waren er diverse gebouwen die nu niet meer bestaan; deze worden niet getoond.
+                        </p>
 
                         <div style={{ marginBottom: '1.5rem' }}>
                              <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1rem', color: '#1a1a1a' }}>Navigatie</h3>
@@ -117,6 +121,9 @@ export const AboutMap: React.FC = () => {
                             <ul style={{ margin: 0, paddingLeft: '20px', color: '#555', lineHeight: '1.5', fontSize: '0.95rem' }}>
                                 <li style={{ marginBottom: '8px' }}>
                                     <strong>3D Data:</strong> Met dank aan het <a href="https://3dbag.nl" target="_blank" rel="noopener noreferrer" style={{ color: '#ff4444', textDecoration: 'none' }}>3DBAG</a> project (TU Delft) voor de gedetailleerde gebouwinformatie en kaart-logica.
+                                </li>
+                                <li style={{ marginBottom: '8px' }}>
+                                    <strong>Bevolking:</strong> Cijfers afkomstig uit <a href="https://onderzoek.amsterdam.nl/artikel/de-amsterdamse-bevolking-tot-1900" target="_blank" rel="noopener noreferrer" style={{ color: '#ff4444', textDecoration: 'none' }}>Onderzoek & Statistiek Amsterdam</a>.
                                 </li>
                                 <li style={{ marginBottom: '8px' }}>
                                     <strong>Ontwikkeling:</strong> Door <a href="https://herprogrammeerdeoverheid.nl" target="_blank" rel="noopener noreferrer" style={{ color: '#ff4444', textDecoration: 'none' }}>Herprogrammeer de Overheid</a> (<a href="https://www.linkedin.com/in/oscar-lepoeter-87002a160/" target="_blank" rel="noopener noreferrer" style={{ color: '#ff4444', textDecoration: 'none' }}>Oscar Lepoeter</a>, <a href="https://www.linkedin.com/in/onnoericblom/" target="_blank" rel="noopener noreferrer" style={{ color: '#ff4444', textDecoration: 'none' }}>Onno Eric Blom</a> en <a href="https://www.stanvanbaarsen.nl" target="_blank" rel="noopener noreferrer" style={{ color: '#ff4444', textDecoration: 'none' }}>Stan van Baarsen</a>).
