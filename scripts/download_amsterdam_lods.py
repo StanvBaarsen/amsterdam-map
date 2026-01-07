@@ -11,7 +11,7 @@ except ImportError:
     from config import get_amsterdam_bounds
 
 # Configuration
-AMSTERDAM_BOUNDS = get_amsterdam_bounds(buffer_percent=2.5)
+AMSTERDAM_BOUNDS = get_amsterdam_bounds()
 print(f"Using bounds: {AMSTERDAM_BOUNDS}")
 
 LODS = {

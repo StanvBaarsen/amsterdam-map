@@ -1,5 +1,7 @@
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
 import './IntroOverlay.css';
+import startText from '../../assets/start_text.json';
 
 interface IntroOverlayProps {
     show: boolean;
@@ -66,12 +68,11 @@ export const IntroOverlay: React.FC<IntroOverlayProps> = ({ show, onStart, isLoa
         <div className={`intro-overlay ${show ? 'visible' : ''}`}>
             <div className="intro-card">
                 <h1 className="intro-title">
-                    Amsterdam 2030
+                    {startText.title}
                 </h1>
-                <p className="intro-description">
-                    Ontdek wat innovatie voor Amsterdam heeft betekend door de eeuwen heen. 
-                    Deze interactieve 3D-kaart toont de groei van de stad, en neemt je mee door verschillende innovatieprojecten.
-                </p>
+                <div className="intro-description">
+                    <ReactMarkdown>{startText.content}</ReactMarkdown>
+                </div>
                 <p className="mobile-warning">Deze kaart werkt het beste op een desktop.</p>
 
                 <div className="actions-area">

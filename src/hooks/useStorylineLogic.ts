@@ -1,6 +1,13 @@
 import { useEffect, useRef } from 'react';
-import storylinesData from '../assets/storylines.json';
+import storylinesDataRaw from '../assets/storylines.json';
 import TWEEN from '@tweenjs/tween.js';
+
+// Parse "current" year
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const storylinesData = storylinesDataRaw.map((s: any) => ({
+    ...s,
+    year: (s.year === "current") ? new Date().getFullYear() : s.year
+}));
 
 interface UseStorylineLogicProps {
     isPlaying: boolean;

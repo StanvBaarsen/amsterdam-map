@@ -3,7 +3,6 @@ import * as THREE from 'three';
 import TWEEN from '@tweenjs/tween.js';
 
 import { IntroOverlay } from './overlays/IntroOverlay';
-import { LoadingOverlay } from './overlays/LoadingOverlay';
 import { TimelineOverlay } from './overlays/TimelineOverlay';
 import { StorylineOverlay } from './overlays/StorylineOverlay';
 import { StorylineProgress } from './overlays/StorylineProgress';
@@ -13,8 +12,15 @@ import { AboutMap } from './overlays/AboutMap';
 import { MapControls } from './overlays/MapControls';
 
 import { wgs84ToRd } from '../utils/coords';
-import storylinesData from '../assets/storylines.json';
+import storylinesDataRaw from '../assets/storylines.json';
 import innovationProjects from '../assets/innovation_projects.json';
+
+// Handle parsing of "current" year in storylines
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const storylinesData = storylinesDataRaw.map((s: any) => ({
+    ...s,
+    year: (s.year === "current") ? new Date().getFullYear() : s.year
+}));
 
 interface MapOverlaysProps {
     isLoading: boolean;
@@ -197,7 +203,6 @@ export const MapOverlays: React.FC<MapOverlaysProps> = ({
                 isLoading={isLoading}
                 progress={loadingProgress}
             />
-            <LoadingOverlay isLoading={isLoading} showIntro={showIntro} progress={loadingProgress} />
             
             {innovationEvent && (
                 <StorylineOverlay

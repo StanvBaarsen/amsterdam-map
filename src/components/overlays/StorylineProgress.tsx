@@ -27,7 +27,7 @@ export const StorylineProgress: React.FC<StorylineProgressProps> = ({
     const getTitle = (desc: string) => {
         // Extract title from markdown-like description
         const firstLine = desc.split('\n')[0].replace(/^#+\s*/, '');
-        return firstLine.length > 25 ? firstLine.substring(0, 25) + '...' : firstLine;
+        return firstLine;
     };
 
     // Calculate progress line height
