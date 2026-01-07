@@ -198,6 +198,9 @@ export class TilesRenderer {
             this.pendingFetches++;
             fetch( requestURL, { signal } ).then( function ( res ) {
 
+                if (!res.ok) {
+                    throw new Error(`Failed to load tile: ${res.status} ${res.statusText}`);
+                }
                 return res.arrayBuffer();
 
             } ).then( function ( buffer ) {
@@ -229,12 +232,15 @@ export class TilesRenderer {
                 };
                 
                 image.onerror = function(err) {
-                    console.error("Texture load error for tile:", tileId, err);
+                    // Suppress texture load errors for cancelled/invalid tiles
+                    // console.error("Texture load error for tile:", tileId, err);
                 };
 
             } ).catch( function ( e ) {
+                
+                // console.warn("Tile fetch failed:", tileId, e.message);
 
-                // we end up here if abort() is called on the Abortcontroller attached to this tile
+                // we end up here if abort() is called on the Abortcontroller attached to this tile, or if fetch fails
                 scope.downloadQueue.delete( tileId );
                 scope.activeTiles.delete( tileId );
                 scope.resourceTracker.untrack( geometry );

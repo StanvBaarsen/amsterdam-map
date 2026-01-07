@@ -60,20 +60,23 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
 
     return (
         <div className={`timeline-overlay ${isStorylineActive ? 'storyline-active' : ''}`}>
-            <div className="timeline-play-button-container" style={{
-                width: isStorylineComplete ? '40px' : '0px',
-                opacity: isStorylineComplete ? 1 : 0
-            }}>
-                <button
-                    onClick={() => {
-                        setIsEditing(false);
-                        onPlayPause(!isPlaying);
-                    }}
-                    className="timeline-play-button"
-                >
-                    {isPlaying ? <MdPause /> : <MdPlayArrow />}
-                </button>
-            </div>
+             {!isStorylineActive && (
+                 <div className="timeline-play-button-container" style={{
+                    width: isStorylineComplete ? '40px' : '0px',
+                    opacity: isStorylineComplete ? 1 : 0
+                }}>
+                    <button
+                        onClick={(e) => {
+                            e.currentTarget.blur();
+                            setIsEditing(false);
+                            onPlayPause(!isPlaying);
+                        }}
+                        className="timeline-play-button"
+                    >
+                        {isPlaying ? <MdPause /> : <MdPlayArrow />}
+                    </button>
+                </div>
+             )}
 
             <div className="timeline-content">
                 <div className="timeline-labels">
