@@ -57,6 +57,38 @@
     margin-right: auto;
 }
 
+.mobile-warning {
+    display: none;
+    font-size: 0.9rem;
+    color: #cc5500; /* Darker orange for warning */
+    background-color: #fff4e6;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border: 1px solid #ffcc99;
+    font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .mobile-warning {
+        display: inline-block;
+    }
+    
+    .intro-card {
+        padding: 2rem;
+        max-width: 90%;
+    }
+
+    .intro-title {
+        font-size: 2rem;
+    }
+
+    .intro-description {
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+    }
+}
+
 /* New container for overlapping actions */
 .actions-area {
     display: grid;
@@ -122,11 +154,18 @@
     z-index: 1;
 }
 
-.start-options.visible {
+/* Only enable pointer events if the PARENT overlay is also visible */
+.intro-overlay.visible .start-options.visible {
     opacity: 1;
     transform: translateY(0);
     pointer-events: auto;
     z-index: 3;
+}
+
+/* Fallback for visibility without pointer events (e.g. while fading out) */
+.start-options.visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .start-options-row {

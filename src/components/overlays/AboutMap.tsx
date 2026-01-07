@@ -42,7 +42,7 @@ export const AboutMap: React.FC = () => {
                     cursor: 'pointer',
                     zIndex: 90,
                     transition: 'transform 0.2s',
-                    fontFamily: 'serif'
+                    fontFamily: '"Helvetica Neue", Arial, sans-serif'
                 }}
                 onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
                 onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
@@ -116,16 +116,12 @@ export const AboutMap: React.FC = () => {
                             <h3 style={{ margin: '0 0 10px 0', fontSize: '1rem', color: '#1a1a1a' }}>Credits</h3>
                             <ul style={{ margin: 0, paddingLeft: '20px', color: '#555', lineHeight: '1.5', fontSize: '0.95rem' }}>
                                 <li style={{ marginBottom: '8px' }}>
-                                    <strong>3D Data:</strong> Met dank aan het <a href="https://3dbag.nl" target="_blank" rel="noopener noreferrer" style={{ color: '#ff4444', textDecoration: 'none' }}>3DBAG</a> project (TUDelft) voor de gedetailleerde gebouwinformatie en kaart-logica.
+                                    <strong>3D Data:</strong> Met dank aan het <a href="https://3dbag.nl" target="_blank" rel="noopener noreferrer" style={{ color: '#ff4444', textDecoration: 'none' }}>3DBAG</a> project (TU Delft) voor de gedetailleerde gebouwinformatie en kaart-logica.
                                 </li>
                                 <li style={{ marginBottom: '8px' }}>
-                                    <strong>Realisatie:</strong> Door het <a href="https://deltainstituut.nl" target="_blank" rel="noopener noreferrer" style={{ color: '#ff4444', textDecoration: 'none' }}>Delta Instituut</a>, <a href="https://www.linkedin.com/in/oscar-lepoeter-87002a160/" target="_blank" rel="noopener noreferrer" style={{ color: '#ff4444', textDecoration: 'none' }}>Oscar Lepoeter</a>, <a href="https://www.stanvanbaarsen.nl" target="_blank" rel="noopener noreferrer" style={{ color: '#ff4444', textDecoration: 'none' }}>Stan van Baarsen</a> en <a href="https://www.linkedin.com/in/onnoericblom/" target="_blank" rel="noopener noreferrer" style={{ color: '#ff4444', textDecoration: 'none' }}>Onno Eric Blom</a>.
+                                    <strong>Ontwikkeling:</strong> Door het <a href="https://deltainstituut.nl" target="_blank" rel="noopener noreferrer" style={{ color: '#ff4444', textDecoration: 'none' }}>Delta Instituut</a> (<a href="https://www.linkedin.com/in/oscar-lepoeter-87002a160/" target="_blank" rel="noopener noreferrer" style={{ color: '#ff4444', textDecoration: 'none' }}>Oscar Lepoeter</a>, <a href="https://www.linkedin.com/in/onnoericblom/" target="_blank" rel="noopener noreferrer" style={{ color: '#ff4444', textDecoration: 'none' }}>Onno Eric Blom</a> en <a href="https://www.stanvanbaarsen.nl" target="_blank" rel="noopener noreferrer" style={{ color: '#ff4444', textDecoration: 'none' }}>Stan van Baarsen</a>).
                                 </li>
                             </ul>
-                        </div>
-                        
-                        <div style={{ textAlign: 'center', fontSize: '0.85rem', color: '#888' }}>
-                           © {new Date().getFullYear()} Delta Instituut
                         </div>
                     </div>
                 </div>
