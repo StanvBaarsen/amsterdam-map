@@ -26,8 +26,13 @@ def get_amsterdam_bounds(buffer_percent=0.6):
     width = bounds["maxRDX"] - bounds["minRDX"]
     height = bounds["maxRDY"] - bounds["minRDY"]
     
-    buffer_x = width * buffer_percent
-    buffer_y = height * (buffer_percent * 2.0)
+    # Calculate buffer
+    # buffer_percent of 4.0 means we fetch 4x the width on each side
+    # e.g. center + (0.5 + 4.0) * width
+    effective_buffer = max(buffer_percent, 4.0)
+    
+    buffer_x = width * effective_buffer
+    buffer_y = height * effective_buffer
     
     return {
         "min_x": int(bounds["minRDX"] - buffer_x),

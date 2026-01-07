@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { MdClose } from 'react-icons/md';
 import './StorylineOverlay.css';
@@ -38,6 +38,10 @@ export const StorylineOverlay: React.FC<StorylineOverlayProps> = ({
     // allEvents = []
 }) => {
     const [isExiting, setIsExiting] = React.useState(false);
+
+    useEffect(() => {
+        setIsExiting(false);
+    }, [event]);
 
     const handleNext = () => {
         setIsExiting(true);

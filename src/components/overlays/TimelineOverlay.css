@@ -145,3 +145,64 @@
         font-size: 2rem;
     }
 }
+
+.range-container {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    height: 20px;
+}
+
+.timeline-slider {
+    width: 100%;
+    margin: 0;
+    -webkit-appearance: none;
+    background: transparent; /* Handled by inline gradient */
+    height: 6px;
+    border-radius: 3px;
+    outline: none;
+    z-index: 2; /* Above the gap */
+    position: relative;
+}
+
+/* Track styles for slider to be mostly transparent so gradient shows */
+.timeline-slider::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 6px;
+    cursor: pointer;
+    background: transparent;
+    border-radius: 3px;
+}
+
+/* Thumb styles */
+.timeline-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 18px;
+    width: 18px;
+    border-radius: 50%;
+    background: #FF0000;
+    cursor: pointer;
+    margin-top: -6px; /* center thumb */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    border: 2px solid white;
+}
+
+.timeline-gap {
+    position: absolute;
+    height: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-image: linear-gradient(to right, #ccc 33%, rgba(255,255,255,0) 0%);
+    background-position: bottom;
+    background-size: 6px 1px; /* Dotted line effect */
+    background-repeat: repeat-x;
+    z-index: 1;
+    pointer-events: none;
+    /* Adjust dotted style */
+    border-top: 2px dotted #aaa; 
+    border-bottom: 2px dotted #aaa;
+    /* Disable background-image approach if using border */
+    background: none;
+    box-sizing: border-box;
+}

@@ -28,7 +28,7 @@
         "colorFilter": "rgba(50, 65, 80, 0.45)"
     },
     {
-        "year": 2026,
+        "year": "current",
         "description": "# Modern Amsterdam\n\nDe stad zoals we die nu kennen. Een metropool met een rijke historie, maar ook een stad die vooruit kijkt. Toerisme, technologie en creatieve industrieën zijn belangrijke pijlers van de economie.\n\nAmsterdam is een stad van diversiteit, waar mensen van over de hele wereld samenleven. De historische binnenstad is UNESCO werelderfgoed, maar de stad blijft zich vernieuwen. De Zuidas is het nieuwe zakelijke centrum, en aan de IJ-oevers verrijzen moderne woonwijken.\n\nDuurzaamheid en leefbaarheid staan hoog op de agenda. De stad streeft ernaar om klimaatneutraal te worden en de openbare ruimte te verbeteren voor fietsers en voetgangers. Amsterdam blijft een stad in beweging.",
         "coordinate": {
             "x": 121000,
