@@ -60,7 +60,36 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
         }
     };
 
-    const isFuture = currentYear > presentYear;
+    // removed unused isFuture
+
+    // Local state for smooth slider dragging (optimization)
+    const [localSliderValue, setLocalSliderValue] = React.useState(currentYear);
+    
+    React.useEffect(() => {
+        setLocalSliderValue(currentYear);
+    }, [currentYear]);
+
+    const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = Number(e.target.value);
+        setLocalSliderValue(val);
+        
+        // "Magnetic" logic: 
+        // If we drag past presentYear, snap to maxYear (2030)
+        // detailed logic: "secretly continue to 2027" -> means short drag distance
+        // We set input max to presentYear + 3 (approx 2028). 
+        // If val > presentYear, we treat it as 2030.
+        
+        if (val > presentYear) {
+            onYearChange(maxYear);
+        } else {
+            onYearChange(val);
+        }
+
+        if (isPlaying) onPlayPause(false);
+    };
+
+    // Calculate max value for the slider input: present + small buffer to simulate the 'gap'
+    const sliderMax = presentYear + 2; 
 
     return (
         <div className={`timeline-overlay ${isStorylineActive ? 'storyline-active' : ''}`}>
@@ -108,48 +137,35 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
                     <span>{maxYear}</span>
                 </div>
                 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
+                <div className="range-container">
                     <input
                         type="range"
                         min={minYear}
-                        max={presentYear}
-                        value={Math.min(currentYear, presentYear)}
-                        onChange={(e) => {
-                            onYearChange(Number(e.target.value));
-                            if (isPlaying) onPlayPause(false);
-                        }}
+                        max={sliderMax}
+                        value={currentYear > presentYear ? sliderMax : localSliderValue}
+                        onChange={handleSliderChange}
                         disabled={!isStorylineComplete}
                         className="timeline-slider"
                         style={{
                             cursor: isStorylineComplete ? 'pointer' : 'default',
                             opacity: isStorylineComplete ? 1 : 0.7,
-                            flex: 1
+                            background: `linear-gradient(to right, 
+                                currentColor 0%, 
+                                currentColor ${(Math.min(localSliderValue, presentYear) - minYear) / (sliderMax - minYear) * 100}%, 
+                                #ddd ${(Math.min(localSliderValue, presentYear) - minYear) / (sliderMax - minYear) * 100}%, 
+                                #ddd ${(presentYear - minYear) / (sliderMax - minYear) * 100}%,
+                                transparent ${(presentYear - minYear) / (sliderMax - minYear) * 100}%
+                            )`
                         }}
                     />
-                    
-                    {/* Future / 2030 Separator */}
-                    {maxYear > presentYear && (
-                         <div 
-                            onClick={() => {
-                                if (isStorylineComplete) {
-                                    onYearChange(maxYear);
-                                    if (isPlaying) onPlayPause(false);
-                                }
-                            }}
-                            style={{ 
-                                width: '16px', 
-                                height: '16px', 
-                                borderRadius: '50%', 
-                                background: isFuture ? '#ff4444' : '#ddd', 
-                                border: '2px solid white',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                                cursor: isStorylineComplete ? 'pointer' : 'default',
-                                transition: 'all 0.3s ease',
-                                flexShrink: 0
-                            }}
-                            title={`Innovatieprojecten in ${maxYear}`}
-                        />
-                    )}
+                    {/* Visual Dotted Line for the Gap */}
+                    <div 
+                        className="timeline-gap"
+                        style={{
+                            left: `${(presentYear - minYear) / (sliderMax - minYear) * 100}%`,
+                            width: `${(sliderMax - presentYear) / (sliderMax - minYear) * 100}%`
+                        }}
+                    />
                 </div>
             </div>
         </div>
