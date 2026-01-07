@@ -20,6 +20,8 @@ interface StorylineOverlayProps {
     currentIndex?: number;
     totalEvents?: number;
     allEvents?: StorylineEvent[];
+    nextProjectName?: string;
+    isStorylineComplete?: boolean;
 }
 
 export const StorylineOverlay: React.FC<StorylineOverlayProps> = ({ 
@@ -31,6 +33,8 @@ export const StorylineOverlay: React.FC<StorylineOverlayProps> = ({
     variant = 'default',
     currentIndex = 0,
     totalEvents = 1,
+    // nextProjectName,
+    isStorylineComplete = false,
     // allEvents = []
 }) => {
     const [isExiting, setIsExiting] = React.useState(false);
@@ -60,6 +64,8 @@ export const StorylineOverlay: React.FC<StorylineOverlayProps> = ({
         }
     };
 
+    const skipButtonText = isStorylineComplete ? "Geschiedenis afsluiten" : "Geschiedenis overslaan";
+
     return (
         <div className="storyline-overlay">
             <div 
@@ -69,9 +75,9 @@ export const StorylineOverlay: React.FC<StorylineOverlayProps> = ({
                <button 
                     onClick={handleSkip}
                     className={`storyline-skip-btn ${variant === 'innovation' ? 'icon-only' : ''}`}
-                    title={variant === 'innovation' ? "Sluiten" : "Geschiedenis overslaan"}
+                    title={variant === 'innovation' ? "Sluiten" : skipButtonText}
                 >
-                    {variant === 'innovation' ? <MdClose /> : 'geschiedenis overslaan »'}
+                    {variant === 'innovation' ? <MdClose /> : <>{skipButtonText} »</>}
                 </button>
                 <img src={event.image} alt={`Amsterdam ${event.year}`} className="storyline-image" />
                 <div className="storyline-content">
@@ -87,7 +93,7 @@ export const StorylineOverlay: React.FC<StorylineOverlayProps> = ({
                     )}
                     <button onClick={handleNext} className="storyline-next-btn">
                         {currentIndex === totalEvents - 1 
-                            ? 'Bekijk Amsterdam in 2030' 
+                            ? 'Bekijk innovatieprojecten in Amsterdam in 2030'
                             : (variant === 'innovation' ? 'Bekijk volgend project' : 'Volgende')}
                     </button>
                 </div>

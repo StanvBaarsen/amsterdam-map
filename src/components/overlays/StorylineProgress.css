@@ -46,36 +46,48 @@
     padding-bottom: 6px;
 }
 
-/* Progress Line Background */
-.dots-line-bg {
+/* Track Wrapper for the line */
+.storyline-line-track {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    top: 10px;
-    height: calc(100% - 20px);
+    top: 12px; /* Center of first dot approx (24px row height / 2) */
+    bottom: 15px; /* Center of last dot approx */
     width: 2px;
-    background: rgba(0,0,0,0.1);
     z-index: 0;
+}
+
+/* Progress Line Background */
+.dots-line-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.1);
 }
 
 /* Active Progress Line */
 .dots-line-progress {
     position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    top: 10px; /* Start at first dot center */
-    width: 2px;
+    top: 0;
+    left: 0;
+    width: 100%;
+    /* height set by inline style */
     background: #ff4444;
-    z-index: 0;
     transition: height 0.5s ease;
 }
 
 /* Override line position when expanded */
-.storyline-progress-pill:hover .dots-line-bg,
-.storyline-progress-pill:hover .dots-line-progress {
-    left: 12px; /* Center of 8px dot (at x=0? no padded 8px) -> 8 + 4 = 12px */
+.storyline-progress-pill:hover .storyline-line-track {
+    left: 12px; /* Center of 8px dot (aligned left with padding?) */
+    /* The dot row has padding: 0 8px. */
+    /* The dot is width 8px. */
+    /* Left padding 8px + half-dot 4px = 12px center. */
     transform: none;
 }
+
+/* OLD RULES REMOVED/UPDATED ABOVE */
 
 .storyline-start-btn-inline {
     background: #ff4444;
@@ -90,11 +102,26 @@
     margin-bottom: 12px;
     white-space: nowrap;
     text-align: left;
-    display: none; /* Hide when collapsed */
+    
+    /* Fix jankiness: Don't display:none, instead hide visually but keep layout or absolute */
+    /* Ideally, force it to be wide so it doesn't wrap when container is narrow */
+    min-width: 240px; 
+    opacity: 0;
+    height: 0;
+    margin-bottom: 0;
+    padding: 0;
+    pointer-events: none;
+    transition: opacity 0.3s 0.1s, height 0.3s, margin 0.3s, padding 0.3s;
+    overflow: hidden;
 }
 
 .storyline-progress-pill:hover .storyline-start-btn-inline {
-    display: block;
+    /* display: block;  <-- Removed */
+    opacity: 1;
+    height: auto; 
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    pointer-events: auto;
 }
 
 .storyline-start-btn-inline:hover {
@@ -135,7 +162,8 @@
     margin: 0 auto; /* Center when collapsed */
     position: relative;
     z-index: 2;
-    box-shadow: 0 0 0 2px rgba(255,255,255,0.8); /* White border to separate from line */
+    /* Use opaque color matching the pill background to mask the line */
+    box-shadow: 0 0 0 4px rgb(239, 240, 235); 
 }
 
 /* When expanded */
@@ -181,7 +209,7 @@
     width: 24px;
     height: 24px;
     background: transparent;
-    display: flex; /* Always display but maybe hide content? */
+    display: flex; 
     align-items: center;
     justify-content: center;
     transform: none !important; /* No scale */
@@ -194,29 +222,40 @@
 .storyline-progress-pill:hover .future-dot {
     width: 20px;
     height: 20px;
-    margin: 0;
-    margin-left: -6px; /* Align with dots */
+    margin: 0; /* Reset margins */
+    margin-left: -6px; /* Align by offset */
     background: white; 
     border: 1px solid #ff4444;
 }
 
 /* Initially hide text/wrapping config */
-.storyline-start-btn-inline,
 .storyline-skip-future-btn {
     white-space: normal; /* Allow wrap */
     word-break: break-word; /* Break if needed */
-    height: auto; /* Allow growth */
 }
 
 /* Constrain future dot width when collapsed to prevent overflow */
 .storyline-progress-pill:not(:hover) .future-dot {
     width: 20px; /* Force small width */
+    margin: 0 auto;
+    /* Ensure no sticky margin-left from other rules */
+    /* box-shadow: 0 0 0 4px rgb(239, 240, 235); optional */
+    display: flex; 
+    justify-content: center; /* Center horizontally */
+    align-items: center;     /* Center vertically */
 }
+
+/* Fix Future Row alignment when collapsed */
+/* Since storyline-dot-row has padding: 0 8px, it might offset the centered dot if width is constrained. */
+.storyline-progress-pill:not(:hover) .future-row {
+    padding: 0;
+    justify-content: center;
+}
+
 /* Hide icon when collapsed if needed, or scale down */
 .storyline-progress-pill:not(:hover) .future-icon {
     font-size: 14px;
-    /* color: transparent;  Hide icon if it's too wide? */
-    /* Or just center it */
+    margin: 0; /* Remove any margin causing shift */
 }
 
 .future-icon {
@@ -227,23 +266,16 @@
 .future-label {
     color: #ff4444;
     font-weight: 600;
-}
+} 
 
-.storyline-progress-pill:hover .future-dot {
-    margin: 0;
-    margin-left: -8px; /* Offset to center icon with 8px dots? */
-    /* 8px dot center is at 4px. 24px dot center is at 12px. Delta 8px. */
-    width: 20px;
-    height: 20px;
-    margin-left: -6px; 
-}
-
-.future-icon {
+/* Improve hover-out transition */
+.storyline-chapter-title {
     font-size: 14px;
-    color: #ff4444;
-}
-
-.future-label {
-    color: #ff4444;
-    font-weight: 600;
+    color: #333;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateX(10px);
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+    pointer-events: none; 
 }
