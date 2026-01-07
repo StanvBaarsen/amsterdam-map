@@ -6,8 +6,10 @@ import './StorylineOverlay.css';
 interface StorylineEvent {
     year: number;
     description: string;
-    coordinate: { x: number, y: number };
+    coordinate: { x: number, y: number } | { lat: number, lng: number };
     image: string;
+    cameraAngle?: number;
+    cameraDistance?: number;
 }
 
 interface StorylineOverlayProps {
@@ -97,7 +99,7 @@ export const StorylineOverlay: React.FC<StorylineOverlayProps> = ({
                     )}
                     <button onClick={handleNext} className="storyline-next-btn">
                         {currentIndex === totalEvents - 1 
-                            ? 'Bekijk innovatieprojecten in Amsterdam in 2030'
+                            ? (variant === 'innovation' ? 'Terug naar overzicht' : 'Bekijk innovatieprojecten in Amsterdam in 2030')
                             : (variant === 'innovation' ? 'Bekijk volgend project' : 'Volgende')}
                     </button>
                 </div>
