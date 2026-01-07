@@ -1,23 +1,52 @@
 [
-  {
-    "id": "project-1",
-    "name": "Marineterrein",
-    "description": "Living lab for urban challenges, testing sustainable living solutions.",
-    "coordinate": { "lat": 52.377109, "lng": 4.909920 },
-    "image": "/amsterdam-2026.webp"
-  },
-  {
-    "id": "project-2",
-    "name": "Schoonschip",
-    "description": "Floating sustainable neighborhood in Amsterdam North.",
-    "coordinate": { "lat": 52.387952, "lng": 4.924493 },
-    "image": "/amsterdam-2026.webp"
-  },
-  {
-    "id": "project-3",
-    "name": "The Valley",
-    "description": "Green, mixed-use building complex in Zuidas.",
-    "coordinate": { "lat": 52.338232, "lng": 4.856048 },
-    "image": "/amsterdam-2026.webp"
-  }
+    {
+        "id": "project-1",
+        "name": "NADI",
+        "description": "Kijk naar het Marineterrein. Eeuwenlang was dit een gesloten vesting, ommuurd en streng bewaakt, waar de marine zich in het geheim voorbereidde op dat wat te komen stond. Het is de perfecte landingsplek voor NADI, het Nederlands Agentschap voor Disruptieve Innovatie.\n\nHier combineren we onze maatschappelijke ambities met technologische durf. NADI is onze versie van DARPA, maar dan op zijn Amsterdams: gericht op de grote uitdagingen van onze tijd. Hoe houden we de stad droog? Hoe maken we energie goedkoop en groen? Hier durven we te investeren in risicovolle ideeën, niet alleen voor de winst, maar voor de wereld. Het is de plek waar we de 'moonshots' lanceren die nodig zijn voor de transities waar we ons als stad al zo hard voor maken.",
+        "coordinate": {
+            "lat": 52.3412264,
+            "lng": 4.8899065
+        },
+        "image": "/amsterdam-2026.webp"
+    },
+    {
+        "id": "project-2",
+        "name": "DeltaAI Lab",
+        "description": "Vlieg een stukje naar het zuidwesten, naar het Schinkelkwartier. Ooit een rafelrand van industrie en overslag, nu het domein van de makers. Hier komt DeltaAI. Want code alleen is niets zonder toepassing. In dit lab komen de creatives en de engineers samen.\n\nHet is de plek waar abstracte algoritmes worden omgesmeed tot werkende oplossingen voor de stad, de bedrijven en de mensen. Hier bouwen we de 'software van Nederland'. Geen logge systemen, maar slimme toepassingen die onze leraren helpen, onze zorg ontlasten en ons energienet balanceren. Amsterdammers zijn meesters in het visualiseren van de toekomst en het vertellen van verhalen. In DeltaAI smeden we die creativiteit samen met harde techniek. Hier zorgen we dat de 'intelligente machine' een menselijke toepassing krijgt.",
+        "coordinate": {
+            "lat": 52.3455725,
+            "lng": 4.8456662
+        },
+        "image": "/amsterdam-2026.webp"
+    },
+    {
+        "id": "project-3",
+        "name": "ELLIS Instituut",
+        "description": "In het oosten ligt het Science Park. Van bovenaf lijkt het een printplaat van glas en staal. Dit is het domein van de kennis. Hier verrijst het ELLIS Instituut, de magneet die het slimste talent van Europa naar onze polder trekt.\n\nWe hebben de strijd om de hardware verloren van Azië en Amerika, maar de strijd om de knappe koppen ligt nog open. ELLIS is het Europese antwoord op de brain drain. Hier werken honderden PhD-studenten en toponderzoekers aan de  vragen van morgen. Het is het fundament van de intelligentie-economie. Onze heipalen. Hier wordt de diepe kennis ontwikkeld die nodig is om niet alleen gebruiker, maar ook maker van de toekomst te blijven.",
+        "coordinate": {
+            "lat": 52.3549204,
+            "lng": 4.9564371
+        },
+        "image": "/amsterdam-2026.webp"
+    },
+    {
+        "id": "project-4",
+        "name": "Ondernemersloket",
+        "description": "En dan de Zuidas. De skyline die de stad een internationaal gezicht geeft. Er werken hier tienduizenden juristen, accountants en consultants. Hun werk gaat ingrijpend veranderen. Door AI, maar ook door 126 miljard euro aan investeringspotentieel, dat niet zo maar op de goede plek terecht komt.\n\nHier zit de implementatiekracht. De juristen, de accountants, de strategen. Zij zijn de vertalers die de wilde ideeën van de techneuten omzetten in solide businesscases die voldoen aan de wet. Dit is de 'Control Tower' in actie. Hier wordt bepaald wat mag, wat kan en wat rendeert. Amsterdam maakt hier van de nood een deugd: onze regeldruk en bureaucratie vormen we om tot een exportproduct. 'AI Act Compliant' wordt het nieuwe kwaliteitskeurmerk, en op de Zuidas wordt dat stempel gedrukt.",
+        "coordinate": {
+            "lat": 52.340699,
+            "lng": 4.8737158
+        },
+        "image": "/amsterdam-2026.webp"
+    },
+    {
+        "id": "project-5",
+        "name": "Regulatory Sandbox",
+        "description": "Tot slot vliegen we terug naar het IJ, naar de NDSM-werf. De ideale plek voor de 'Regulatory Sandbox'. Want innovatie vraagt om ruimte om te falen zonder dat je direct failliet gaat aan boetes.\n\nIn deze 'veilige haven' mogen overheden en startups samen oefenen met de toekomst. Hier mag een zelfrijdende auto een fout maken, zodat hij dat straks op de A10 niet doet. Hier mag een robotalgoritme struikelen, zodat we leren hoe we het weer overeind helpen. Hier testen we hoe een zelfsturende pont past in het drukke IJ, of hoe slimme sensoren onze privacy kunnen beschermen in plaats van schenden. Het maakt Amsterdam tot het Delaware van Europa: de plek waar je als bedrijf naartoe komt, niet omdat de regels soepel zijn, maar omdat ze helder en voorspelbaar zijn.",
+        "coordinate": {
+            "lat": 52.4003736,
+            "lng": 4.8929539
+        },
+        "image": "/amsterdam-2026.webp"
+    }
 ]

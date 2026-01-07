@@ -210,6 +210,14 @@ export const MapOverlays: React.FC<MapOverlaysProps> = ({
                     onNext={() => {
                         // Find current index
                         const idx = innovationProjects.findIndex(p => p.name === innovationEvent.name);
+                        
+                        // If we are at the last project (the ending text), close the overlay
+                        if (idx === innovationProjects.length - 1) {
+                            setInnovationEvent(null);
+                            animateCameraToOverview();
+                            return;
+                        }
+
                         const nextIdx = (idx + 1) % innovationProjects.length;
                         const nextProject = innovationProjects[nextIdx];
                         
@@ -221,6 +229,20 @@ export const MapOverlays: React.FC<MapOverlaysProps> = ({
                              image: '/amsterdam-2026.webp'
                         });
                         animateCameraToStoryline(nextProject.coordinate);
+                    }}
+                    onPrev={() => {
+                        const idx = innovationProjects.findIndex(p => p.name === innovationEvent.name);
+                        if (idx > 0) {
+                            const prevProject = innovationProjects[idx - 1];
+                            setInnovationEvent({
+                                ...prevProject,
+                                year: prevProject.year,
+                                description: `# ${prevProject.name}\n\n${prevProject.description}`,
+                                coordinate: prevProject.coordinate,
+                                image: '/amsterdam-2026.webp'
+                            });
+                            animateCameraToStoryline(prevProject.coordinate);
+                        }
                     }}
                     onSkip={() => {
                         setInnovationEvent(null);
