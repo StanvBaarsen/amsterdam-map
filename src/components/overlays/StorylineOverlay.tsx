@@ -27,11 +27,11 @@ export const StorylineOverlay: React.FC<StorylineOverlayProps> = ({
     onNext, 
     onPrev, 
     onSkip, 
-    onJump,
+    // onJump,
     variant = 'default',
     currentIndex = 0,
     totalEvents = 1,
-    allEvents = []
+    // allEvents = []
 }) => {
     const [isExiting, setIsExiting] = React.useState(false);
 
@@ -48,11 +48,11 @@ export const StorylineOverlay: React.FC<StorylineOverlayProps> = ({
         if (onSkip) onSkip();
     }
     
-    const handleChapterClick = (index: number) => {
-        if (onJump && index !== currentIndex) {
-            onJump(index);
-        }
-    }
+    // const handleChapterClick = (index: number) => {
+    //     if (onJump && index !== currentIndex) {
+    //         onJump(index);
+    //     }
+    // }
 
     const onAnimationEnd = () => {
         if (isExiting) {
@@ -62,22 +62,6 @@ export const StorylineOverlay: React.FC<StorylineOverlayProps> = ({
 
     return (
         <div className="storyline-overlay">
-            {/* Sidebar with Chapter Progress */}
-            {variant === 'default' && (
-                <div className="storyline-sidebar">
-                    {allEvents.map((evt, idx) => (
-                        <div 
-                            key={idx}
-                            className={`storyline-chapter-dot ${idx === currentIndex ? 'active' : ''} ${idx < currentIndex ? 'completed' : ''}`}
-                            onClick={() => handleChapterClick(idx)}
-                            title={`Ga naar ${evt.year}`}
-                        >
-                            <span className="chapter-tooltip">{evt.year}</span>
-                        </div>
-                    ))}
-                </div>
-            )}
-
             <div 
                 className={`storyline-card ${isExiting ? 'exiting' : ''}`}
                 onAnimationEnd={onAnimationEnd}
@@ -102,7 +86,9 @@ export const StorylineOverlay: React.FC<StorylineOverlayProps> = ({
                         </button>
                     )}
                     <button onClick={handleNext} className="storyline-next-btn">
-                        {currentIndex === totalEvents - 1 ? 'Bekijk Amsterdam in 2030' : 'Volgende'}
+                        {currentIndex === totalEvents - 1 
+                            ? 'Bekijk Amsterdam in 2030' 
+                            : (variant === 'innovation' ? 'Bekijk volgend project' : 'Volgende')}
                     </button>
                 </div>
             </div>

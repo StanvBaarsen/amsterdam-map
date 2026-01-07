@@ -72,6 +72,7 @@ export const IntroOverlay: React.FC<IntroOverlayProps> = ({ show, onStart, isLoa
                     Ontdek wat innovatie voor Amsterdam heeft betekend door de eeuwen heen. 
                     Deze interactieve 3D-kaart toont de groei van de stad, en neemt je mee door verschillende innovatieprojecten.
                 </p>
+                <p className="mobile-warning">Deze kaart werkt het beste op een desktop.</p>
 
                 <div className="actions-area">
                     <div className={`loading-container ${isLoading ? 'loading' : ''}`}>
@@ -105,7 +106,7 @@ export const IntroOverlay: React.FC<IntroOverlayProps> = ({ show, onStart, isLoa
                                 onClick={() => handleStart(true)}
                                 className="start-button half-width"
                             >
-                                Amsterdam 2030 vrij verkennen
+                                Innovatie-kaart vrij verkennen
                             </button>
                         </div>
                     </div>
