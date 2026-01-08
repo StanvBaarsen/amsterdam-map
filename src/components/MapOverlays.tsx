@@ -19,7 +19,7 @@ import innovationProjects from '../assets/innovation_projects.json';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const storylinesData = storylinesDataRaw.map((s: any) => ({
     ...s,
-    year: (s.year === "current") ? new Date().getFullYear() : s.year
+    year: (s.year === "current") ? new Date().getFullYear() : Number(s.year),
 }));
 
 interface MapOverlaysProps {
@@ -221,27 +221,34 @@ export const MapOverlays: React.FC<MapOverlaysProps> = ({
                         const nextIdx = (idx + 1) % innovationProjects.length;
                         const nextProject = innovationProjects[nextIdx];
                         
+                        // Convert WGS84 to RD for camera
+                        const rd = wgs84ToRd(nextProject.coordinate.lat, nextProject.coordinate.lng);
+                        
                         setInnovationEvent({
                             ...nextProject,
-                             year: nextProject.year,
+                             year: 2030,
                              description: `# ${nextProject.name}\n\n${nextProject.description}`,
                              coordinate: nextProject.coordinate,
                              image: '/amsterdam-2026.webp'
                         });
-                        animateCameraToStoryline(nextProject.coordinate);
+                        animateCameraToStoryline(rd);
                     }}
                     onPrev={() => {
                         const idx = innovationProjects.findIndex(p => p.name === innovationEvent.name);
                         if (idx > 0) {
                             const prevProject = innovationProjects[idx - 1];
+                            
+                            // Convert WGS84 to RD for camera
+                            const rd = wgs84ToRd(prevProject.coordinate.lat, prevProject.coordinate.lng);
+
                             setInnovationEvent({
                                 ...prevProject,
-                                year: prevProject.year,
+                                year: 2030,
                                 description: `# ${prevProject.name}\n\n${prevProject.description}`,
                                 coordinate: prevProject.coordinate,
                                 image: '/amsterdam-2026.webp'
                             });
-                            animateCameraToStoryline(prevProject.coordinate);
+                            animateCameraToStoryline(rd);
                         }
                     }}
                     onSkip={() => {
@@ -293,9 +300,13 @@ export const MapOverlays: React.FC<MapOverlaysProps> = ({
                         // Go to first innovation project
                         if (innovationProjects.length > 0) {
                              const firstProj = innovationProjects[0];
+                             
+                             // Convert WGS84 to RD
+                             const rd = wgs84ToRd(firstProj.coordinate.lat, firstProj.coordinate.lng);
+                             
                              setInnovationEvent({
                                 ...firstProj,
-                                 year: firstProj.year,
+                                 year: 2030,
                                  description: `# ${firstProj.name}\n\n${firstProj.description}`,
                                  coordinate: firstProj.coordinate,
                                  image: '/amsterdam-2026.webp'
@@ -304,14 +315,14 @@ export const MapOverlays: React.FC<MapOverlaysProps> = ({
                              // Smoothly animate year to project year
                              const yearObj = { year: currentYear };
                              new TWEEN.Tween(yearObj)
-                                .to({ year: firstProj.year }, 2000)
+                                .to({ year: 2030 }, 2000)
                                 .easing(TWEEN.Easing.Quadratic.InOut)
                                 .onUpdate(() => {
                                     setCurrentYear(Math.round(yearObj.year));
                                 })
                                 .start();
 
-                             animateCameraToStoryline(firstProj.coordinate);
+                             animateCameraToStoryline(rd);
                         } else {
                             // Fallback if no projects
                             animateCameraToOverview(); 
@@ -400,16 +411,27 @@ export const MapOverlays: React.FC<MapOverlaysProps> = ({
                                     projects={innovationProjects}
                                     onSelectProject={(project) => {
                                         setStorylineMode('overview'); // Exit story mode
+                                        
+                                        // Convert WGS84 to RD
+                                        let rd;
+                                        if ('lat' in project.coordinate) {
+                                            rd = wgs84ToRd(project.coordinate.lat, project.coordinate.lng);
+                                        } else {
+                                            rd = project.coordinate;
+                                        }
+                                        
+                                        const PROJECT_YEAR = 2030;
+
                                         setInnovationEvent({
                                             ...project, // Keep all props including name
-                                            year: project.year,
+                                            year: PROJECT_YEAR,
                                             description: `# ${project.name}\n\n${project.description}`,
                                             coordinate: project.coordinate,
                                             image: '/amsterdam-2026.webp'
                                         });
                                         setIsPlaying(false);
-                                        setCurrentYear(project.year);
-                                        animateCameraToStoryline(project.coordinate);
+                                        setCurrentYear(PROJECT_YEAR);
+                                        animateCameraToStoryline(rd);
                                         if (!controlsGuideDismissed) setControlsGuideDismissed(true);
                                     }}
                                 />

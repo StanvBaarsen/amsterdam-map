@@ -33,6 +33,7 @@
 .timeline-overlay.storyline-active {
     transform: translateX(calc(-50% - 245px));
     width: 400px; /* Force smaller width when sidebar is open */
+    pointer-events: none; /* Disable interaction during storyline */
 }
 
 @media (max-width: 1200px) {
@@ -45,6 +46,7 @@
         left: 20px;
         transform: none;
         width: 40%;
+        pointer-events: none; /* Disable interaction during storyline */
     }
 }
 

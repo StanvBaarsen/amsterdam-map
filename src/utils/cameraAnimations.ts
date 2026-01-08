@@ -71,10 +71,16 @@ export const animateCameraToLocation = (
     const currentPos = camera.position.clone();
     const distanceToTarget = currentPos.distanceTo(finalCamPos);
     
-    // Dynamic duration: min 800ms, max 2000ms based on distance
-    const baseDuration = 800;
-    const additionalDuration = Math.min(1200, (distanceToTarget / 5000) * 1500);
+    // Dynamic duration: min 1500ms, max 2500ms based on distance
+    const baseDuration = 1500;
+    const additionalDuration = Math.min(1000, (distanceToTarget / 5000) * 1000);
     const duration = baseDuration + additionalDuration;
+
+    // Detect if we are zooming out (going higher)
+    const isZoomingOut = finalCamPos.y > currentPos.y;
+    // Step 1: Delay vertical movement ONLY if zooming in (descending), creating a "swoop"
+    // If zooming out, start rising immediately to avoid dragging across the ground
+    const zoomDelay = isZoomingOut ? 0 : 200;
 
     // Animate X and Z (Pan/Rotate)
     new TWEEN.Tween(camera.position)
@@ -82,10 +88,10 @@ export const animateCameraToLocation = (
         .easing(TWEEN.Easing.Quadratic.InOut)
         .start();
 
-    // Animate Y (Zoom) with delay
+    // Animate Y (Zoom) with delay logic
     new TWEEN.Tween(camera.position)
         .to({ y: finalCamPos.y }, duration)
-        .delay(200) // Delay zoom slightly
+        .delay(zoomDelay)
         .easing(TWEEN.Easing.Quadratic.InOut)
             .onUpdate(() => {
             controls.update();
@@ -138,11 +144,18 @@ export const animateZoomOut = (
     initialCameraState: { position: THREE.Vector3, target: THREE.Vector3 },
     onNeedsRerender: () => void
 ) => {
-    if (!controls || !camera || !initialCameraState) return;
+    if (!controls || !camera) return;
 
-    const { target } = initialCameraState;
-    const initialPos = initialCameraState.position;
+    // Use current state to zoom out from WHERE WE ARE, not where we started
+    const target = controls.target.clone();
+    const initialPos = camera.position.clone();
+
     const direction = new THREE.Vector3().subVectors(initialPos, target).normalize();
+
+    // If direction is zero (camera on target), assume up
+    if (direction.lengthSq() < 0.0001) {
+        direction.set(0, 1, 0);
+    }
     
     const dist = 6000;
     const endPos = target.clone().add(direction.multiplyScalar(dist));
