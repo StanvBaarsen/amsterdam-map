@@ -20,7 +20,7 @@ interface UseStorylineLogicProps {
     setStorylineMode: React.Dispatch<React.SetStateAction<'overview' | 'focus'>>;
     setStorylineIndex: React.Dispatch<React.SetStateAction<number>>;
     setIsStorylineComplete: React.Dispatch<React.SetStateAction<boolean>>;
-    animateCameraToStoryline: (coordinate: { x: number, y: number }, onComplete?: () => void) => void;
+    animateCameraToStoryline: (coordinate: { x: number, y: number } | { lat: number, lng: number }, onComplete?: () => void, cameraAngle?: number, cameraDistance?: number) => void;
     zoomOutToMax: () => void;
     isTransitioning: boolean;
 }
@@ -45,6 +45,13 @@ export const useStorylineLogic = ({
     const isRewindingRef = useRef(false);
     const isOrbitingRef = useRef(false);
 
+    // Reset zoom out flag when restarting storyline (index 0) OR if we are in a chapter before 1850
+    useEffect(() => {
+        if (storylineIndex === 0 || (storylinesData[storylineIndex] && storylinesData[storylineIndex].year < 1850)) {
+            hasZoomedOutRef.current = false;
+        }
+    }, [storylineIndex]);
+
     // Playback Loop
     useEffect(() => {
         let interval: ReturnType<typeof setInterval>;
@@ -68,11 +75,23 @@ export const useStorylineLogic = ({
 
                     const next = prev + increment;
 
+                    // Trigger zoom out at 1850 directly in the loop to avoid timing issues
+                    if (prev < 1850 && next >= 1850 && !hasZoomedOutRef.current) {
+                        hasZoomedOutRef.current = true;
+                        isOrbitingRef.current = false;
+                        zoomOutToMax();
+                    }
+
                     if (nextEvent && next >= nextEvent.year) {
                         setIsPlaying(false);
-                        animateCameraToStoryline(nextEvent.coordinate, () => {
-                            setStorylineMode('focus');
-                        });
+                        animateCameraToStoryline(
+                            nextEvent.coordinate, 
+                            () => {
+                                setStorylineMode('focus');
+                            },
+                            nextEvent.cameraAngle,
+                            nextEvent.cameraDistance
+                        );
                         isOrbitingRef.current = true;
                         return nextEvent.year;
                     }
@@ -87,16 +106,11 @@ export const useStorylineLogic = ({
             }, 50);
         }
         return () => clearInterval(interval);
-    }, [isPlaying, storylineIndex, skipStoryline, animateCameraToStoryline]);
+    }, [isPlaying, storylineIndex, skipStoryline, animateCameraToStoryline, zoomOutToMax]);
 
-    // Independent zoom out check
-    useEffect(() => {
-        if (!isTransitioning && currentYear >= 1850 && !hasZoomedOutRef.current && !isStorylineComplete) {
-            hasZoomedOutRef.current = true;
-            zoomOutToMax();
-        }
-    }, [currentYear, zoomOutToMax, isTransitioning, isStorylineComplete]);
-
+    // Independent zoom out check (Removed as it is now handled in the loop for better sync)
+    // Kept ONLY as a fallback for non-playback scenarios if needed, but for now removing to prevent double triggers
+    // or race conditions.
 
     const handleNextStoryline = () => {
         isOrbitingRef.current = false;
@@ -122,13 +136,18 @@ export const useStorylineLogic = ({
             setTimeout(() => {
                  setStorylineIndex(nextIdx); // This will update state
                  
-                 animateCameraToStoryline(nextEvent.coordinate, () => {
-                     // Pause briefly
-                     setTimeout(() => {
-                        setStorylineMode('focus');
-                        setIsPlaying(true); 
-                     }, 500);
-                 });
+                 animateCameraToStoryline(
+                    nextEvent.coordinate, 
+                    () => {
+                        // Pause briefly
+                        setTimeout(() => {
+                            setStorylineMode('focus');
+                            setIsPlaying(true); 
+                        }, 500);
+                    },
+                    nextEvent.cameraAngle,
+                    nextEvent.cameraDistance
+                 );
                  
             }, 500);
         } else {

@@ -1,12 +1,12 @@
 [
     {
-        "year": "1700",
+        "year": "1600",
         "description": "# Heipalen in de modder (1000-1600)\n\nHet begint in de modder. Waar anderen in het jaar 1000 slechts een onbewoonbaar moeras zien, zien pioniers een kans. Van bovenaf is het landschap vloeibaar; land en water lopen in elkaar over. Amsterdam komt tot leven door menselijk vernuft: een dam in de rivier de Amstel (de Dam). Plotseling ontstaat er een veilige binnenhaven, het Rokin, en een zeehaven, het Damrak. De stad krijgt vorm.\n\nHet is innovatie uit pure noodzaak. Want hoe bouw je een stad op een moeras? De dam beschermt tegen overstromingen, maar wat te doen met die drassige grond? De Amsterdammers heien duizenden boomstammen de zompige bodem in, op zoek naar houvast in de diepte. Het is een onzichtbaar woud onder de grond dat zelfs tot nu toe grote delen van de stad draagt. Hier ontstaat de mentaliteit dat je de natuur niet gewillig ondergaat, maar naar je hand zet.\n\nNaast uitvindingen en ideeën begint Amsterdam zich te ontwikkelen door iets waar ze nog steeds sterk in is: financiële en juridische afspraken. Terwijl de concurrentie overal in Holland moet betalen, heeft Amsterdam een deal gesloten met de graaf van Holland. Het is een gouden ticket dat een klein vissersdorp in recordtempo tot een logistiek zwaartegewicht transformeert. Grachten worden gegraven, wallen gebouwd, pakhuizen neergezet. De stad wordt snel rijk van de handel in graan en hout uit de Oostzee. Amsterdam groeit in een paar eeuwen van 1000 naar 50 duizend inwoners.\n\nZo is het water voor de Amsterdammers niet langer alleen een vijand, maar een bondgenoot. Het water biedt bescherming, voedsel, werk en vormt de poort naar de rest van Europa.",
         "coordinate": {
             "lat": 52.3731449,
             "lng": 4.8913363
         },
-        "image": "/amsterdam-1700.webp",
+        "image": "/amsterdam-1600.webp",
         "cameraDistance": 600
     },
     {
@@ -23,16 +23,17 @@
         "year": "1800",
         "description": "# Het verval (1700-1800)\n\nAan het einde van de zeventiende eeuw komt er langzaam een einde aan de bloeiperiode. Drie landen vallen de Republiek aan. Het loopt niet goed af. Engeland brengt de vloot tot zinken. Frankrijk verslaat de legers. Veel kooplieden en rijke families vluchten naar andere landen, anderen kopiëren waar Amsterdam goed in was, en de handel verplaatst zich naar andere steden zoals Londen. Er is nog handel met de Oost, maar het echte kapitaal verdwijnt langzaam.\n\nJe kunt dat goed zien. De stad breidt zich bijna niet uit. Er zijn steeds minder innovaties of kunstwerken. Op een gegeven moment verzandt de haven letterlijk; schepen kunnen de stad nauwelijks meer bereiken zonder hulpmiddelen. De ooit zo drukke kades worden stiller. De wereld is complex geworden, vol oorlogen en onzekerheid. En er is één ding waar kapitaal een hekel aan heeft: onduidelijkheid.\n\nHet geld dat in de Gouden Eeuw is verdiend, zoekt nu veiligheid boven risico. De ondernemersgeest maakt plaats voor de renteniersmentaliteit. Rijke Amsterdammers trekken zich terug in hun grachtenpanden of op buitenplaatsen aan de Vecht. Het kapitaal wordt niet meer geïnvesteerd in nieuwe expedities of gewaagde ondernemingen, maar vloeit weg in buitenlandse staatsleningen. Amsterdam wordt de bankier van Europa, maar verliest haar eigen productiekracht.\n\nDe stad teert op haar vet. De pakhuizen staan vaker leeg, de werven vallen stil. Het is een tijd van consolidatie, niet van expansie. Innovatie gaat ondergronds, de salons in, waar wetenschap en kunst nog wel bloeien in gebouwen als Felix Meritis. Maar de fysieke stad ligt erbij als een slapende reus. Als Napoleon komt, is de fut er al lang uit. De scheepvaartroutes slibben dicht, net als de durf.",
         "coordinate": {
-            "lat": 52.3569233,
-            "lng": 4.8974228
+            "lat": 52.3630076,
+            "lng": 4.8908369
         },
         "image": "/amsterdam-1800.webp",
+        "cameraAngle": 25,
         "cameraDistance": 2000,
-        "colorFilter": "rgba(50, 65, 80, 0.45)"
+        "colorFilter": "rgba(50, 65, 80, 0.25)"
     },
     {
         "year": "1945",
-        "description": "# Opkrabbelen (1800-1945)\n\n",
+        "description": "# Opkrabbelen (1800-1945)\n\nLangzaam, heel langzaam ontwaakt de stad uit haar winterslaap. Terwijl in Engeland de stoommachines al decennia het hele land op zijn kop zetten, heerst in Amsterdam de geest van Jan Salie: een trage tevredenheid met het verleden. De industriële revolutie laat in Amsterdam lang op zich wachten. In het publieke zelfbeeld klinkt daarom vaak een andere toon. “Beschaving, fatsoen, gidsland”, een morele maatstaf die makkelijker vast te houden dan het inhalen van de economische achterstand.\n\nToch zijn het uiteindelijk de ingenieurs die de stad weer openbreken. Kijk naar de nieuwe sporen in het landschap: het Noordzeekanaal snijdt dwars door de duinen om de haven weer lucht te geven. Spoorlijnen trekken harde strepen door de stad en verbinden Amsterdam met het achterland. Het Centraal Station verrijst als een kathedraal van de vooruitgang, ook al sluit het de stad af van het IJ.\n\nDe stad groeit weer, en breekt voor het eerst door de zeventiende-eeuwse singelgracht heen. De Pijp, Dapperbuurt, Staatsliedenbuurt. Revolutionaire bouw voor de arbeiders die de nieuwe industrie draaiende houden. Ondernemers als Sarphati proberen de stad grandeur te geven met het Paleis voor Volksvlijt. Maar de glans is broos. De Tweede Wereldoorlog laat uiteindelijk een stad achter met een gapend gat. De Jodenbuurt is verkrot, kapot en geplunderd. Een tiende van de bevolking van Amsterdam komt nooit meer terug uit het concentratiekamp.",
         "coordinate": {
             "lat": 52.3571117,
             "lng": 4.8915465
@@ -41,13 +42,15 @@
         "cameraDistance": 1000
     },
     {
-        "year": 1945,
+        "year": "1980",
         "description": "# Wederopbouw (1945-nu)\n\nNa de oorlog moet er gebouwd worden. De blik gaat vooruit. Snel, efficiënt, grootschalig. Het Algemeen Uitbreidingsplan wordt uitgerold. Je ziet de stad als een olievlek uitdijen over de polders. Westelijke Tuinsteden. Buitenveldert. Beton, licht en groen in strakke lijnen. De auto krijgt ruim baan; tunnels duiken onder het IJ door, ringwegen omknellen de stad. De schaal verandert. De Bijlmer verrijst in de verte als een futuristische droom van honingraatflats.\n\nDe haven verschuift naar het westen, weg van de stad, naar het Westelijk Havengebied. Het oude centrum wordt het domein van de dienstensector en later het toerisme. En er verschijnt een nieuw zakencentrum: de Zuidas. Een cluster van licht en glas langs de ringweg en het spoor. Hier klopt nu het financiële hart, direct verbonden met de wereld via Schiphol en de datakabels van de AMS-IX. De stad transformeert van een havenstad naar een knooppunt van data en diensten. We zijn weer rijk, maar de vraag blijft: zijn we ook nog bouwers?",
         "coordinate": {
-            "lat": 52.3676,
-            "lng": 4.9041
+            "lat": 52.355147,
+            "lng": 4.9273276
         },
-        "image": "/amsterdam-1945.webp"
+        "image": "/amsterdam-1980.webp",
+        "cameraAngle": 135,
+        "cameraDistance": 3000
     },
     {
         "year": "current",
@@ -57,6 +60,7 @@
             "lng": 4.8899065
         },
         "image": "/amsterdam-2026.webp",
+        "cameraAngle": 0,
         "cameraDistance": 5000
     },
     {

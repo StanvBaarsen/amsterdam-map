@@ -24,17 +24,20 @@ import { MapControls } from './overlays/MapControls';
 
 import { processTileColors } from '../utils/tiles';
 // import { createPaletteTexture } from '../utils/colors'; // Now in useTileShaders
-import storylinesData from '../assets/storylines.json';
+import storylinesDataRaw from '../assets/storylines.json';
 import innovationProjects from '../assets/innovation_projects.json';
 
 // Handle parsing of "current" year in storylines
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const parsedStorylinesData = storylinesData.map((s: any) => ({
+const storylinesData = storylinesDataRaw.map((s: any) => ({
     ...s,
-    year: (s.year === "current") ? new Date().getFullYear() : s.year,
+    year: (s.year === "current") ? new Date().getFullYear() : Number(s.year), // Force Number() here
     cameraAngle: s.cameraAngle, // Ensure this property is passed through if present
     cameraDistance: s.cameraDistance
 }));
+
+const parsedStorylinesData = storylinesData; 
+
 
 interface ThreeViewerProps {
     tilesUrl?: string;
@@ -88,6 +91,8 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
             const index = parseInt(savedIndex, 10);
             if (index > 0 && index < parsedStorylinesData.length) {
                 setStorylineIndex(index);
+                // Ensure initial year is correct if resuming
+                // setCurrentYear(parsedStorylinesData[index].year); // Optional: depends on desired startup behavior
             }
         }
     }, []);

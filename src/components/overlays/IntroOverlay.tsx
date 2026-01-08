@@ -65,7 +65,7 @@ export const IntroOverlay: React.FC<IntroOverlayProps> = ({ show, onStart, isLoa
     }
 
     return (
-        <div className={`intro-overlay ${show ? 'visible' : ''}`}>
+        <div className={`intro-overlay ${show ? 'visible' : ''} ${!isLoading ? 'loaded' : ''}`}>
             <div className="intro-card">
                 <h1 className="intro-title">
                     {startText.title}
