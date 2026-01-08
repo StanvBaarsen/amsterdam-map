@@ -97,7 +97,8 @@ export const useTileShaders = (
         const shader = coloredMaterialRef.current?.userData?.shader;
         if (shader) {
             if (shader.uniforms.currentYear) {
-                shader.uniforms.currentYear.value = typeof currentYear === 'number' ? currentYear : new Date().getFullYear();
+                // Ensure currentYear is a number to prevent GLSL uniform type mismatch
+                shader.uniforms.currentYear.value = Number(currentYear) || new Date().getFullYear();
             }
             
             let sat = 1.0;
