@@ -141,7 +141,6 @@ export const animateCameraToOverview = (
 export const animateZoomOut = (
     camera: THREE.PerspectiveCamera,
     controls: any,
-    initialCameraState: { position: THREE.Vector3, target: THREE.Vector3 },
     onNeedsRerender: () => void
 ) => {
     if (!controls || !camera) return;
