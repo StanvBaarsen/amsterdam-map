@@ -326,7 +326,6 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         CameraAnims.animateZoomOut(
             cameraRef.current,
             controlsRef.current,
-            initialCameraStateRef.current,
             () => { needsRerender.current = 1; }
         );
     }, [cameraRef, controlsRef, initialCameraStateRef, needsRerender]);
