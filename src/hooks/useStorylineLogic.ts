@@ -37,8 +37,7 @@ export const useStorylineLogic = ({
     setStorylineIndex,
     setIsStorylineComplete,
     animateCameraToStoryline,
-    zoomOutToMax,
-    isTransitioning
+    zoomOutToMax
 }: UseStorylineLogicProps) => {
 
     const hasZoomedOutRef = useRef(false);
