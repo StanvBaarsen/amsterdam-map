@@ -1,6 +1,6 @@
 {
-  "name": "MyWebSite",
-  "short_name": "MySite",
+  "name": "Amsterdam 2030",
+  "short_name": "Amsterdam",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",

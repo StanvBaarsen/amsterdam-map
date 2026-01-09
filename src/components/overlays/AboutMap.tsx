@@ -84,7 +84,7 @@ export const AboutMap: React.FC = () => {
                         </p>
                         
                         <p style={{ lineHeight: '1.6', color: '#444', marginBottom: '1.5rem', fontSize: '0.9em', fontStyle: 'italic' }}>
-                            Let op: De kaart toont de gebouwen zoals ze er zijn in 2025. Gebouwen worden ingekleurd op basis van hun bouwjaar. Historisch gezien waren er diverse gebouwen die nu niet meer bestaan; deze worden niet getoond.
+                            Let op: De kaart toont de gebouwen zoals ze er zijn in 2025. Gebouwen worden ingekleurd op basis van hun bouwjaar. Historisch gezien waren er uiteraard diverse gebouwen die nu niet meer bestaan; deze worden niet getoond.
                         </p>
 
                         <div style={{ marginBottom: '1.5rem' }}>

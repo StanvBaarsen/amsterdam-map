@@ -24,6 +24,7 @@ interface StorylineOverlayProps {
     allEvents?: StorylineEvent[];
     nextProjectName?: string;
     isStorylineComplete?: boolean;
+    onStartInnovation?: () => void;
 }
 
 export const StorylineOverlay: React.FC<StorylineOverlayProps> = ({ 
@@ -32,6 +33,7 @@ export const StorylineOverlay: React.FC<StorylineOverlayProps> = ({
     onPrev, 
     onSkip, 
     // onJump,
+    onStartInnovation,
     variant = 'default',
     currentIndex = 0,
     totalEvents = 1,
@@ -40,9 +42,14 @@ export const StorylineOverlay: React.FC<StorylineOverlayProps> = ({
     // allEvents = []
 }) => {
     const [isExiting, setIsExiting] = React.useState(false);
+    const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         setIsExiting(false);
+        // Reset scroll position when event changes
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTop = 0;
+        }
     }, [event]);
 
     const handleNext = () => {
@@ -72,38 +79,64 @@ export const StorylineOverlay: React.FC<StorylineOverlayProps> = ({
 
     const skipButtonText = isStorylineComplete ? "Geschiedenis afsluiten" : "Geschiedenis overslaan";
 
+    const isEndingText = (event as any).ending_text;
+
     return (
         <div className="storyline-overlay">
             <div 
                 className={`storyline-card ${isExiting ? 'exiting' : ''}`}
                 onAnimationEnd={onAnimationEnd}
             >
-               <button 
-                    onClick={handleSkip}
-                    className={`storyline-skip-btn ${variant === 'innovation' ? 'icon-only' : ''}`}
-                    title={variant === 'innovation' ? "Sluiten" : skipButtonText}
-                >
-                    {variant === 'innovation' ? <MdClose /> : <>{skipButtonText} »</>}
-                </button>
-                <img src={event.image} alt={`Amsterdam ${event.year}`} className="storyline-image" />
-                <div className="storyline-content">
-                    <div className="storyline-description">
-                        <ReactMarkdown>{event.description}</ReactMarkdown>
+                <div className="storyline-scroll-container" ref={scrollContainerRef}>
+                    <div style={{ position: 'relative' }}>
+                        <img src={event.image} alt={`Amsterdam ${event.year}`} className="storyline-image" />
+                        <button 
+                            onClick={handleSkip}
+                            className={`storyline-skip-btn ${variant === 'innovation' ? 'icon-only' : ''}`}
+                            title={variant === 'innovation' ? "Sluiten" : skipButtonText}
+                        >
+                            {variant === 'innovation' ? <MdClose /> : <>{skipButtonText} »</>}
+                        </button>
+                    </div>
+                    <div className="storyline-content">
+                        <div className="storyline-description">
+                            <ReactMarkdown>{event.description}</ReactMarkdown>
+                        </div>
                     </div>
                 </div>
+
                 <div className="storyline-footer">
-                    {currentIndex > 0 && (
+                    {currentIndex > 0 && !isEndingText && (
                         <button onClick={handlePrev} className="storyline-prev-btn">
                             Vorige
                         </button>
                     )}
-                    <button onClick={handleNext} className="storyline-next-btn">
-                        {currentIndex === totalEvents - 1 
-                            ? (variant === 'innovation' ? 'Terug naar overzicht' : 'Bekijk innovatieprojecten in Amsterdam in 2030')
-                            : (variant === 'innovation' ? 'Bekijk volgend project' : 'Volgende')}
+                    
+                    {/* Different button if we are about to enter innovation loop */}
+                    <button 
+                        onClick={() => {
+                            if (isEndingText) {
+                                // If ending, just close/skip
+                                onSkip ? onSkip() : onNext();
+                            } else if ((event as any).startInnovation) {
+                                (onStartInnovation) ? onStartInnovation() : onNext();
+                            } else {
+                                handleNext();
+                            }
+                        }} 
+                        className="storyline-next-btn"
+                    >
+                        {isEndingText 
+                            ? "Afsluiten" 
+                            : (currentIndex === totalEvents - 1 
+                                ? (variant === 'innovation' ? 'Naar het slot' : 'Bekijk innovatieprojecten in Amsterdam in 2030')
+                                : (variant === 'innovation' ? 'Bekijk volgend project' : 'Volgende')
+                              )
+                        }
                     </button>
                 </div>
             </div>
         </div>
     );
 };
+

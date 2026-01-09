@@ -1,9 +1,9 @@
-import React, { useMemo } from 'react';
-import { MdArrowForward } from 'react-icons/md';
+import React, { useMemo, useState } from 'react';
+import { MdArrowForward, MdClose } from 'react-icons/md';
 import './StorylineProgress.css';
 
 interface StorylineProgressProps {
-    chapters: { year: number; description: string; }[];
+    chapters: { year: number; description: string; ending_text?: boolean; }[];
     activeIndex: number;
     currentYear?: number;
     mode: 'overview' | 'focus';
@@ -24,6 +24,8 @@ export const StorylineProgress: React.FC<StorylineProgressProps> = ({
     onStartStoryline
 }) => {
     
+    const [isExpanded, setIsExpanded] = useState(false);
+
     const getTitle = (desc: string) => {
         // Extract title from markdown-like description
         const firstLine = desc.split('\n')[0].replace(/^#+\s*/, '');
@@ -79,7 +81,22 @@ if (isProjectCompleted) return '100%';
 
     return (
         <div className={`storyline-progress-container ${mode}`}>
-            <div className="storyline-progress-pill">
+            <div 
+                className={`storyline-progress-pill ${isExpanded ? 'expanded' : ''}`}
+                onMouseEnter={() => setIsExpanded(true)}
+                onMouseLeave={() => setIsExpanded(false)}
+                onClick={() => setIsExpanded(true)}
+            >
+                 <button 
+                    className="storyline-close-mobile"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setIsExpanded(false);
+                    }}
+                >
+                    <MdClose />
+                </button>
+
                 {mode === 'overview' && (
                     <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
                          <button 
@@ -103,6 +120,7 @@ if (isProjectCompleted) return '100%';
                         <div className="dots-line-progress" style={{ height: progressHeight }} />
                     </div>
                     {chapters.map((chapter, index) => {
+                        if (chapter.ending_text) return null;
                         const isPast = isProjectCompleted || index < activeIndex || (currentYear && currentYear >= new Date().getFullYear());
                         const isActive = !isProjectCompleted && mode === 'focus' && index === activeIndex;
                         
@@ -110,7 +128,12 @@ if (isProjectCompleted) return '100%';
                             <div 
                                 key={index} 
                                 className={`storyline-dot-row ${isActive ? 'active' : ''} ${isPast ? 'past' : ''}`}
-                                onClick={() => onJump(index)}
+                                onClick={(e) => {
+                                    if (!isExpanded) return; // Prevent jump if not expanded (mobile tap to open)
+                                    e.stopPropagation(); // Avoid re-triggering parent click? Actually parent click just sets expanded true, so it's fine.
+                                    // But better to be explicit.
+                                    onJump(index);
+                                }}
                             >
                                 <div className={`storyline-dot ${isActive ? 'active' : ''} ${isPast ? 'completed' : ''}`} />
                                 <span className="storyline-chapter-title">
@@ -124,7 +147,10 @@ if (isProjectCompleted) return '100%';
                 {mode === 'focus' && (
                      <div 
                         className="storyline-dot-row future-row"
-                        onClick={onSkipToFuture}
+                        onClick={(e) => {
+                            if (!isExpanded) return;
+                            onSkipToFuture();
+                        }}
                      >
                         <div className="storyline-dot future-dot">
                             <MdArrowForward className="future-icon" />

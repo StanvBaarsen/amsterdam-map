@@ -8,61 +8,16 @@ interface IntroOverlayProps {
     onStart: (skipStoryline: boolean, resume?: boolean, goToInnovation?: boolean) => void;
     isLoading: boolean;
     progress: number;
-    hasSavedProgress?: boolean;
 }
 
-export const IntroOverlay: React.FC<IntroOverlayProps> = ({ show, onStart, isLoading, progress, hasSavedProgress }) => {
-    const [showResumeParams, setShowResumeParams] = React.useState(false);
+export const IntroOverlay: React.FC<IntroOverlayProps> = ({ show, onStart, isLoading, progress }) => {
 
     const handleStart = (skip: boolean, goToInnovation: boolean = false) => {
-        if (!skip && hasSavedProgress && !showResumeParams) {
-             setShowResumeParams(true);
-        } else {
-             onStart(skip, false, goToInnovation);
-        }
+         onStart(skip, false, goToInnovation);
     };
 
-    const handleResume = () => {
-        onStart(false, true);
-    }
-    
-    const handleRestart = () => {
-        onStart(false, false);
-    }
-
-    // Clamp progress at 100%
-    const displayProgress = Math.min(100, Math.round(progress));
-
-    if (showResumeParams) {
-        return (
-            <div className={`intro-overlay ${show ? 'visible' : ''}`}>
-                <div className="intro-card">
-                    <h1 className="intro-title">Verder waar je gebleven was?</h1>
-                    <p className="intro-description">
-                         Je hebt de rondleiding eerder afgebroken. Wil je verdergaan bij het hoofdstuk waar je gebleven was?
-                    </p>
-                     <div className="actions-area">
-                        <div className="start-options visible">
-                             <button 
-                                onClick={handleResume}
-                                className="start-button full-width"
-                                style={{ marginBottom: '10px' }}
-                            >
-                                Ja, ga verder
-                            </button>
-                            <button 
-                                onClick={handleRestart}
-                                className="start-button half-width"
-                                style={{ width: '100%' }}
-                            >
-                                Nee, begin opnieuw
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        )
-    }
+    // Clamp progress at 99%
+    const displayProgress = Math.min(99, Math.round(progress));
 
     return (
         <div className={`intro-overlay ${show ? 'visible' : ''} ${!isLoading ? 'loaded' : ''}`}>
