@@ -55,7 +55,7 @@
             "lng": 4.9008714
         },
         "image": "/amsterdam-2026.webp",
-        "cameraAngle": 180,
+        "cameraAngle": 0,
         "cameraDistance": 2200
     }
 ]
