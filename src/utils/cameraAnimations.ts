@@ -208,3 +208,36 @@ export const animateResetToStart = (
         })
         .start();
 };
+
+export const animateZoomOutToDefault = (
+    camera: THREE.PerspectiveCamera,
+    controls: any,
+    initialCameraState: { position: THREE.Vector3, target: THREE.Vector3 },
+    onNeedsRerender: () => void,
+    distance?: number
+) => {
+    if (!camera || !controls || !initialCameraState) return;
+    const { position: defaultPos, target } = initialCameraState;
+
+    const direction = new THREE.Vector3().subVectors(defaultPos, target).normalize();
+    if (direction.lengthSq() < 0.0001) {
+        direction.set(0, 1, 0.8).normalize();
+    }
+    
+    const dist = distance || 6000;
+    const endPos = target.clone().add(direction.multiplyScalar(dist));
+    
+    new TWEEN.Tween(camera.position)
+        .to({ x: endPos.x, y: endPos.y, z: endPos.z }, 4000)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .onUpdate(() => {
+            controls.update();
+            onNeedsRerender();
+        })
+        .start();
+
+    new TWEEN.Tween(controls.target)
+        .to({ x: target.x, y: target.y, z: target.z }, 4000)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .start();
+};

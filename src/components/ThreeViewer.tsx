@@ -48,6 +48,7 @@ interface ThreeViewerProps {
     onShowLocationBox?: (text: string) => void;
     onHideLocationBox?: () => void;
     onStorylineToggle?: (active: boolean) => void;
+    onInnovationToggle?: (active: boolean) => void;
 }
 
 export const ThreeViewer: React.FC<ThreeViewerProps> = ({
@@ -70,7 +71,8 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     onCamRotationZ,
     onShowLocationBox,
     // onHideLocationBox,
-    onStorylineToggle
+    onStorylineToggle,
+    onInnovationToggle
 }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [loadingProgress, setLoadingProgress] = useState(0);
@@ -352,9 +354,11 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     const zoomOutToMax = useCallback((customDistance?: number) => {
         if (!controlsRef.current || !cameraRef.current || !initialCameraStateRef.current) return;
         
-        CameraAnims.animateZoomOut(
+        // Use the new reset-aware zoom out
+        CameraAnims.animateZoomOutToDefault(
             cameraRef.current,
             controlsRef.current,
+            initialCameraStateRef.current,
             () => { needsRerender.current = 1; },
             customDistance
         );
@@ -412,18 +416,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                     setStorylineMode('focus');
                     setIsStorylineComplete(true);
                     
-                    animateCameraToStoryline(
-                        endingEvent.coordinate,
-                        () => {
-                            isOrbitingRef.current = true;
-                            if (controlsRef.current) {
-                                controlsRef.current.autoRotate = true;
-                                controlsRef.current.autoRotateSpeed = -1.5;
-                            }
-                        },
-                        endingEvent.cameraAngle,
-                        endingEvent.cameraDistance
-                    );
+                    animateCameraToOverview();
                 } else {
                     setStorylineMode('overview');
                     animateCameraToOverview();
@@ -481,12 +474,22 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
             setStorylineMode('overview'); // Show timeline
             setIsTransitioning(true);
             
-            // 1. Zoom Out to Overview (Using the full overview animation - approx 2000ms)
-            animateCameraToOverview();
-
             const nextEvent = parsedStorylinesData[nextIdx];
+            const isModern = nextEvent.year > 1850;
 
-            // Wait for 2000ms zoom out to finish before starting year animation
+            // 1. Zoom Out to Overview
+            let zoomTime = 2000;
+            
+            if (isModern) {
+                // "Even-more-zoomed-out view" for modern era targets
+                zoomOutToMax(6000);
+                zoomTime = 4000; // From CameraAnims.animateZoomOut duration
+            } else {
+                // Standard City Center view for historical targets
+                animateCameraToOverview();
+            }
+
+            // Wait for zoom out to finish before starting year animation
             setTimeout(() => {
                 const yearObj = { year: currentYear };
                 // Year animation duration
@@ -526,7 +529,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                         );
                     })
                     .start();
-            }, 2000); 
+            }, zoomTime); 
         } else {
              // Reached the end of the storyline (after ending text)
              setStorylineMode('overview');
@@ -587,7 +590,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                 })
                 .start();
         }, 1000);
-    }, [cameraRef, controlsRef, initialCameraStateRef, currentYear, minYear, setIsPlaying, hasZoomedOutRef, isRewindingRef, needsRerender]);
+    }, [cameraRef, controlsRef, initialCameraStateRef, currentYear, minYear, setIsPlaying, hasZoomedOutRef, isRewindingRef, needsRerender, zoomOutToMax]);
 
 
     const { placeMarkerOnPoint } = useMarkers(sceneRef, needsRerender, userHasPanned);
@@ -1253,13 +1256,17 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
 
                         setStorylineIndex(index);
                         setStorylineMode('focus');
-                        animateCameraToStoryline(event.coordinate, () => {
-                             if (controlsRef.current) {
-                                     isOrbitingRef.current = true;
-                                     controlsRef.current.autoRotate = true;
-                                     controlsRef.current.autoRotateSpeed = -1.5;
-                             }
-                        });
+                        if (event.ending_text) {
+                            animateCameraToOverview();
+                        } else {
+                            animateCameraToStoryline(event.coordinate, () => {
+                                 if (controlsRef.current) {
+                                         isOrbitingRef.current = true;
+                                         controlsRef.current.autoRotate = true;
+                                         controlsRef.current.autoRotateSpeed = -1.5;
+                                 }
+                            });
+                        }
                         if (!controlsGuideDismissed) setControlsGuideDismissed(true);
                     }}
                     onSkipToFuture={async () => {
@@ -1427,19 +1434,24 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                              const event = parsedStorylinesData[index];
                              setCurrentYear(event.year);
                              setStorylineMode('focus');
-                             animateCameraToStoryline(
-                                 event.coordinate, 
-                                 () => {
-                                     // Enable rotation after arriving ONLY if no fixed angle
-                                     if (event.cameraAngle === undefined && controlsRef.current) {
-                                         isOrbitingRef.current = true;
-                                         controlsRef.current.autoRotate = true;
-                                         controlsRef.current.autoRotateSpeed = -1.5;
-                                     }
-                                 },
-                                 event.cameraAngle,
-                                 event.cameraDistance
-                             );
+                             
+                             if (event.ending_text) {
+                                 animateCameraToOverview();
+                             } else {
+                                 animateCameraToStoryline(
+                                     event.coordinate, 
+                                     () => {
+                                         // Enable rotation after arriving ONLY if no fixed angle
+                                         if (event.cameraAngle === undefined && controlsRef.current) {
+                                             isOrbitingRef.current = true;
+                                             controlsRef.current.autoRotate = true;
+                                             controlsRef.current.autoRotateSpeed = -1.5;
+                                         }
+                                     },
+                                     event.cameraAngle,
+                                     event.cameraDistance
+                                 );
+                             }
                         }
                     }}
                     nextProjectName={innovationProjects[0]?.name}
@@ -1455,6 +1467,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                             {storylineMode === 'overview' && !innovationEvent && (
                                 <InnovationList
                                     projects={innovationProjects}
+                                    onToggle={onInnovationToggle}
                                     onSelectProject={(project) => {
                                         setStorylineMode('overview'); // Exit story mode
                                         setInnovationEvent({
@@ -1512,15 +1525,6 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                                     .start();
                              }
 
-                             // Max zoom logic when exploring (timeline scrubbing) after 1850
-                             if (targetYear > 1850 && storylineMode !== 'focus' && !innovationEvent && !hasZoomedOutRef.current) {
-                                 // Trigger max zoom
-                                 if (zoomOutToMax) {
-                                     zoomOutToMax();
-                                     hasZoomedOutRef.current = true; // Prevent repeated triggers
-                                 }
-                             }
-                             
                              if (storylineMode !== 'focus') {
                                 // If target year is 2030 zone
                                 if (false) {

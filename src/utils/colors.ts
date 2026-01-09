@@ -17,14 +17,14 @@ type ColorStop = { year: number; color: string };
 
 export const PALETTES: Record<string, ColorStop[]> = {
     default: [
-        { year: 0, color: '#902020' },    // Lightened
-        { year: 1400, color: '#a03030' }, // Lightened
-        { year: 1500, color: '#b04040' }, // Lightened
-        { year: 1600, color: '#bb1100' },
-        { year: 1700, color: '#dd3300' },
-        { year: 1800, color: '#ff5500' },
-        { year: 1900, color: '#ff7700' },
-        { year: 2000, color: '#ff9900' }
+        { year: 0, color: '#5c1212' },     // Dark Red
+        { year: 1400, color: '#8f1f1f' },  // Red
+        { year: 1500, color: '#bf2c2c' },  // Bright Red
+        { year: 1600, color: '#d95d5d' },  // Light Red
+        { year: 1700, color: '#9e79a1' },  // Purple Transition
+        { year: 1800, color: '#6889ba' },  // Blue Transition
+        { year: 1900, color: '#4473ad' },  // Blue
+        { year: 2000, color: '#244f7d' }   // Dark Blue
     ],
     grayscale: [
         { year: 0, color: '#333333' },
@@ -34,16 +34,8 @@ export const PALETTES: Record<string, ColorStop[]> = {
         { year: 2000, color: '#ffffff' }
     ],
     future: [
-        { year: 0, color: '#224477' },    // Lightened from 001133
-        { year: 1600, color: '#335588' }, // Lightened from 003366
-        { year: 1800, color: '#005599' },
-        { year: 1900, color: '#0077cc' },
-        { year: 2000, color: '#0099ff' }
-    ],
-    // Example: Blueprint/Technical
-    technical: [
-        { year: 0, color: '#001133' },
-        { year: 1600, color: '#003366' },
+        { year: 0, color: '#224477' },
+        { year: 1600, color: '#335588' },
         { year: 1800, color: '#005599' },
         { year: 1900, color: '#0077cc' },
         { year: 2000, color: '#0099ff' }
