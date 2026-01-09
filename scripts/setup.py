@@ -29,7 +29,7 @@ def check_env_vars():
         sys.exit(1)
     print("Environment variables check passed.")
 
-def run_script(script_name, is_node=False):
+def run_script(script_name, args=None, is_node=False):
     print(f"--- Running {script_name} ---")
     script_dir = Path(__file__).parent.resolve()
     script_path = script_dir / script_name
@@ -39,6 +39,9 @@ def run_script(script_name, is_node=False):
         cmd = ["node", str(script_path)]
     else:
         cmd = [sys.executable, str(script_path)]
+
+    if args:
+        cmd.extend(args)
         
     # Run from project root so "data/" paths are relative to root
     result = subprocess.run(cmd, check=False, cwd=str(project_root))
@@ -58,6 +61,11 @@ def main():
     
     # 2. Download LOD 1.2 and 2.2
     run_script("download_amsterdam_lods.py")
+
+    # 3. Optimize B3DM files
+    print("Optimization will strip unused attributes to reduce file size.")
+    run_script("optimize_b3dm.py", args=["data/amsterdam_3dtiles_lod12/tiles/"])
+    run_script("optimize_b3dm.py", args=["data/amsterdam_3dtiles_lod22/tiles/"])
     
     # 4. Upload to R2
     # ask if user wants to upload
