@@ -17,7 +17,7 @@ type ColorStop = { year: number; color: string };
 
 export const PALETTES: Record<string, ColorStop[]> = {
     default: [
-        { year: 0, color: '#5c1212' },     // Dark Red
+        { year: 0, color: '#902020' },     // Lighter Dark Red (matches getBuildingColor < 1400)
         { year: 1400, color: '#8f1f1f' },  // Red
         { year: 1500, color: '#bf2c2c' },  // Bright Red
         { year: 1600, color: '#d95d5d' },  // Light Red

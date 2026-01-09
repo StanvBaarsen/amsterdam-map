@@ -29,7 +29,8 @@ export const StorylineProgress: React.FC<StorylineProgressProps> = ({
     const getTitle = (desc: string) => {
         // Extract title from markdown-like description
         const firstLine = desc.split('\n')[0].replace(/^#+\s*/, '');
-        return firstLine;
+        // Remove text in parentheses (including the parens)
+        return firstLine.replace(/\s*\(.*?\)/g, '').trim();
     };
 
     return (
