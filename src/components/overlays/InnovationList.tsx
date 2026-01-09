@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MdLightbulbOutline, MdClose } from 'react-icons/md';
 import './InnovationList.css';
 
@@ -14,10 +14,22 @@ interface InnovationProject {
 interface InnovationListProps {
     projects: InnovationProject[];
     onSelectProject: (project: InnovationProject) => void;
+    onToggle?: (isOpen: boolean) => void;
 }
 
-export const InnovationList: React.FC<InnovationListProps> = ({ projects, onSelectProject }) => {
+export const InnovationList: React.FC<InnovationListProps> = ({ projects, onSelectProject, onToggle }) => {
     const [isOpen, setIsOpen] = useState(false);
+    
+    useEffect(() => {
+        return () => {
+            onToggle?.(false);
+        };
+    }, [onToggle]);
+
+    const handleToggle = (newState: boolean) => {
+        setIsOpen(newState);
+        onToggle?.(newState);
+    };
     
     // Filter out projects that are marked as ending text (should not show in list)
     const visibleProjects = projects.filter(p => !p.ending_text);
@@ -26,7 +38,7 @@ export const InnovationList: React.FC<InnovationListProps> = ({ projects, onSele
         <div className="innovation-list-container">
             <button 
                 className={`innovation-toggle ${isOpen ? 'active' : ''}`}
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={() => handleToggle(!isOpen)}
                 title="Innovatieprojecten"
             >
                 <div className="icon-wrapper">
@@ -46,7 +58,7 @@ export const InnovationList: React.FC<InnovationListProps> = ({ projects, onSele
                             className="innovation-item"
                             onClick={() => {
                                 onSelectProject(project);
-                                setIsOpen(false); // Close on select
+                                handleToggle(false); // Close on select
                             }}
                         >
                             <span className="innovation-item-name">{project.name}</span>
