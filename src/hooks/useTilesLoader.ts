@@ -74,13 +74,14 @@ export const useTilesLoader = ({
         const isMobile = window.innerWidth < 768;
 
         // Reduce cache size significantly for mobile to prevent OOM crashes
-        // Aggressive limits: minSize=150, maxSize=300 for mobile
-        // If "tiles stays around 100", let's keep it close to that.
-        tiles.lruCache.minSize = isMobile ? 150 : 4000;
-        tiles.lruCache.maxSize = isMobile ? 300 : 6000;
+        // Adjusted to prevent "thrashing" (load/unload loop) which causes low FPS.
+        // If the view needs ~100 tiles, minSize must be comfortably above that.
+        tiles.lruCache.minSize = isMobile ? 350 : 4000;
+        tiles.lruCache.maxSize = isMobile ? 500 : 6000;
         
         // @ts-ignore
-        tiles.lruCache.unloadPercent = isMobile ? 0.5 : 0.05; // Force unloading of unused tiles aggressively on mobile
+        // Unload less aggressively to avoid CPU spikes from re-decoding
+        tiles.lruCache.unloadPercent = isMobile ? 0.1 : 0.05; 
 
         // Increase error target on mobile to reduce geometry load (lower LOD)
         tiles.errorTarget = isMobile ? 20 : 10;
