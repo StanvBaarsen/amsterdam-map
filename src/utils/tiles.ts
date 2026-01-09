@@ -58,10 +58,19 @@ export const processTileColors = (scene: THREE.Object3D | THREE.Group, tile: any
             if (c.isMesh) {
                 let geometry = c.geometry;
 
+                // Dispose of the original material created by the loader as we are replacing it
+                // This prevents memory leaks as 3d-tiles-renderer won't dispose it if it's detached
+                if (c.material && c.material !== coloredMaterial && c.material !== defaultMaterial) {
+                    c.material.dispose();
+                }
+
                 // Ensure geometry is non-indexed to support per-face coloring (hard edges)
                 if (geometry.index) {
+                    const oldGeometry = geometry;
                     geometry = geometry.toNonIndexed();
                     c.geometry = geometry;
+                    // Dispose of the original indexed geometry
+                    oldGeometry.dispose();
                 }
 
                 const batchIdAttr = geometry.getAttribute('_batchid');
@@ -99,6 +108,10 @@ export const processTileColors = (scene: THREE.Object3D | THREE.Group, tile: any
             if (c.isMesh &&
                 c.material !== defaultMaterial &&
                 c.material !== coloredMaterial) {
+                
+                // Dispose old material before replacing
+                if (c.material) c.material.dispose();
+                
                 c.material = defaultMaterial;
             }
         });
