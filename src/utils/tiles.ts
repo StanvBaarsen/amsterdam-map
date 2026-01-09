@@ -153,7 +153,6 @@ export const processTileColors = (scene: THREE.Object3D | THREE.Group, tile: any
                     // parameters are identical, so GPU overhead is negligible and stability is improved.
                     c.material = coloredMaterial.clone();
                 }
-                }
             }
         });
         // Only mark processed if we successfully applied colors
