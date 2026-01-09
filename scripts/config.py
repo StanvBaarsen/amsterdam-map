@@ -28,8 +28,7 @@ def get_amsterdam_bounds(buffer_percent=0.6):
     
     # Calculate buffer
     # buffer_percent of 4.0 means we fetch 4x the width on each side
-    # e.g. center + (0.5 + 4.0) * width
-    effective_buffer = max(buffer_percent, 4.0)
+    effective_buffer = buffer_percent
     
     buffer_x = width * effective_buffer
     buffer_y = height * effective_buffer
