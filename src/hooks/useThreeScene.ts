@@ -16,7 +16,8 @@ export const useThreeScene = (containerRef: React.RefObject<HTMLDivElement | nul
 
         // Renderer
         const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setPixelRatio(window.devicePixelRatio);
+        // Cap pixel ratio at 2.0 to prevent performance issues on high-DPI devices (especially mobile)
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
         renderer.setClearColor(0xf0f0f0);
         renderer.outputColorSpace = THREE.SRGBColorSpace;

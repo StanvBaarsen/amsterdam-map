@@ -80,6 +80,26 @@ export class TilesRenderer {
 
 				}
 
+                // Memory Cleanup: Prune tiles that are no longer in view
+                // This prevents infinite accumulation of tiles during long sessions (e.g. storylines)
+                const MAX_ACTIVE_TILES = 50;
+                if (this.activeTiles.size > MAX_ACTIVE_TILES) {
+                    for ( let i = this.group.children.length - 1; i >= 0; i-- ) {
+                        const child = this.group.children[i];
+                        // Only remove if it has a tileId (managed by us) and is not visible
+                        if (child.userData.tileId && !tidsInView.has(child.userData.tileId)) {
+                             // Also ensure we don't remove tiles from other levels if they are being handled by cleanTileLevels?
+                             // No, cleanTileLevels handles cross-level. 
+                             // But actually if we are simply panning, tileLevel is constant.
+                             // So we just check tileId.
+                             
+                             this.group.remove(child);
+                             this.resourceTracker.untrack(child);
+                             this.activeTiles.delete(child.userData.tileId);
+                        }
+                    }
+                }
+
 			} );
 
 		}
@@ -178,6 +198,7 @@ export class TilesRenderer {
 
 		var mesh = new Mesh( geometry, this.tempMaterial );
 		mesh.name = this.tileLevel;
+        mesh.userData.tileId = tile.getId();
 		// The temporary (white) tiles on the bottom
 		mesh.renderOrder = -3;
 		this.group.add( mesh );
