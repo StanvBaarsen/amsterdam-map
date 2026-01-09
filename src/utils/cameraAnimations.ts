@@ -82,10 +82,50 @@ export const animateCameraToLocation = (
     // If zooming out, start rising immediately to avoid dragging across the ground
     const zoomDelay = isZoomingOut ? 0 : 200;
 
-    // Animate X and Z (Pan/Rotate)
-    new TWEEN.Tween(camera.position)
-        .to({ x: finalCamPos.x, z: finalCamPos.z }, duration)
-        .easing(TWEEN.Easing.Quadratic.InOut)
+    // --- Calculate Orbital Animation Paths ---
+    // Start State
+    const startTarget = controls.target.clone();
+    const startCameraPos = camera.position.clone();
+    const startOffset = new THREE.Vector3().subVectors(startCameraPos, startTarget);
+    const startRadius = Math.sqrt(startOffset.x * startOffset.x + startOffset.z * startOffset.z);
+    // atan2(y, x) -> using x = -r*sin(th), z = r*cos(th) => theta = atan2(-x, z)
+    const startAngle = Math.atan2(-startOffset.x, startOffset.z);
+
+    // End State
+    const endOffset = new THREE.Vector3().subVectors(finalCamPos, target);
+    const endRadius = Math.sqrt(endOffset.x * endOffset.x + endOffset.z * endOffset.z);
+    let endAngle = Math.atan2(-endOffset.x, endOffset.z);
+
+    // Shortest Path Rotation Logic
+    // Ensure we rotate the shortest distance (e.g. 170 -> -170 should cross 180, not 0)
+    let angleDiff = endAngle - startAngle;
+    while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+    while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+    endAngle = startAngle + angleDiff;
+
+    // Animate X and Z (Orbital Rotate/Pan)
+    // We tween a proxy value 't' from 0 to 1 to drive the complex interpolation
+    const orbitalState = { t: 0 };
+    new TWEEN.Tween(orbitalState)
+        .to({ t: 1 }, duration)
+        .easing(TWEEN.Easing.Quadratic.InOut) 
+        .onUpdate(() => {
+            const t = orbitalState.t;
+            
+            // Interpolate Angle & Radius
+            const curAngle = startAngle + (endAngle - startAngle) * t;
+            const curRadius = startRadius + (endRadius - startRadius) * t;
+            
+            // Interpolate Target (syncs with the separate target tween)
+            const curTargetX = startTarget.x + (target.x - startTarget.x) * t;
+            const curTargetZ = startTarget.z + (target.z - startTarget.z) * t;
+
+            // Reconstruct Camera Position
+            // x = -r * sin(theta)
+            // z = r * cos(theta)
+            camera.position.x = curTargetX - curRadius * Math.sin(curAngle);
+            camera.position.z = curTargetZ + curRadius * Math.cos(curAngle);
+        })
         .start();
 
     // Animate Y (Zoom) with delay logic
