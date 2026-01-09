@@ -109,6 +109,9 @@ export const useTilesLoader = ({
         tilesRef.current = tiles;
 
         return () => {
+             // Dispose loaders to terminate workers
+             dracoLoader.dispose();
+             
             if (tilesRef.current) {
                 if (offsetParentRef.current) offsetParentRef.current.remove(tilesRef.current.group);
                 if (tilesRef.current.dispose) tilesRef.current.dispose();

@@ -9,6 +9,8 @@ interface InnovationProject {
     coordinate: { x: number, y: number } | { lat: number, lng: number };
     image?: string;
     ending_text?: boolean;
+    cameraAngle?: number;
+    cameraDistance?: number;
 }
 
 interface InnovationListProps {

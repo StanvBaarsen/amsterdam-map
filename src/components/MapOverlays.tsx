@@ -139,7 +139,7 @@ export const MapOverlays: React.FC<MapOverlaysProps> = ({
                     setSkipStoryline(skip);
                     
                     if (skip) {
-                        setCurrentYear(new Date().getFullYear());
+                        setCurrentYear(2030);
                         setIsPlaying(false);
                         setIsStorylineComplete(true);
                         animateCameraToOverview();
@@ -243,7 +243,7 @@ export const MapOverlays: React.FC<MapOverlaysProps> = ({
                              coordinate: nextProject.coordinate,
                              image: '/amsterdam-2026.webp'
                         });
-                        animateCameraToStoryline(rd);
+                        animateCameraToStoryline(rd, undefined, nextProject.cameraAngle, nextProject.cameraDistance);
                     }}
                     onPrev={() => {
                         const idx = innovationProjects.findIndex(p => p.name === innovationEvent.name);
@@ -402,7 +402,7 @@ export const MapOverlays: React.FC<MapOverlaysProps> = ({
                         
                         // Smoothly animate year to PRESENT_YEAR
                         const yearObj = { year: currentYear };
-                        const PRESENT_YEAR = new Date().getFullYear();
+                        const PRESENT_YEAR = 2030;
                         new TWEEN.Tween(yearObj)
                             .to({ year: PRESENT_YEAR }, 2500) 
                             .easing(TWEEN.Easing.Quadratic.InOut)
@@ -464,7 +464,8 @@ export const MapOverlays: React.FC<MapOverlaysProps> = ({
                                         });
                                         setIsPlaying(false);
                                         setCurrentYear(PROJECT_YEAR);
-                                        animateCameraToStoryline(rd);
+                                        // @ts-ignore
+                                        animateCameraToStoryline(rd, undefined, project.cameraAngle, project.cameraDistance);
                                         if (!controlsGuideDismissed) setControlsGuideDismissed(true);
                                     }}
                                 />
@@ -473,7 +474,7 @@ export const MapOverlays: React.FC<MapOverlaysProps> = ({
                     )}
                     <TimelineOverlay
                         minYear={minYear}
-                        maxYear={new Date().getFullYear()}
+                        maxYear={2030}
                         currentYear={currentYear}
                         onYearChange={(targetYear) => {
                              if (isPlaying) setIsPlaying(false);

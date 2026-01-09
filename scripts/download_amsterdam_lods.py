@@ -16,7 +16,6 @@ print(f"Using bounds: {AMSTERDAM_BOUNDS}")
 
 LODS = {
     "lod12": "https://data.3dbag.nl/v20250903/3dtiles/lod12/",
-    "lod13": "https://data.3dbag.nl/v20250903/3dtiles/lod13/",
     "lod22": "https://data.3dbag.nl/v20250903/3dtiles/lod22/"
 }
 
