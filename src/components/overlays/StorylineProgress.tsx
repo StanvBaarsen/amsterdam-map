@@ -147,7 +147,7 @@ if (isProjectCompleted) return '100%';
                 {mode === 'focus' && (
                      <div 
                         className="storyline-dot-row future-row"
-                        onClick={(e) => {
+                        onClick={() => {
                             if (!isExpanded) return;
                             onSkipToFuture();
                         }}
