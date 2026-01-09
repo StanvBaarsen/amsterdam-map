@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { getBuildingColor } from './colors';
 
 export const processTileColors = (scene: THREE.Object3D | THREE.Group, tile: any, coloredMaterial: THREE.Material, defaultMaterial: THREE.Material) => {
     // Check if we've already processed this tile

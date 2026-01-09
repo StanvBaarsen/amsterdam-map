@@ -49,7 +49,7 @@ interface MapOverlaysProps {
     controlsRef: React.RefObject<any>;
     cameraRef: React.RefObject<any>;
     tilesRef: React.RefObject<any>;
-    animateCameraToStoryline: (target: { x: number, y: number }, cb?: () => void) => void;
+    animateCameraToStoryline: (target: { x: number, y: number } | { lat: number, lng: number }, cb?: () => void, cameraAngle?: number, cameraDistance?: number) => void;
     animateCameraToOverview: () => void;
     placeMarkerOnPoint: (pos: THREE.Vector3) => void;
     handleNextStoryline: () => void;
