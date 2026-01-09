@@ -303,6 +303,18 @@
         height: auto;
     }
 
+    .storyline-description h1 {
+        font-size: 1.5rem;
+    }
+
+    .storyline-description h2 {
+        font-size: 1.3rem;
+    }
+
+    .storyline-description h3 {
+        font-size: 1.1rem;
+    }
+
     .storyline-scroll-container {
         overflow-y: auto;
         flex: 1;
@@ -314,6 +326,7 @@
         flex: none; /* Fixed footer */
         position: relative;
         width: 100%;
+        box-sizing: border-box; /* Prevent overflow due to padding */
         background: white;
         z-index: 5;
         box-shadow: 0 -2px 10px rgba(0,0,0,0.05); /* Subtle separation */
