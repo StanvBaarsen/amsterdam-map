@@ -21,7 +21,6 @@ import { InnovationList } from './overlays/InnovationList';
 import { MapControlsGuide } from './overlays/MapControlsGuide';
 import { AboutMap } from './overlays/AboutMap';
 import { MapControls } from './overlays/MapControls';
-import { DebugMonitor } from './overlays/DebugMonitor';
 
 import { processTileColors } from '../utils/tiles';
 // import { createPaletteTexture } from '../utils/colors'; // Now in useTileShaders
@@ -150,24 +149,6 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     const [userHasPanned, setUserHasPanned] = useState(false);
     const [userHasRotated, setUserHasRotated] = useState(false);
     const controlsLearnedRef = useRef(false);
-    const [showDebug, setShowDebug] = useState(false);
-
-    useEffect(() => {
-        // Toggle debug with 'd' key
-        const handleKey = (e: KeyboardEvent) => {
-            if (e.key === 'd' || e.key === 'D') {
-                setShowDebug(prev => !prev);
-            }
-        };
-        window.addEventListener('keydown', handleKey);
-        
-        // Also enable via URL param ?debug=true
-        if (new URLSearchParams(window.location.search).get('debug')) {
-            setShowDebug(true);
-        }
-
-        return () => window.removeEventListener('keydown', handleKey);
-    }, []);
 
     useEffect(() => {
         // Clear old storage if exists
@@ -1528,9 +1509,6 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                     totalEvents={parsedStorylinesData.length}
                     allEvents={parsedStorylinesData}
                 />
-            )}
-            {showDebug && rendererRef.current && (
-                <DebugMonitor renderer={rendererRef.current} tilesRef={tilesRef} />
             )}
 
             {!showIntro && !isLoading && (
