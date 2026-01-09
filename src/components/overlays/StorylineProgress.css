@@ -30,17 +30,59 @@
     border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
+@media (max-width: 768px) {
+    .storyline-progress-container {
+        display: none !important;
+    }
+}
+
 .storyline-progress-pill::-webkit-scrollbar {
     display: none;
 }
 
 /* Hover state: Expand */
-.storyline-progress-pill:hover {
-    width: 340px; /* Expanded width - increased to fit content better */
+.storyline-progress-pill:hover,
+.storyline-progress-pill.expanded {
+    width: auto; 
+    min-width: 340px; /* Expanded width - increased to fit content better */
+    max-width: 400px;
     padding: 24px; /* Increased padding */
+    padding-top: 34px; /* Make room for close button */
     align-items: flex-start; /* Align content to left */
     border-radius: 16px;
     overflow-y: auto;
+}
+
+.storyline-close-mobile {
+    display: none;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: transparent;
+    border: none;
+    color: #666;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px;
+    z-index: 30;
+    border-radius: 50%;
+}
+
+.storyline-close-mobile:hover {
+    background: rgba(0,0,0,0.05);
+    color: #000;
+}
+
+/* On mobile, only show when parent is explicitly expanded */
+@media (max-width: 768px) {
+    .storyline-progress-pill.expanded .storyline-close-mobile {
+        display: block; 
+    }
+}
+
+/* On desktop, show it if expanded manually too (optional, but requested for mobile) */
+.storyline-progress-pill.expanded .storyline-close-mobile {
+    display: block;
 }
 
 /* The dots container */
@@ -51,6 +93,28 @@
     width: 100%;
     position: relative;
     padding-bottom: 6px;
+}
+
+.storyline-chapter-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0;
+    transition: opacity 0.2s;
+    transition-delay: 0s;
+    /* Ensure it doesn't take up space */
+    max-width: 0; 
+}
+
+.storyline-progress-pill:hover .storyline-chapter-title.future-label {
+    white-space: normal; /* Allow wrapping */
+    height: auto;
+}
+
+.storyline-progress-pill:hover .storyline-chapter-title {
+    opacity: 1;
+    transition-delay: 0.2s;
+    max-width: 260px; /* Allow expansion */
 }
 
 /* Track Wrapper for the line */
@@ -85,12 +149,47 @@
     transition: height 0.5s ease;
 }
 
-/* Override line position when expanded */
-.storyline-progress-pill:hover .storyline-line-track {
+/* Override line position when expanded */,
+.storyline-progress-pill.expanded .storyline-line-track {
     left: 12px; /* Center of 8px dot (aligned left with padding?) */
     /* The dot row has padding: 0 8px. */
     /* The dot is width 8px. */
     /* Left padding 8px + half-dot 4px = 12px center. */
+    transform: none;
+}
+
+/* Title visibility when expanded via class (mobile) */
+.storyline-progress-pill.expanded .storyline-chapter-title {
+    display: block;
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+    max-width: 260px; /* Matches hover state */
+}
+
+.storyline-progress-pill.expanded .storyline-dot-row {
+    /* Ensure dot row layout works in expanded mode */
+}
+
+/* Fix Future dot in expanded mode mobile */
+.storyline-progress-pill.expanded .future-dot {
+    width: 20px;
+    height: 20px;
+    margin: 0; 
+    margin-left: -6px; 
+    background: white; 
+    border: 1px solid #ff4444;
+}
+
+.storyline-progress-pill.expanded .future-row {
+    justify-content: flex-start;
+    padding-left: 8px; /* Match standard padding */
+}
+
+/* Ensure future label wraps in expanded mobile */
+.storyline-progress-pill.expanded .storyline-chapter-title.future-label {
+    white-space: normal;
+    height: auto 8px + half-dot 4px = 12px center. */
     transform: none;
 }
 
@@ -300,6 +399,17 @@
     font-weight: 600;
 } 
 
+.storyline-chapter-title.future-label {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    line-height: 1.2;
+    height: auto;
+}
+ 
+.storyline-progress-pill:hover .storyline-chapter-title.future-label {
+     max-width: 100%;
+}
 
 /* Improve hover-out transition - REMOVED DUPLICATE */
 

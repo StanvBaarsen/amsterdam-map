@@ -108,6 +108,26 @@
 .chapter-list-header {
     padding: 16px 20px;
     border-bottom: 1px solid rgba(0,0,0,0.06);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chapter-list-close-mobile {
+    display: none;
+    background: transparent;
+    border: none;
+    color: #231F20;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px;
+    margin-right: -4px;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.chapter-list-close-mobile:hover {
+    background-color: rgba(0,0,0,0.05);
 }
 
 .chapter-list-header h3 {
@@ -188,6 +208,10 @@
 }
 
 @media (max-width: 768px) {
+    .chapter-list-close-mobile {
+        display: block;
+    }
+
     .chapter-nav-container {
         top: auto;
         bottom: 100px;

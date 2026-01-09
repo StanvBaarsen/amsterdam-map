@@ -32,6 +32,7 @@
     width: 450px; 
     max-width: 90%;
     height: calc(100vh - 60px); 
+    max-height: 800px;
     /* removed overflow-y: auto from here, moving it to content */
     pointer-events: auto;
     display: flex;
@@ -40,20 +41,37 @@
     position: relative; /* For absolute positioning of skip button */
 }
 
+@media (max-width: 768px) {
+    .storyline-card {
+        max-width: 95%;
+        height: 60vh; /* Reduce height on mobile to leave room for map/timeline */
+        max-height: none;
+    }
+}
+
+.storyline-scroll-container {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow-x: hidden;
+}
+
 .storyline-image {
     width: 100%;
     height: 200px;
     object-fit: cover;
     border-top-left-radius: 12px;
     border-top-right-radius: 12px;
-    flex-shrink: 0;
+    flex-shrink: 0; /* Keep it from shrinking, but it will scroll because container scrolls */
 }
 
 .storyline-content {
     padding: 24px;
     padding-bottom: 24px;
-    flex: 1;
-    overflow-y: auto; /* Allow scrolling within content area */
+    flex: none; /* Don't flex, just exist in scroll flow */
+    overflow-y: visible; /* Content overflows freely inside scroll container */
 }
 
 .storyline-footer {
@@ -67,8 +85,8 @@
 
 .storyline-skip-btn {
     position: absolute;
-    top: 15px;
-    right: 15px;
+    top: 10px;
+    right: 10px;
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(4px);
     border: none;
@@ -80,10 +98,10 @@
     color: #444;
     transition: all 0.2s ease;
     z-index: 100;
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     font-family: '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
     font-weight: 600;
-    padding: 6px 14px;
+    padding: 4px 10px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -270,10 +288,50 @@
         width: calc(100% - 20px);
         max-width: 100%;
         border-radius: 12px;
-        height: auto;
+        height: 50vh; /* Fixed height ratio as requested */
         max-height: 50vh;
+        display: flex; /* Flex layout to pin footer */
+        flex-direction: column;
         animation: slideUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        overflow-y: hidden; /* Container fixed */
     }
+
+    .storyline-content {
+        overflow-y: visible; /* Let parent handle scroll */
+        flex: none;
+        overflow-x: hidden;
+        height: auto;
+    }
+
+    .storyline-scroll-container {
+        overflow-y: auto;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .storyline-footer {
+        flex: none; /* Fixed footer */
+        position: relative;
+        width: 100%;
+        background: white;
+        z-index: 5;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.05); /* Subtle separation */
+        border-top: 1px solid #eee;
+        display: flex;
+        flex-wrap: wrap; /* Allow wrapping */
+        gap: 8px; /* Gap between wrapped items */
+        padding: 16px;
+    }
+    
+    .storyline-footer button {
+        flex: 1; /* Distribute space */
+        min-width: 120px; /* Force wrap if too small */
+        white-space: normal; /* Allow text wrapping in button */
+        height: auto; /* Allow height growth */
+        padding: 10px 16px;
+    }
+
 
     .storyline-card.exiting {
         animation: slideDown 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
