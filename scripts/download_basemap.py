@@ -30,10 +30,8 @@ def get_buffer_for_level(level_id):
     except ValueError:
         return 0.2 # Default
     
-    if level <= 9:
-        return 2.5 # 250%
-    elif level == 10:
-        return 1.5 # 150%
+    if level <= 10:
+        return 4.0 # 400% (High buffer for zoomed-out levels)
     elif level == 11:
         return 1.0 # 100% - Increased from 50% to fix missing tiles
     elif level == 12:
