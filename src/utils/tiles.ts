@@ -57,10 +57,21 @@ export const processTileColors = (scene: THREE.Object3D | THREE.Group, tile: any
             if (c.isMesh) {
                 let geometry = c.geometry;
 
-                // Dispose of the original material created by the loader as we are replacing it
-                // This prevents memory leaks as 3d-tiles-renderer won't dispose it if it's detached
+                // CRITICAL MEMORY FIX:
+                // Dispose of the original material AND its textures.
+                // GLTFLoader typically creates unique materials/textures for tiles. 
+                // Since we replace them, all these textures become orphaned in GPU memory if not disposed.
                 if (c.material && c.material !== coloredMaterial && c.material !== defaultMaterial) {
-                    c.material.dispose();
+                    const mat = c.material;
+                    // Dispose textures
+                    if (mat.map) mat.map.dispose();
+                    if (mat.emissiveMap) mat.emissiveMap.dispose();
+                    if (mat.roughnessMap) mat.roughnessMap.dispose();
+                    if (mat.metalnessMap) mat.metalnessMap.dispose();
+                    if (mat.normalMap) mat.normalMap.dispose();
+                    if (mat.aoMap) mat.aoMap.dispose();
+                    
+                    mat.dispose();
                 }
 
                 // Ensure geometry is non-indexed to support per-face coloring (hard edges)
@@ -136,7 +147,12 @@ export const processTileColors = (scene: THREE.Object3D | THREE.Group, tile: any
                     // It IS present in the template regardless of defines.
                     // So we can safely turn off vertexColors in the material, and remove the attribute here!
                     
-                    c.material = coloredMaterial;
+                    // Clone the material to ensure it is unique for this tile.
+                    // This is SAFER than sharing, as 3d-tiles-renderer may dispose materials on unload.
+                    // Cloning a material is cheap (JS object), and Three.js will reuse the Program (Shader) if
+                    // parameters are identical, so GPU overhead is negligible and stability is improved.
+                    c.material = coloredMaterial.clone();
+                }
                 }
             }
         });
@@ -150,8 +166,17 @@ export const processTileColors = (scene: THREE.Object3D | THREE.Group, tile: any
                 c.material !== defaultMaterial &&
                 c.material !== coloredMaterial) {
                 
-                // Dispose old material before replacing
-                if (c.material) c.material.dispose();
+                // Dispose old material AND textures
+                if (c.material) {
+                    const mat = c.material;
+                    if (mat.map) mat.map.dispose();
+                    if (mat.emissiveMap) mat.emissiveMap.dispose();
+                    if (mat.roughnessMap) mat.roughnessMap.dispose();
+                    if (mat.metalnessMap) mat.metalnessMap.dispose();
+                    if (mat.normalMap) mat.normalMap.dispose();
+                    if (mat.aoMap) mat.aoMap.dispose();
+                    mat.dispose();
+                }
                 
                 c.material = defaultMaterial;
             }
