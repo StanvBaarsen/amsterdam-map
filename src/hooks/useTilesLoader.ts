@@ -70,14 +70,14 @@ export const useTilesLoader = ({
         tiles.fetchOptions = { mode: 'cors' };
         tiles.displayBoxBounds = false;
         tiles.colorMode = 0;
-        tiles.lruCache.minSize = 6000;
-        tiles.lruCache.maxSize = 8000;
+        tiles.lruCache.minSize = 400 * 1024 * 1024; // 400 MB
+        tiles.lruCache.maxSize = 512 * 1024 * 1024; // 512 MB
         // @ts-ignore
-        tiles.lruCache.unloadPercent = 0; // Prevent unloading
-        tiles.errorTarget = 10;
-        tiles.loadSiblings = true;
+        tiles.lruCache.unloadPercent = 0.2; 
+        tiles.errorTarget = 25;
+        tiles.loadSiblings = false;
         tiles.maxDepth = 30;
-        tiles.showEmptyTiles = true;
+        tiles.showEmptyTiles = false;
 
         tiles.setCamera(cameraRef.current);
         tiles.setResolutionFromRenderer(cameraRef.current, rendererRef.current);
