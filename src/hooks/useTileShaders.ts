@@ -10,9 +10,7 @@ export const useTileShaders = (
     storylineMode: 'overview' | 'focus',
     needsRerender: React.MutableRefObject<number>
 ) => {
-    // UPDATED: vertexColors: false. We manage colors via shader injection and 'constructionYear' attribute.
-    // This allows us to drop the expensive 'color' attribute from all tile geometries.
-    const coloredMaterialRef = useRef<THREE.Material>(new THREE.MeshLambertMaterial({ vertexColors: false, side: THREE.DoubleSide, flatShading: true }));
+    const coloredMaterialRef = useRef<THREE.Material>(new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide, flatShading: true }));
 
     // Palettes state
     const [palettes] = useState(() => ({
