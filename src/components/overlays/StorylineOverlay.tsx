@@ -39,10 +39,12 @@ export const StorylineOverlay: React.FC<StorylineOverlayProps> = ({
     totalEvents = 1,
     // nextProjectName,
     isStorylineComplete = false,
-    // allEvents = []
+    allEvents = []
 }) => {
     const [isExiting, setIsExiting] = React.useState(false);
     const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+
+    const nextIsEnding = allEvents && allEvents[currentIndex + 1] && (allEvents[currentIndex + 1] as any).ending_text;
 
     useEffect(() => {
         setIsExiting(false);
@@ -131,10 +133,13 @@ export const StorylineOverlay: React.FC<StorylineOverlayProps> = ({
                         className="storyline-next-btn"
                     >
                         {isEndingText 
-                            ? "Afsluiten" 
-                            : (currentIndex === totalEvents - 1 
-                                ? (variant === 'innovation' ? 'Naar het slot' : 'Bekijk innovatieprojecten in Amsterdam in 2030')
-                                : (variant === 'innovation' ? 'Bekijk volgend project' : 'Volgende')
+                            ? "Afsluiten"
+                            : (nextIsEnding && variant !== 'innovation'
+                                ? "Bekijk innovatieprojecten in 2030"
+                                : (currentIndex === totalEvents - 1 
+                                    ? (variant === 'innovation' ? 'Naar het slot' : 'Bekijk innovatieprojecten in 2030')
+                                    : (variant === 'innovation' ? 'Bekijk volgend project' : 'Volgende')
+                                  )
                               )
                         }
                     </button>

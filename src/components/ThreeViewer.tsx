@@ -76,6 +76,8 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
 }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [loadingProgress, setLoadingProgress] = useState(0);
+    const [, setAreImagesPreloaded] = useState(false);
+    const areImagesPreloadedRef = useRef(false);
     const [showIntro, setShowIntro] = useState(true);
     const PRESENT_YEAR = new Date().getFullYear();
     const [currentYear, setCurrentYear] = useState(PRESENT_YEAR);
@@ -97,6 +99,45 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                 // setCurrentYear(parsedStorylinesData[index].year); // Optional: depends on desired startup behavior
             }
         }
+    }, []);
+
+    // Preload images
+    useEffect(() => {
+        const imageUrls = [
+            ...parsedStorylinesData.map(s => s.image).filter(Boolean),
+            ...innovationProjects.map(p => p.image).filter(Boolean)
+        ];
+        
+        const uniqueUrls = [...new Set(imageUrls)];
+        
+        let loadedCount = 0;
+        const total = uniqueUrls.length;
+        
+        if (total === 0) {
+            setAreImagesPreloaded(true);
+            areImagesPreloadedRef.current = true;
+            return;
+        }
+
+        uniqueUrls.forEach(url => {
+            const img = new Image();
+            img.src = url;
+            img.onload = () => {
+                loadedCount++;
+                if (loadedCount === total) {
+                    setAreImagesPreloaded(true);
+                    areImagesPreloadedRef.current = true;
+                }
+            };
+            img.onerror = () => {
+                console.warn(`Failed to preload image: ${url}`);
+                loadedCount++;
+                if (loadedCount === total) {
+                    setAreImagesPreloaded(true);
+                    areImagesPreloadedRef.current = true;
+                }
+            }
+        });
     }, []);
 
     // Save progress when index changes
@@ -515,8 +556,8 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                                     setIsTransitioning(false);
                                     
                                     if (controlsRef.current) {
-                                        // Auto-rotate only if no cameraAngle specified
-                                        if (nextEvent.cameraAngle === undefined) {
+                                        // Auto-rotate only if no cameraAngle specified and NOT ending text
+                                        if (nextEvent.cameraAngle === undefined && !nextEvent.ending_text) {
                                             isOrbitingRef.current = true;
                                             controlsRef.current.autoRotate = true;
                                             controlsRef.current.autoRotateSpeed = -1.5;
@@ -684,12 +725,15 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                 stableFramesRef.current++;
                 // Wait for 15 frames (approx 0.25 sec) of stability to ensure everything is truly loaded
                 if (stableFramesRef.current > 15 && !isFinishingLoadRef.current) {
-                    isFinishingLoadRef.current = true;
-                    setLoadingProgress(100);
-                    setTimeout(() => {
-                        setIsLoading(false);
-                        isLoadingRef.current = false;
-                    }, 200);
+                    // Also wait for images to load
+                    if (areImagesPreloadedRef.current) {
+                        isFinishingLoadRef.current = true;
+                        setLoadingProgress(100);
+                        setTimeout(() => {
+                            setIsLoading(false);
+                            isLoadingRef.current = false;
+                        }, 200);
+                    }
                 } else if (!isFinishingLoadRef.current) {
                    // Continue inching towards 100 while verifying stability
                    setLoadingProgress((prev: number) => {
