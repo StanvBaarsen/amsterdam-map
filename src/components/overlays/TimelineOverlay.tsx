@@ -79,8 +79,6 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
 
     const [internalValue, setInternalValue] = React.useState(getSliderValue(currentYear));
     const [isDragging, setIsDragging] = React.useState(false);
-    // Track if we are in a 'large jump' transition state to prevent slider jitter
-    const [isJumping, setIsJumping] = React.useState(false);
 
     // Sync internal value when external props change (e.g. playback), but ONLY if not dragging
     React.useEffect(() => {
@@ -91,13 +89,10 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
             // or if the jump is "done" (assuming ThreeViewer tweens correctly), we sync.
             // But actually, we ALWAYS want to sync if not dragging, because that provides the animation.
             setInternalValue(newValue);
-            
-            // Simple heuristic: if we synced and the value matches, we aren't jumping anymore
-            setIsJumping(false);
         }
     }, [currentYear, isDragging, maxYear, presentYear]);
 
-    const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleSliderChange = () => {
         // NOTE: We do NOT use this standard onChange for user interactions anymore
         // because we handle pointer events directly to allow smooth clicking (preventing instant jump).
         // However, we leave it hooked up just in case, but we might want to ignore it if we're hijacking.
@@ -146,8 +141,6 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
         // If clicking (not dragging), we trigger the change but DO NOT visually snap instantly.
         // We let the prop update drive the visual slider (smooth transition).
         if (isClick) {
-            // "Jump" logic
-            setIsJumping(true);
             // We do NOT setInternalValue here. We let the parent tween update the prop, 
             // and the useEffect will sync internalValue smoothly.
             if (newYear !== currentYear) {
@@ -172,7 +165,6 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
         
         setIsDragging(true);
         const startX = e.clientX;
-        const startTime = Date.now();
 
         // Check if this turns into a drag or stays a click
         let hasMoved = false;

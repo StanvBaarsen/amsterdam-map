@@ -70,11 +70,17 @@ export const useTilesLoader = ({
         tiles.fetchOptions = { mode: 'cors' };
         tiles.displayBoxBounds = false;
         tiles.colorMode = 0;
-        tiles.lruCache.minSize = 6000;
-        tiles.lruCache.maxSize = 8000;
+
+        const isMobile = window.innerWidth < 768;
+
+        // Reduce cache size significantly for mobile to prevent OOM crashes
+        tiles.lruCache.minSize = isMobile ? 1000 : 4000;
+        tiles.lruCache.maxSize = isMobile ? 1500 : 6000;
+        
         // @ts-ignore
-        tiles.lruCache.unloadPercent = 0; // Prevent unloading
-        tiles.errorTarget = 10;
+        tiles.lruCache.unloadPercent = isMobile ? 0.2 : 0.05; // Force unloading of unused tiles
+
+        tiles.errorTarget = isMobile ? 12 : 10; // Slightly lower detail on mobile
         tiles.loadSiblings = true;
         tiles.maxDepth = 30;
         tiles.showEmptyTiles = true;
