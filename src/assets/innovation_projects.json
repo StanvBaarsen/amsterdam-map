@@ -7,7 +7,7 @@
             "lat": 52.3737165,
             "lng": 4.9157975
         },
-        "image": "/amsterdam-2026.webp",
+        "image": "/nadi.webp",
         "cameraDistance": 1500
     },
     {
@@ -18,7 +18,7 @@
             "lat": 52.3466384,
             "lng": 4.8592493
         },
-        "image": "/amsterdam-2026.webp",
+        "image": "/deltaai-lab.webp",
         "cameraAngle": 250,
         "cameraDistance": 1500
     },
@@ -30,7 +30,7 @@
             "lat": 52.35555,
             "lng": 4.9339731
         },
-        "image": "/amsterdam-2026.webp",
+        "image": "/ellis-instituut.webp",
         "cameraAngle": 120,
         "cameraDistance": 2000
     },
@@ -39,10 +39,10 @@
         "name": "Ondernemersloket",
         "description": "En dan de Zuidas. De skyline die de stad een internationaal gezicht geeft. Er werken hier tienduizenden juristen, accountants en consultants. Hun werk gaat ingrijpend veranderen. Door AI, maar ook door 126 miljard euro aan investeringspotentieel, dat niet zo maar op de goede plek terecht komt.\n\nHier zit de implementatiekracht. De juristen, de accountants, de strategen. Zij zijn de vertalers die de wilde ideeën van de techneuten omzetten in solide businesscases die voldoen aan de wet. Dit is de 'Control Tower' in actie. Hier wordt bepaald wat mag, wat kan en wat rendeert. Amsterdam maakt hier van de nood een deugd: onze regeldruk en bureaucratie vormen we om tot een exportproduct. 'AI Act Compliant' wordt het nieuwe kwaliteitskeurmerk, en op de Zuidas wordt dat stempel gedrukt.",
         "coordinate": {
-            "lat": 52.340699,
-            "lng": 4.8737158
+            "lat": 52.3406799,
+            "lng": 4.8727877
         },
-        "image": "/amsterdam-2026.webp",
+        "image": "/ondernemersloket.webp",
         "cameraAngle": 180,
         "cameraDistance": 3000
     },
@@ -54,7 +54,7 @@
             "lat": 52.3790449,
             "lng": 4.9008714
         },
-        "image": "/amsterdam-2026.webp",
+        "image": "/regulatory-sandbox.webp",
         "cameraAngle": 0,
         "cameraDistance": 2200
     }
