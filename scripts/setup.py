@@ -31,14 +31,17 @@ def check_env_vars():
 
 def run_script(script_name, is_node=False):
     print(f"--- Running {script_name} ---")
-    script_path = Path(__file__).parent / script_name
+    script_dir = Path(__file__).parent.resolve()
+    script_path = script_dir / script_name
+    project_root = script_dir.parent
     
     if is_node:
         cmd = ["node", str(script_path)]
     else:
         cmd = [sys.executable, str(script_path)]
         
-    result = subprocess.run(cmd, check=False)
+    # Run from project root so "data/" paths are relative to root
+    result = subprocess.run(cmd, check=False, cwd=str(project_root))
     if result.returncode != 0:
         print(f"Error running {script_name}")
         sys.exit(result.returncode)
