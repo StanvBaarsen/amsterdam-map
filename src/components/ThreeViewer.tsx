@@ -1356,33 +1356,49 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                     isStorylineComplete={isStorylineComplete}
                     onNext={handleNextStoryline}
                     onPrev={() => {
-                        const prev = storylineIndex - 1;
-                        if (prev >= 0) {
-                            setStorylineIndex(prev);
-                            
-                            // Animate Year
-                            const prevEvent = parsedStorylinesData[prev];
-                            const yearObj = { year: currentYear };
-                            new TWEEN.Tween(yearObj)
-                                .to({ year: prevEvent.year }, 1500)
-                                .easing(TWEEN.Easing.Quadratic.InOut)
-                                .onUpdate(() => {
-                                    setCurrentYear(Math.round(yearObj.year));
-                                })
-                                .start();
+                        const prevIdx = storylineIndex - 1;
+                        if (prevIdx >= 0) {
+                            // 1. Zoom Out
+                            isOrbitingRef.current = false;
+                            setStorylineMode('overview'); 
+                            setIsTransitioning(true);
+                            animateCameraToOverview(); 
 
-                            animateCameraToStoryline(
-                                prevEvent.coordinate,
-                                () => {
-                                    if (prevEvent.cameraAngle === undefined && controlsRef.current) {
-                                        isOrbitingRef.current = true;
-                                        controlsRef.current.autoRotate = true;
-                                        controlsRef.current.autoRotateSpeed = -1.5;
-                                    }
-                                },
-                                prevEvent.cameraAngle,
-                                prevEvent.cameraDistance
-                            );
+                            const prevEvent = parsedStorylinesData[prevIdx];
+
+                            // 2. Wait for zoom out, then animate year
+                            setTimeout(() => {
+                                const yearObj = { year: currentYear };
+                                new TWEEN.Tween(yearObj)
+                                    .to({ year: prevEvent.year }, 2000)
+                                    .easing(TWEEN.Easing.Quadratic.InOut) 
+                                    .onUpdate(() => {
+                                        setCurrentYear(Math.round(yearObj.year));
+                                    })
+                                    .onComplete(() => {
+                                        // 3. Zoom In
+                                        setStorylineIndex(prevIdx); 
+                                        animateCameraToStoryline(
+                                            prevEvent.coordinate,
+                                            () => {
+                                                // 4. Arrived
+                                                setTimeout(() => {
+                                                    setStorylineMode('focus');
+                                                    setIsTransitioning(false);
+                                                    
+                                                    if (controlsRef.current && prevEvent.cameraAngle === undefined) {
+                                                        isOrbitingRef.current = true;
+                                                        controlsRef.current.autoRotate = true;
+                                                        controlsRef.current.autoRotateSpeed = -1.5;
+                                                    }
+                                                }, 300);
+                                            },
+                                            prevEvent.cameraAngle,
+                                            prevEvent.cameraDistance
+                                        );
+                                    })
+                                    .start();
+                            }, 2000); 
                         }
                     }}
                     onSkip={() => {
@@ -1476,12 +1492,16 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                         presentYear={PRESENT_YEAR}
                         currentYear={currentYear}
                         isTransitioning={isTransitioning}
-                        onYearChange={(targetYear) => {
+                        onYearChange={(targetYear, isDragging) => {
                              // Cancel explicit playing if manually scrubbing
                              if (isPlaying) setIsPlaying(false);
 
-                             // Optimization: Only use Tween for large jumps (clicks), direct update for dragging/scrubbing
-                             if (Math.abs(targetYear - currentYear) > 2) {
+                             // Update current year
+                             // If dragging, always update directly (dragging is the animation)
+                             // If jumping (click) and diff is large, tween.
+                             if (isDragging || Math.abs(targetYear - currentYear) <= 2) {
+                                 setCurrentYear(targetYear);
+                             } else {
                                  const yearObj = { year: currentYear };
                                  new TWEEN.Tween(yearObj)
                                     .to({ year: targetYear }, 500)
@@ -1490,14 +1510,15 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                                         setCurrentYear(Math.round(yearObj.year));
                                     })
                                     .start();
-                             } else {
-                                 setCurrentYear(targetYear);
                              }
 
                              // Max zoom logic when exploring (timeline scrubbing) after 1850
                              if (targetYear > 1850 && storylineMode !== 'focus' && !innovationEvent && !hasZoomedOutRef.current) {
                                  // Trigger max zoom
-                                 if (zoomOutToMax) zoomOutToMax();
+                                 if (zoomOutToMax) {
+                                     zoomOutToMax();
+                                     hasZoomedOutRef.current = true; // Prevent repeated triggers
+                                 }
                              }
                              
                              if (storylineMode !== 'focus') {

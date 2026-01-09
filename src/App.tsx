@@ -153,11 +153,11 @@ const ViewerPage: React.FC = () => {
                         fontWeight: '600',
                         letterSpacing: '0.2em',
                         textTransform: 'uppercase',
-                        fontFamily: "'Lora', serif"
+                        fontFamily: "'Merriweather', serif"
                     }}>
                         Amsterdam 2030
                     </h1>
-                    <img src="/favicon.svg" alt="Logo" style={{ height: '24px', width: 'auto' }} />
+                    <img src="/favicon.svg" alt="Logo" className="header-logo" />
                 </div>
             </div>
 

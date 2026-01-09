@@ -74,3 +74,15 @@
   visibility: visible;
   transition: opacity 0.3s linear;
 }
+
+.header-logo {
+  height: 30px;
+  width: auto;
+  transition: height 0.3s ease;
+}
+
+@media (min-width: 1024px) {
+  .header-logo {
+    height: 40px;
+  }
+}
