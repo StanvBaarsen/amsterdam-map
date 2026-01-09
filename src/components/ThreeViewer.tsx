@@ -1157,7 +1157,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                             
                         } else {
                             // Free explore
-                            setCurrentYear(PRESENT_YEAR);
+                            setCurrentYear(2030);
                             animateCameraToOverview();
                         }
                     } else if (resume) { 
