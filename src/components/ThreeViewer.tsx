@@ -144,6 +144,18 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
 
     const location = useLocation();
 
+    // Adjust rotation speed on mobile during storyline mode
+    useEffect(() => {
+        if (controlsRef.current) {
+            const isMobile = window.innerWidth < 768;
+            if (isMobile && storylineMode === 'focus') {
+                 controlsRef.current.rotateSpeed = 0.25; 
+            } else {
+                 controlsRef.current.rotateSpeed = isMobile ? 0.6 : 1.0; 
+            }
+        }
+    }, [storylineMode]);
+
     // Materials
     const materialRef = useRef<THREE.Material>(new THREE.MeshLambertMaterial({ color: 0xff4444, flatShading: true }));
     const coloredMaterialRef = useTileShaders(currentYear, storylineIndex, storylineMode, needsRerender);
@@ -297,10 +309,27 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
             }
         }
 
+        // Apply Responsive Offset logic
+        const isMobile = window.innerWidth < 768; // Mobile
+        const isTablet = window.innerWidth >= 768 && window.innerWidth < 1100; // Tablet/Narrow Desktop
+
+        let offsetX = 0;
+        let offsetY = 0;
+
+        if (isMobile) {
+            // Bottom 50% is UI. Target should be higher up (centered in top 50%).
+            // Look South (lower Y) so map moves up.
+            offsetY = -150; 
+        } else if (isTablet) {
+            // Side UI. Target should be East (centered in left/right available space).
+            // Look East (higher X) so map moves Left.
+            offsetX = 100;
+        }
+
         CameraAnims.animateCameraToLocation(
             cameraRef.current,
             controlsRef.current,
-            targetRD,
+            { x: targetRD.x + offsetX, y: targetRD.y + offsetY },
             tilesRef.current.group.position,
             () => { needsRerender.current = 1; },
             onComplete,
@@ -320,13 +349,14 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         );
     }, [cameraRef, controlsRef, initialCameraStateRef, needsRerender]);
 
-    const zoomOutToMax = useCallback(() => {
+    const zoomOutToMax = useCallback((customDistance?: number) => {
         if (!controlsRef.current || !cameraRef.current || !initialCameraStateRef.current) return;
         
         CameraAnims.animateZoomOut(
             cameraRef.current,
             controlsRef.current,
-            () => { needsRerender.current = 1; }
+            () => { needsRerender.current = 1; },
+            customDistance
         );
     }, [cameraRef, controlsRef, initialCameraStateRef, needsRerender]);
 
@@ -347,8 +377,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         setStorylineIndex,
         setIsStorylineComplete,
         animateCameraToStoryline,
-        zoomOutToMax,
-        isTransitioning
+        zoomOutToMax
     });
 
     const handleNextStoryline = () => {
@@ -372,10 +401,33 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                 
                 animateCameraToStoryline(nextProj.coordinate);
             } else {
-                // No more projects: Zoom Out to full map
+                // No more projects: Transition to ending text if available
                 setInnovationEvent(null);
-                setStorylineMode('overview');
-                animateCameraToOverview();
+                
+                const nextIdx = storylineIndex + 1;
+                const endingEvent = parsedStorylinesData[nextIdx];
+
+                if (endingEvent && endingEvent.ending_text) {
+                    setStorylineIndex(nextIdx);
+                    setStorylineMode('focus');
+                    setIsStorylineComplete(true);
+                    
+                    animateCameraToStoryline(
+                        endingEvent.coordinate,
+                        () => {
+                            isOrbitingRef.current = true;
+                            if (controlsRef.current) {
+                                controlsRef.current.autoRotate = true;
+                                controlsRef.current.autoRotateSpeed = -1.5;
+                            }
+                        },
+                        endingEvent.cameraAngle,
+                        endingEvent.cameraDistance
+                    );
+                } else {
+                    setStorylineMode('overview');
+                    animateCameraToOverview();
+                }
             }
             return;
         }
@@ -387,6 +439,45 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         // If next chapter exists
 
         if (parsedStorylinesData[nextIdx]) {
+            // Check if next item is the ending text. If so, we want to show innovation projects FIRST.
+            if (parsedStorylinesData[nextIdx].ending_text) {
+                 setStorylineMode('overview');
+                 setIsPlaying(false);
+                 // Don't mark complete yet, as we have the ending text to come back to?
+                 // or maybe we do. Text says "it should go ... to innovation ... then to ending text".
+                 // So we are not "done-done".
+                 
+                 // 1. Zoom Out first
+                 animateCameraToOverview();
+                 setIsTransitioning(true);
+
+                 // 2. Animate Year to 2030
+                 const yearObj = { year: currentYear };
+                 new TWEEN.Tween(yearObj)
+                    .to({ year: 2030 }, 2500)
+                    .easing(TWEEN.Easing.Quadratic.InOut)
+                    .onUpdate(() => {
+                        setCurrentYear(Math.round(yearObj.year));
+                    })
+                    .onComplete(() => {
+                         // 3. Open First Innovation Project
+                         setIsTransitioning(false);
+                         if (innovationProjects.length > 0) {
+                            const p = innovationProjects[0];
+                            setInnovationEvent({
+                               ...p,
+                               year: 2030,
+                               description: `# ${p.name}\n\n${p.description}`,
+                               coordinate: p.coordinate,
+                               image: p.image || '/amsterdam-2026.webp'
+                           });
+                           animateCameraToStoryline(p.coordinate);
+                         }
+                    })
+                    .start();
+                return;
+            }
+
             setStorylineMode('overview'); // Show timeline
             setIsTransitioning(true);
             
@@ -437,39 +528,11 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                     .start();
             }, 2000); 
         } else {
-             // Reached the end of the storyline, jump to innovation projects
+             // Reached the end of the storyline (after ending text)
              setStorylineMode('overview');
              setIsPlaying(false);
              setIsStorylineComplete(true);
-
-             // 1. Zoom Out first
              animateCameraToOverview();
-             setIsTransitioning(true);
-
-             // 2. Animate Year to 2030
-             const yearObj = { year: currentYear };
-             new TWEEN.Tween(yearObj)
-                .to({ year: 2030 }, 2500)
-                .easing(TWEEN.Easing.Quadratic.InOut)
-                .onUpdate(() => {
-                    setCurrentYear(Math.round(yearObj.year));
-                })
-                .onComplete(() => {
-                     // 3. Open First Innovation Project
-                     setIsTransitioning(false);
-                     if (innovationProjects.length > 0) {
-                        const p = innovationProjects[0];
-                        setInnovationEvent({
-                           ...p,
-                           year: 2030,
-                           description: `# ${p.name}\n\n${p.description}`,
-                           coordinate: p.coordinate,
-                           image: p.image || '/amsterdam-2026.webp'
-                       });
-                       animateCameraToStoryline(p.coordinate);
-                     }
-                })
-                .start();
         }
     };
 
@@ -992,6 +1055,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
 
                         if (goToInnovation) {
                             // Immediately go to 2030 and open first project
+                            setIsTransitioning(true); // Don't show controls tooltip
                             animateCameraToOverview(); // Start from overview for transition
                             
                             const yearObj = { year: PRESENT_YEAR }; // Start from now
@@ -1004,6 +1068,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                                     setCurrentYear(Math.round(yearObj.year));
                                 })
                                 .onComplete(() => {
+                                     setIsTransitioning(false);
                                      if (innovationProjects.length > 0) {
                                          const p = innovationProjects[0];
                                          setInnovationEvent({
@@ -1013,7 +1078,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                                             coordinate: p.coordinate,
                                             image: p.image || '/amsterdam-2026.webp'
                                         });
-                                        animateCameraToStoryline(p.coordinate);
+                                        animateCameraToStoryline(p.coordinate, undefined, p.cameraAngle, p.cameraDistance);
                                      }
                                 })
                                 .start();
@@ -1119,17 +1184,41 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                                 .start();
 
                             animateCameraToStoryline(nextProject.coordinate, () => {
-                                 if (controlsRef.current) {
+                                 if (controlsRef.current && nextProject.cameraAngle === undefined) {
                                          isOrbitingRef.current = true;
                                          controlsRef.current.autoRotate = true;
                                          controlsRef.current.autoRotateSpeed = -1.5;
                                  }
-                            });
+                            }, nextProject.cameraAngle, nextProject.cameraDistance);
                         } else {
                             // Finished innovation projects
                             setInnovationEvent(null);
-                            setStorylineMode('overview');
-                            animateCameraToOverview();
+                            
+                            // Check for ending text
+                            const endingIndex = parsedStorylinesData.findIndex((s: any) => s.ending_text);
+                            
+                            if (endingIndex !== -1) {
+                                const endingEvent = parsedStorylinesData[endingIndex];
+                                setStorylineIndex(endingIndex);
+                                setStorylineMode('focus');
+                                setIsStorylineComplete(true);
+                                
+                                animateCameraToStoryline(
+                                    endingEvent.coordinate,
+                                    () => {
+                                        isOrbitingRef.current = true;
+                                        if (controlsRef.current) {
+                                            controlsRef.current.autoRotate = true;
+                                            controlsRef.current.autoRotateSpeed = -1.5;
+                                        }
+                                    },
+                                    endingEvent.cameraAngle,
+                                    endingEvent.cameraDistance
+                                );
+                            } else {
+                                setStorylineMode('overview');
+                                animateCameraToOverview();
+                            }
                         }
                     }}
                     onSkip={() => {
@@ -1219,7 +1308,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                                          coordinate: firstProj.coordinate,
                                          image: firstProj.image || '/amsterdam-2026.webp'
                                      });
-                                     animateCameraToStoryline(firstProj.coordinate);
+                                     animateCameraToStoryline(firstProj.coordinate, undefined, firstProj.cameraAngle, firstProj.cameraDistance);
                                 })
                                 .start();
                          }
@@ -1386,6 +1475,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                         maxYear={2030} // Extends to 2030 for innovation
                         presentYear={PRESENT_YEAR}
                         currentYear={currentYear}
+                        isTransitioning={isTransitioning}
                         onYearChange={(targetYear) => {
                              // Cancel explicit playing if manually scrubbing
                              if (isPlaying) setIsPlaying(false);
@@ -1404,6 +1494,12 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                                  setCurrentYear(targetYear);
                              }
 
+                             // Max zoom logic when exploring (timeline scrubbing) after 1850
+                             if (targetYear > 1850 && storylineMode !== 'focus' && !innovationEvent && !hasZoomedOutRef.current) {
+                                 // Trigger max zoom
+                                 if (zoomOutToMax) zoomOutToMax();
+                             }
+                             
                              if (storylineMode !== 'focus') {
                                 // If target year is 2030 zone
                                 if (false) {
@@ -1467,7 +1563,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                         isStorylineComplete={isStorylineComplete}
                     />
                     <MapControlsGuide 
-                        visible={isStorylineComplete && !controlsGuideDismissed} 
+                        visible={isStorylineComplete && !controlsGuideDismissed && !innovationEvent && storylineMode === 'overview' && !isTransitioning} 
                         hasPanned={userHasPanned}
                         hasRotated={userHasRotated}
                     />
@@ -1511,7 +1607,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                                     // Check if within bounds (Amsterdam approx)
                                     // Using camera bounds: X: 119000 - 124000, Y: 484500 - 488000
                                     if (rdX < 119000 || rdX > 124000 || rdY < 484500 || rdY > 488000) {
-                                        if (onShowLocationBox) onShowLocationBox("Niet binnen het kaartgebied");
+                                        if (onShowLocationBox) onShowLocationBox("Locatie niet binnen het kaartgebied");
                                         return;
                                     }
 

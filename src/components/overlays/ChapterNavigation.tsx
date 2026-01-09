@@ -5,6 +5,7 @@ import './ChapterNavigation.css';
 interface Chapter {
     year: number;
     description: string;
+    ending_text?: boolean;
 }
 
 interface ChapterNavigationProps {
@@ -44,9 +45,16 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
             <div className={`chapter-list ${isOpen ? 'open' : ''}`}>
                 <div className="chapter-list-header">
                     <h3>Tijdlijn</h3>
+                    <button 
+                        className="chapter-list-close-mobile"
+                        onClick={onToggle}
+                        aria-label="Sluiten"
+                    >
+                        <MdClose />
+                    </button>
                 </div>
                 <div className="chapter-list-scroll">
-                    {chapters.map((chapter, index) => (
+                    {chapters.filter(c => !c.ending_text).map((chapter, index) => (
                         <button 
                             key={chapter.year}
                             className={`chapter-item ${index === activeIndex ? 'active' : ''}`}

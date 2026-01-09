@@ -3,9 +3,9 @@ import * as THREE from 'three';
 export const getBuildingColor = (year: number) => {
     if (!year) return new THREE.Color(0xeeeeee); // Unknown: Light Grey
 
-    if (year < 1400) return new THREE.Color(0x550000); // < 1400: Dark Red
-    if (year < 1500) return new THREE.Color(0x770000); // 1400-1500: Medium Dark Red
-    if (year < 1600) return new THREE.Color(0x990000); // 1500-1600: Red
+    if (year < 1400) return new THREE.Color(0x902020); // < 1400: Lighter Dark Red (was 550000)
+    if (year < 1500) return new THREE.Color(0xa03030); // 1400-1500: Lighter Medium Dark Red (was 770000)
+    if (year < 1600) return new THREE.Color(0xb04040); // 1500-1600: Lighter Red (was 990000)
     if (year < 1700) return new THREE.Color(0xbb1100); // 1600-1700: Bright Red
     if (year < 1800) return new THREE.Color(0xdd3300); // 1700-1800: Red-Orange
     if (year < 1900) return new THREE.Color(0xff5500); // 1800-1900: Orange-Red
@@ -17,9 +17,9 @@ type ColorStop = { year: number; color: string };
 
 export const PALETTES: Record<string, ColorStop[]> = {
     default: [
-        { year: 0, color: '#550000' },
-        { year: 1400, color: '#770000' },
-        { year: 1500, color: '#990000' },
+        { year: 0, color: '#902020' },    // Lightened
+        { year: 1400, color: '#a03030' }, // Lightened
+        { year: 1500, color: '#b04040' }, // Lightened
         { year: 1600, color: '#bb1100' },
         { year: 1700, color: '#dd3300' },
         { year: 1800, color: '#ff5500' },
@@ -34,8 +34,8 @@ export const PALETTES: Record<string, ColorStop[]> = {
         { year: 2000, color: '#ffffff' }
     ],
     future: [
-        { year: 0, color: '#001133' },
-        { year: 1600, color: '#003366' },
+        { year: 0, color: '#224477' },    // Lightened from 001133
+        { year: 1600, color: '#335588' }, // Lightened from 003366
         { year: 1800, color: '#005599' },
         { year: 1900, color: '#0077cc' },
         { year: 2000, color: '#0099ff' }

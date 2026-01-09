@@ -46,6 +46,8 @@ export const useThreeScene = (containerRef: React.RefObject<HTMLDivElement | nul
         controls.dampingFactor = 0.1;
         controls.zoomSpeed = 1.6;
         controls.panSpeed = 1.6;
+        // Slower rotation on mobile (roughly < 768px check, simple heuristic)
+        controls.rotateSpeed = window.innerWidth < 768 ? 0.6 : 1.0;
         controls.mouseButtons = {
             LEFT: THREE.MOUSE.PAN,
             MIDDLE: THREE.MOUSE.DOLLY,

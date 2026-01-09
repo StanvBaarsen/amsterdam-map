@@ -21,8 +21,8 @@ interface UseStorylineLogicProps {
     setStorylineIndex: React.Dispatch<React.SetStateAction<number>>;
     setIsStorylineComplete: React.Dispatch<React.SetStateAction<boolean>>;
     animateCameraToStoryline: (coordinate: { x: number, y: number } | { lat: number, lng: number }, onComplete?: () => void, cameraAngle?: number, cameraDistance?: number) => void;
-    zoomOutToMax: () => void;
-    isTransitioning: boolean;
+    zoomOutToMax: (distance?: number) => void;
+    // isTransitioning: boolean; // Removed unused prop requirement
 }
 
 export const useStorylineLogic = ({
@@ -78,7 +78,14 @@ export const useStorylineLogic = ({
                     if (prev < 1850 && next >= 1850 && !hasZoomedOutRef.current) {
                         hasZoomedOutRef.current = true;
                         isOrbitingRef.current = false;
-                        zoomOutToMax();
+                        
+                        // Condition: if we are heading to a date past 1850, use 5000 distance
+                        // Wait, this IS the trigger at 1850. 
+                        // The user said: "if the target-date is past 1850, please make the cam distance like 5000"
+                        // I assume this means the intermediate zoom out should be closer (5000) instead of default (6000)
+                        // because modern Amsterdam is bigger? Or smaller? 
+                        // Actually, if we are crossing 1850, we are definitely passing 1850.
+                        zoomOutToMax(5000);
                     }
 
                     if (nextEvent && next >= nextEvent.year) {
@@ -119,6 +126,23 @@ export const useStorylineLogic = ({
         
         // If next chapter exists
         if (storylinesData[nextIdx]) {
+            // Check if this new chapter is the ending text. If so, we DON'T show it yet.
+            // Instead, we trigger the innovation flow.
+            // The ending text should only be shown AFTER innovation projects.
+            if (storylinesData[nextIdx].ending_text) {
+                 // Trigger innovation flow here (handled in parent or via callback)
+                 // But wait, the parent `handleNextStoryline` just calls this. 
+                 // We need to signal that we are entering innovation mode.
+                 
+                 // Since `useStorylineLogic` is somewhat generic, let's keep it simple:
+                 // We WON'T auto-advance to ending_text. We'll stop at the chapter bEFORE it.
+                 // The "Innovation" button in the UI will trigger the innovation flow.
+                 // Then, after innovations, we'll manually jump to ending_text.
+                 
+                 // So: if nextIdx points to ending_text, DO NOTHING (or just set mode to focus on current to be safe)
+                 return; 
+            }
+
             setStorylineMode('overview'); // Temporarily hide overlay to show map transition
             
             // Smoothly animate year

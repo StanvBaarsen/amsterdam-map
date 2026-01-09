@@ -141,7 +141,8 @@ export const animateCameraToOverview = (
 export const animateZoomOut = (
     camera: THREE.PerspectiveCamera,
     controls: any,
-    onNeedsRerender: () => void
+    onNeedsRerender: () => void,
+    customDistance?: number
 ) => {
     if (!controls || !camera) return;
 
@@ -156,7 +157,7 @@ export const animateZoomOut = (
         direction.set(0, 1, 0);
     }
     
-    const dist = 6000;
+    const dist = customDistance || 6000;
     const endPos = target.clone().add(direction.multiplyScalar(dist));
 
     new TWEEN.Tween(camera.position)

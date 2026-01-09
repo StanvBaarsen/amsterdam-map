@@ -62,3 +62,15 @@
       transform: translate(0, -200%);
   }
 }
+
+#locationbox {
+  opacity: 0;
+  visibility: hidden;
+  transition: visibility 0s 0.3s, opacity 0.3s linear;
+  pointer-events: none;
+}
+#locationbox.visible {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.3s linear;
+}

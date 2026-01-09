@@ -58,6 +58,7 @@ interface MapOverlaysProps {
     isOrbitingRef: React.MutableRefObject<boolean>;
     needsRerender: React.MutableRefObject<number>;
     initialCameraStateRef: React.MutableRefObject<any>;
+    zoomOutToMax: () => void;
 }
 
 export const MapOverlays: React.FC<MapOverlaysProps> = ({
@@ -95,7 +96,8 @@ export const MapOverlays: React.FC<MapOverlaysProps> = ({
     hasZoomedOutRef,
     isOrbitingRef,
     needsRerender,
-    initialCameraStateRef
+    initialCameraStateRef,
+    zoomOutToMax
 }) => {
     return (
         <>
@@ -211,10 +213,20 @@ export const MapOverlays: React.FC<MapOverlaysProps> = ({
                         // Find current index
                         const idx = innovationProjects.findIndex(p => p.name === innovationEvent.name);
                         
-                        // If we are at the last project (the ending text), close the overlay
+                        // If we are at the last project, we want to go back to the storyline for the ending
                         if (idx === innovationProjects.length - 1) {
                             setInnovationEvent(null);
-                            animateCameraToOverview();
+                            
+                            // Find the storyline chapter that is the ending text
+                            const endingChapterIndex = storylinesData.findIndex(s => s.ending_text);
+                            
+                            if (endingChapterIndex !== -1) {
+                                setStorylineIndex(endingChapterIndex);
+                                setStorylineMode('focus');
+                                animateCameraToStoryline(storylinesData[endingChapterIndex].coordinate);
+                            } else {
+                               animateCameraToOverview(); 
+                            }
                             return;
                         }
 
@@ -263,7 +275,7 @@ export const MapOverlays: React.FC<MapOverlaysProps> = ({
             )}
 
             {/* Persistent Progress Pill in Both Modes (shows different content) */}
-            {!isLoading && !showIntro && !innovationEvent && (
+            {!isLoading && !showIntro && !innovationEvent && storylineIndex > 0 && (
                 <StorylineProgress
                     chapters={storylinesData}
                     activeIndex={storylineIndex}
@@ -297,20 +309,29 @@ export const MapOverlays: React.FC<MapOverlaysProps> = ({
                         setIsPlaying(false);
                         setIsStorylineComplete(true);
                         
+                        // If this event has "ending_text", then closing/finishing it means going to overview (or whatever)
+                        // But typically onNext handles progression.
+                        // If we are at the ending text (which is now the last item), we handle "overview"
+                        if (storylinesData[storylineIndex].ending_text) {
+                            setStorylineMode('overview'); 
+                            setIsStorylineComplete(true); // MARK STORYLINE AS COMPLETE HERE
+                            if (!controlsGuideDismissed) setControlsGuideDismissed(true); // Reset to allow showing if logic permits, but actually we want to SHOW it now maybe?
+                            // Wait, logic says visible={isStorylineComplete && !controlsGuideDismissed}
+                            // So if we set Complete=true, and Dismissed=false (initially), it shows.
+                            // But previously we might have set dismissed=true.
+                            // So we should ensure dismissed is FALSE if we want to show it.
+                            if (controlsGuideDismissed) setControlsGuideDismissed(false);
+
+                            animateCameraToOverview();
+                            return;
+                        }
+
                         // Go to first innovation project
                         if (innovationProjects.length > 0) {
                              const firstProj = innovationProjects[0];
                              
                              // Convert WGS84 to RD
                              const rd = wgs84ToRd(firstProj.coordinate.lat, firstProj.coordinate.lng);
-                             
-                             setInnovationEvent({
-                                ...firstProj,
-                                 year: 2030,
-                                 description: `# ${firstProj.name}\n\n${firstProj.description}`,
-                                 coordinate: firstProj.coordinate,
-                                 image: '/amsterdam-2026.webp'
-                             });
                              
                              // Smoothly animate year to project year
                              const yearObj = { year: currentYear };
@@ -320,9 +341,20 @@ export const MapOverlays: React.FC<MapOverlaysProps> = ({
                                 .onUpdate(() => {
                                     setCurrentYear(Math.round(yearObj.year));
                                 })
+                                .onComplete(() => {
+                                    // ADDED DELAY HERE
+                                    setTimeout(() => {
+                                         setInnovationEvent({
+                                            ...firstProj,
+                                             year: 2030,
+                                             description: `# ${firstProj.name}\n\n${firstProj.description}`,
+                                             coordinate: firstProj.coordinate,
+                                             image: '/amsterdam-2026.webp'
+                                         });
+                                         animateCameraToStoryline(rd);
+                                    }, 1000); // 1s wait at 2030 before zooming in
+                                })
                                 .start();
-
-                             animateCameraToStoryline(rd);
                         } else {
                             // Fallback if no projects
                             animateCameraToOverview(); 
@@ -339,7 +371,7 @@ export const MapOverlays: React.FC<MapOverlaysProps> = ({
                         animateCameraToStoryline(startEvent.coordinate);
                         
                         setIsPlaying(true);
-                        if (!controlsGuideDismissed) setControlsGuideDismissed(true);
+                        // Removed setControlsGuideDismissed(true) here logic
                     }}
                     mode={storylineMode}
                     currentYear={currentYear}
@@ -366,6 +398,7 @@ export const MapOverlays: React.FC<MapOverlaysProps> = ({
                         setStorylineMode('overview');
                         setIsPlaying(false);
                         setIsStorylineComplete(true);
+                        if (controlsGuideDismissed) setControlsGuideDismissed(false); // Make sure guide shows up
                         
                         // Smoothly animate year to PRESENT_YEAR
                         const yearObj = { year: currentYear };
@@ -456,6 +489,12 @@ export const MapOverlays: React.FC<MapOverlaysProps> = ({
 
                              if (storylineMode !== 'focus') {
                                 setStorylineMode('focus');
+                             }
+                             
+                             if (targetYear > 1850 && !hasZoomedOutRef.current) {
+                                  // Trigger max zoom out if not already
+                                  // Call exposed method if available (added to props)
+                                  if (zoomOutToMax) zoomOutToMax();
                              }
                         }}
                         isPlaying={isPlaying}

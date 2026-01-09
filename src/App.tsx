@@ -1,10 +1,37 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThreeViewer } from './components/ThreeViewer';
 import { BuildingInformation } from './components/BuildingInformation';
 import './App.css';
 
 const ViewerPage: React.FC = () => {
+
+    // Prevent pinch-to-zoom on desktop (trackpad)
+    useEffect(() => {
+        const handleWheel = (e: WheelEvent) => {
+            if (e.ctrlKey) {
+                e.preventDefault();
+            }
+        };
+
+        const handleGesture = (e: Event) => {
+            e.preventDefault();
+        };
+
+        // Standard pinch-zoom (ctrl+wheel)
+        document.addEventListener('wheel', handleWheel, { passive: false });
+        
+        // Safari gesture zoom
+        document.addEventListener('gesturestart', handleGesture);
+        document.addEventListener('gesturechange', handleGesture);
+
+        // Cleanup
+        return () => {
+             document.removeEventListener('wheel', handleWheel);
+             document.removeEventListener('gesturestart', handleGesture);
+             document.removeEventListener('gesturechange', handleGesture);
+        }
+    }, []);
 
     // Configuration for external tile hosting (e.g. Cloudflare R2, AWS S3)
     // If empty, it will look for files in the local public/ folder
@@ -130,15 +157,23 @@ const ViewerPage: React.FC = () => {
                     }}>
                         Amsterdam 2030
                     </h1>
-                    <img src="/amsterdam.webp" alt="Amsterdam" style={{ height: '32px', width: 'auto' }} />
+                    <img src="/favicon.svg" alt="Logo" style={{ height: '24px', width: 'auto' }} />
                 </div>
             </div>
 
-            {showLocationBox && (
-                <div id="locationbox" className="box" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 20 }}>
-                    {locationBoxText}
-                </div>
-            )}
+            <div 
+                id="locationbox" 
+                className={`box ${showLocationBox ? 'visible' : ''}`} 
+                style={{ 
+                    position: 'absolute', 
+                    top: '50%', 
+                    left: '50%', 
+                    transform: 'translate(-50%, -50%)', 
+                    zIndex: 20 
+                }}
+            >
+                {locationBoxText}
+            </div>
 
             <BuildingInformation 
                 building={pickedBuilding} 
@@ -154,6 +189,9 @@ const ViewerPage: React.FC = () => {
                 onShowLocationBox={(text) => {
                     setLocationBoxText(text);
                     setShowLocationBox(true);
+                    setTimeout(() => {
+                        setShowLocationBox(false);
+                    }, 2000);
                 }}
                 onHideLocationBox={() => setShowLocationBox(false)}
                 onObjectPicked={(obj) => {
