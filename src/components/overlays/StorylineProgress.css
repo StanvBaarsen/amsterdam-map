@@ -1,455 +1,233 @@
-.storyline-progress-container {
+.storyline-list-container {
     position: absolute;
-    top: 50%;
+    top: 2.5rem; /* Aligned with header */
     left: 20px;
-    transform: translateY(-50%);
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0;
-    z-index: 20;
+    z-index: 15;
     pointer-events: none;
-    /* Let clicks pass through container */
-}
-
-.storyline-progress-pill {
-    background-color: rgba(239, 240, 235, 0.9);
-    backdrop-filter: blur(8px);
-    border-radius: 20px;
-    padding: 12px 0;
-    /* Remove horizontal padding here */
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    pointer-events: auto;
-    transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-    width: 24px;
-    /* Collapsed width */
-    height: auto;
-    max-height: 80vh;
-    /* Prevent vertical overflow */
-    overflow-y: auto;
-    /* Allow internal scrolling if needed */
-    scrollbar-width: none;
-    /* Hide scrollbar for cleaner look */
+    font-family: 'Merriweather', serif; /* Updated font to match timeline */
     display: flex;
     flex-direction: column;
-    align-items: center;
-    border: 1px solid rgba(255, 255, 255, 0.4);
+    align-items: flex-start; /* Left aligned */
 }
 
-@media (max-width: 768px) {
-    .storyline-progress-container {
-        display: none !important;
-    }
-}
-
-.storyline-progress-pill::-webkit-scrollbar {
-    display: none;
-}
-
-/* Hover state: Expand */
-.storyline-progress-pill:hover,
-.storyline-progress-pill.expanded {
-    width: auto;
-    min-width: 340px;
-    /* Expanded width - increased to fit content better */
-    max-width: 400px;
-    padding: 24px;
-    /* Increased padding */
-    padding-top: 34px;
-    /* Make room for close button */
-    align-items: flex-start;
-    /* Align content to left */
-    border-radius: 16px;
-    overflow-y: auto;
-}
-
-.storyline-close-mobile {
-    display: none;
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background: transparent;
+.storyline-toggle {
+    pointer-events: auto;
+    background-color: rgba(255, 255, 255, 0.95);
+    color: #231F20;
     border: none;
-    color: #666;
-    font-size: 20px;
-    cursor: pointer;
-    padding: 4px;
-    z-index: 30;
     border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    backdrop-filter: blur(12px);
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    font-size: 30px; /* Increased from 24px */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    overflow: hidden;
 }
 
-.storyline-close-mobile:hover {
-    background: rgba(0, 0, 0, 0.05);
+.storyline-toggle:hover {
+    background-color: rgba(255, 255, 255, 1);
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+
+.storyline-toggle.active {
+    background-color: #231F20;
+    color: white;
+}
+
+.storyline-list-panel {
+    pointer-events: auto;
+    position: absolute;
+    top: 60px;
+    left: 0;
+    background-color: rgba(239, 240, 235, 0.98); /* Match timeline bg */
+    backdrop-filter: blur(12px); /* Match timeline blur */
+    border-radius: 30px; /* Match timeline roundedness */
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 180px);
+    transform-origin: top left;
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15); /* Match timeline shadow */
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    transform: scale(0.95);
+    visibility: hidden;
+}
+
+.storyline-list-panel.open {
+    opacity: 1;
+    transform: scale(1);
+    visibility: visible;
+}
+
+.storyline-list-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    background-color: rgba(255,255,255,0.4);
+    border-radius: 30px 30px 0 0;
+}
+
+.storyline-list-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #ff4444; /* Match timeline accent */
+    font-family: 'Merriweather', serif; /* Updated font */
+}
+
+.storyline-items-scroll {
+    overflow-y: auto;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.storyline-item {
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    color: #666; /* Timeline label color */
+    font-size: 0.95rem;
+    font-family: 'Merriweather', serif;
+}
+
+.storyline-item:hover {
+    background: rgba(255, 255, 255, 0.6);
+    transform: translateX(2px);
     color: #000;
 }
 
-/* On mobile, only show when parent is explicitly expanded */
-@media (max-width: 768px) {
-    .storyline-progress-pill.expanded .storyline-close-mobile {
-        display: block;
-    }
+.storyline-item.active {
+    background-color: rgba(255, 68, 68, 0.1); /* Subtle accent bg */
+    color: #ff4444; /* Highlight color */
+    font-weight: 700;
 }
 
-/* On desktop, show it if expanded manually too (optional, but requested for mobile) */
-.storyline-progress-pill.expanded .storyline-close-mobile {
-    display: block;
+.storyline-item.past {
+   color: #999;
 }
 
-/* The dots container */
-.storyline-dots-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    width: 100%;
-    position: relative;
-    padding-bottom: 6px;
+.storyline-item-year {
+    font-family: 'Merriweather', monospace;
+    font-weight: 700;
+    opacity: 1; /* Was 0.8 */
+    min-width: 45px;
+    color: #ff4444; /* Match timeline year color */
 }
 
-.storyline-chapter-title {
+.storyline-item.past .storyline-item-year {
+    color: #999;
+}
+
+.storyline-item-title {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    opacity: 0;
-    transition: opacity 0.2s;
-    transition-delay: 0s;
-    /* Ensure it doesn't take up space */
-    max-width: 0;
+    font-family: 'Merriweather', sans-serif;
 }
 
-.storyline-progress-pill:hover .storyline-chapter-title.future-label {
-    white-space: normal;
-    /* Allow wrapping */
-    height: auto;
+.future-item {
+    border-top: 1px dashed rgba(0,0,0,0.1);
+    margin-top: 4px;
+    color: #1a73e8;
 }
 
-.storyline-progress-pill:hover .storyline-chapter-title {
-    opacity: 1;
-    transition-delay: 0.2s;
-    max-width: 260px;
-    /* Allow expansion */
+.future-item .storyline-item-year {
+    color: #1a73e8;
 }
 
-/* Track Wrapper for the line */
-.storyline-line-track {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    top: 8px;
-    /* Center of first dot (4px pad + 4px half-dot) */
-    bottom: 14px;
-    /* Center of last dot (6px container pad + 4px pad + 4px half-dot) */
-    width: 2px;
-    z-index: 0;
+.future-item:hover {
+    background-color: rgba(26, 115, 232, 0.05);
+    color: #1557b0;
 }
 
-/* Progress Line Background */
-.dots-line-bg {
+/* Scrollbar styles */
+.storyline-items-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+.storyline-items-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+.storyline-items-scroll::-webkit-scrollbar-thumb {
+    background-color: rgba(0,0,0,0.1);
+    border-radius: 3px;
+}
+
+/* Shared Icon Animation Styles */
+.icon-wrapper {
+    position: relative;
+    width: 30px; /* Increased from 24px */
+    height: 30px; /* Increased from 24px */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-icon {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Active Progress Line */
-.dots-line-progress {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    /* height set by inline style */
-    background: #ff4444;
-    transition: height 0.5s ease;
-}
-
-/* Override line position when expanded */
-.storyline-progress-pill.expanded .storyline-line-track {
-    left: 12px;
-    /* Center of 8px dot (aligned left with padding?) */
-    /* The dot row has padding: 0 8px. */
-    /* The dot is width 8px. */
-    /* Left padding 8px + half-dot 4px = 12px center. */
-    transform: none;
-}
-
-/* Title visibility when expanded via class (mobile) */
-.storyline-progress-pill.expanded .storyline-chapter-title {
-    display: block;
+.main-icon {
     opacity: 1;
-    transform: translateX(0);
-    pointer-events: auto;
-    max-width: 260px;
-    /* Matches hover state */
+    transform: rotate(0deg) scale(1);
 }
 
-.storyline-progress-pill.expanded .storyline-dot-row {
-    /* Ensure dot row layout works in expanded mode */
-}
-
-/* Fix Future dot in expanded mode mobile */
-.storyline-progress-pill.expanded .future-dot {
-    width: 20px;
-    height: 20px;
-    margin: 0;
-    margin-left: -6px;
-    background: white;
-    border: 1px solid #ff4444;
-}
-
-.storyline-progress-pill.expanded .future-row {
-    justify-content: flex-start;
-    padding-left: 8px;
-    /* Match standard padding */
-}
-
-/* Ensure future label wraps in expanded mobile */
-.storyline-progress-pill.expanded .storyline-chapter-title.future-label {
-    white-space: normal;
-    height: auto 8px + half-dot 4px=12px center. */ transform: none;
-}
-
-/* OLD RULES REMOVED/UPDATED ABOVE */
-
-.storyline-start-btn-inline {
-    background: #ff4444;
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    /* fallback */
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    width: 100%;
-    margin-bottom: 12px;
-    white-space: normal;
-    /* Allow text to wrap */
-    text-align: left;
-    box-sizing: border-box;
-    /* Ensure padding is included in width */
-    line-height: 1.4;
-
-    /* Fix jankiness: Don't display:none, instead hide visually but keep layout or absolute */
-    /* Ideally, force it to be wide so it doesn't wrap when container is narrow */
+.main-icon.hidden {
     opacity: 0;
-    height: 0;
-    margin-bottom: 0;
-    padding: 0;
-    pointer-events: none;
-    /* transition for expand + hover props */
-    transition: opacity 0.3s 0.1s, height 0.3s, margin 0.3s, padding 0.3s, background-color 0.2s, transform 0.2s, box-shadow 0.2s, border-color 0.2s, color 0.2s;
-    overflow: hidden;
+    transform: rotate(-90deg) scale(0.5);
 }
 
-.storyline-progress-pill:hover .storyline-start-btn-inline {
-    /* display: block;  <-- Removed */
-    opacity: 1;
-    height: auto;
-    padding: 12px 16px;
-    /* Increased padding inside buttons */
-    margin-bottom: 12px;
-    pointer-events: auto;
-}
-
-.storyline-start-btn-inline:hover {
-    background: #dd3333;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(255, 68, 68, 0.25);
-}
-
-/* Secondary Button Styles */
-.storyline-start-btn-inline.secondary {
-    margin-top: 8px;
-    /* Was inline */
-    font-size: 0.9em;
-    /* Was inline */
-    background: transparent;
-    /* Was inline */
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    /* Was inline */
-    color: #666;
-    /* Was inline */
-}
-
-.storyline-start-btn-inline.secondary:hover {
-    background: rgba(0, 0, 0, 0.05);
-    border-color: rgba(0, 0, 0, 0.3);
-    color: #333;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    /* Softer shadow for secondary */
-}
-
-.storyline-dot-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    width: 100%;
-    opacity: 0.6;
-    transition: opacity 0.2s, transform 0.2s ease, background-color 0.2s ease;
-    padding: 4px 8px;
-    /* Slightly more vertical padding */
-    box-sizing: border-box;
-    border-radius: 6px;
-}
-
-.storyline-dot-row:hover {
-    opacity: 1;
-    background-color: rgba(0, 0, 0, 0.03);
-    transform: translateX(2px);
-}
-
-.storyline-dot-row.active {
-    opacity: 1;
-}
-
-.storyline-dot-row.past {
-    opacity: 1;
-}
-
-.storyline-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: #ccc;
-    transition: all 0.3s;
-    flex-shrink: 0;
-    margin: 0 auto;
-    /* Center when collapsed */
-    position: relative;
-    z-index: 2;
-    /* Use opaque color matching the pill background to mask the line */
-    box-shadow: 0 0 0 4px rgb(239, 240, 235);
-}
-
-/* When expanded */
-.storyline-progress-pill:hover .storyline-dot {
-    margin: 0;
-}
-
-.storyline-dot.active {
-    background-color: #ff4444;
-    transform: scale(1.5);
-    /* Larger active dot */
-    box-shadow: 0 0 0 4px rgba(255, 68, 68, 0.2);
-}
-
-.storyline-dot.completed {
-    background-color: #ff4444;
-    /* Past dots colored */
-}
-
-/* Hover glitch fix: Ensure transparent button area covers text */
-.storyline-chapter-title {
-    font-size: 14px;
-    color: #333;
-    font-weight: 500;
-    line-height: 1.3;
-    display: none;
-    /* Hide completely when collapsed to prevent height issues */
+.close-icon {
     opacity: 0;
-    transform: translateX(10px);
-    transition: all 0.2s ease-out;
-    /* Faster transition */
-    pointer-events: none;
+    transform: rotate(90deg) scale(0.5);
 }
 
-/* Show titles on hover */
-.storyline-progress-pill:hover .storyline-chapter-title {
-    display: block;
+.close-icon.visible {
     opacity: 1;
-    transform: translateX(0);
-    pointer-events: auto;
+    transform: rotate(0deg) scale(1);
 }
 
-/* Ensure future button/row looks like a chapter item */
-.future-row {
-    margin-top: 4px;
-}
+/* Common Mobile Styles */
+@media (max-width: 768px) {
+    .storyline-list-container {
+        top: auto;
+        bottom: 100px;
+        left: 16px;
+    }
 
-.future-dot {
-    width: 24px;
-    height: 24px;
-    background: transparent;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transform: none !important;
-    /* No scale */
-    border-radius: 50%;
-    margin: 0 auto;
-    box-shadow: none;
-    flex-shrink: 0;
-}
+    .storyline-list-panel {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.9);
+        width: 90vw;
+        max-width: 340px;
+        height: 60vh;
+        z-index: 100;
+    }
 
-.storyline-progress-pill:hover .future-dot {
-    width: 20px;
-    height: 20px;
-    margin: 0;
-    /* Reset margins */
-    margin-left: -6px;
-    /* Align by offset */
-    background: white;
-    border: 1px solid #ff4444;
+    .storyline-list-panel.open {
+        transform: translate(-50%, -50%) scale(1);
+    }
 }
-
-/* Initially hide text/wrapping config */
-.storyline-skip-future-btn {
-    white-space: normal;
-    /* Allow wrap */
-    word-break: break-word;
-    /* Break if needed */
-}
-
-/* Constrain future dot width when collapsed to prevent overflow */
-.storyline-progress-pill:not(:hover) .future-dot {
-    width: 20px;
-    /* Force small width */
-    margin: 0 auto;
-    /* Ensure no sticky margin-left from other rules */
-    /* box-shadow: 0 0 0 4px rgb(239, 240, 235); optional */
-    display: flex;
-    justify-content: center;
-    /* Center horizontally */
-    align-items: center;
-    /* Center vertically */
-}
-
-/* Fix Future Row alignment when collapsed */
-/* Since storyline-dot-row has padding: 0 8px, it might offset the centered dot if width is constrained. */
-.storyline-progress-pill:not(:hover) .future-row {
-    padding: 0;
-    justify-content: center;
-}
-
-/* Hide icon when collapsed if needed, or scale down */
-.storyline-progress-pill:not(:hover) .future-icon {
-    font-size: 14px;
-    margin: 0;
-    /* Remove any margin causing shift */
-}
-
-.future-icon {
-    font-size: 14px;
-    color: #ff4444;
-}
-
-.future-label {
-    color: #ff4444;
-    font-weight: 600;
-}
-
-.storyline-chapter-title.future-label {
-    white-space: normal;
-    overflow: visible;
-    text-overflow: unset;
-    line-height: 1.2;
-    height: auto;
-}
-
-.storyline-progress-pill:hover .storyline-chapter-title.future-label {
-    max-width: 100%;
-}
-
-/* Improve hover-out transition - REMOVED DUPLICATE */

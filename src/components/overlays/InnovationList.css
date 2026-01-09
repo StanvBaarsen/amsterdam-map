@@ -24,7 +24,7 @@
     cursor: pointer;
     backdrop-filter: blur(12px);
     transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-    font-size: 24px;
+    font-size: 30px; /* Increased from 24px */
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     overflow: hidden;
 }
@@ -32,8 +32,8 @@
 /* Icon Transition Styles (Same as ChapterNavigation) */
 .icon-wrapper {
     position: relative;
-    width: 24px;
-    height: 24px;
+    width: 30px; /* Increased from 24px */
+    height: 30px; /* Increased from 24px */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -84,18 +84,16 @@
     position: absolute;
     top: 60px;
     right: 0;
-    background-color: rgba(239, 240, 235, 0.95);
-    backdrop-filter: blur(12px);
-    border-radius: 16px;
+    background-color: rgba(239, 240, 235, 0.98); /* Match timeline bg */
+    backdrop-filter: blur(12px); /* Match timeline blur */
+    border-radius: 30px; /* Match timeline roundedness */
     width: 300px;
     display: flex;
     flex-direction: column;
     max-height: calc(100vh - 180px);
     transform-origin: top right;
     transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-    box-shadow: 
-        0 10px 40px rgba(0,0,0,0.1),
-        0 2px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15); /* Match timeline shadow */
     border: 1px solid rgba(255, 255, 255, 0.5);
     opacity: 0;
     transform: scale(0.95) translateY(-10px);
@@ -116,10 +114,11 @@
 .innovation-list-header h3 {
     margin: 0;
     font-size: 0.95rem;
-    font-weight: 600;
-    color: #231F20;
+    font-weight: 700;
+    color: #ff4444; /* Match timeline accent */
     letter-spacing: 0.02em;
     text-transform: uppercase;
+    font-family: 'Merriweather', serif;
 }
 
 .innovation-items-scroll {
