@@ -53,10 +53,7 @@ def main():
     # 1. Download Basemap
     run_script("download_basemap.py")
     
-    # 2. Download LOD 2.2
-    run_script("download_amsterdam.py")
-    
-    # 3. Download LOD 1.2/1.3
+    # 2. Download LOD 1.2 and 2.2
     run_script("download_amsterdam_lods.py")
     
     # 4. Upload to R2

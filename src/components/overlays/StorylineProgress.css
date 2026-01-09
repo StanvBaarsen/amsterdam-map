@@ -211,9 +211,13 @@
 /* Common Mobile Styles */
 @media (max-width: 768px) {
     .storyline-list-container {
-        top: 8.5rem; /* Underneath header + extra space for timeline overlap */
+        top: 6rem; /* Underneath header */
         bottom: auto;
         left: 16px;
+    }
+
+    .storyline-list-container.mode-focus {
+        top: 8.5rem; /* Extra space for timeline overlap in focus mode */
     }
 
     .storyline-list-panel {

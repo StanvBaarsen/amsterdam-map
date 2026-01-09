@@ -17,7 +17,7 @@ export const StorylineProgress: React.FC<StorylineProgressProps> = ({
     chapters,
     activeIndex,
     // currentYear,
-    // mode,
+    mode,
     isProjectCompleted,
     onJump,
     onSkipToFuture,
@@ -34,7 +34,7 @@ export const StorylineProgress: React.FC<StorylineProgressProps> = ({
     };
 
     return (
-        <div className="storyline-list-container">
+        <div className={`storyline-list-container mode-${mode}`}>
             <button 
                 className={`storyline-toggle ${isOpen ? 'active' : ''}`}
                 onClick={() => setIsOpen(!isOpen)}

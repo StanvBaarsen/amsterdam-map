@@ -32,7 +32,6 @@ const s3 = new S3Client({
 
 const foldersToUpload = [
     'data/amsterdam_3dtiles_lod12',
-    'data/amsterdam_3dtiles_lod13',
     'data/amsterdam_3dtiles_lod22',
     'data/basemap'
 ];

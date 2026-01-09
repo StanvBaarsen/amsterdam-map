@@ -1278,10 +1278,10 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                                 animateCameraToStoryline(
                                     endingEvent.coordinate,
                                     () => {
-                                        isOrbitingRef.current = true;
+                                        // Ensure rotation is STOPPED for ending text
+                                        isOrbitingRef.current = false;
                                         if (controlsRef.current) {
-                                            controlsRef.current.autoRotate = true;
-                                            controlsRef.current.autoRotateSpeed = -1.5;
+                                            controlsRef.current.autoRotate = false;
                                         }
                                     },
                                     endingEvent.cameraAngle,
