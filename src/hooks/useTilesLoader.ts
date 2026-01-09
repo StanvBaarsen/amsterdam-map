@@ -74,14 +74,16 @@ export const useTilesLoader = ({
         const isMobile = window.innerWidth < 768;
 
         // Reduce cache size significantly for mobile to prevent OOM crashes
-        tiles.lruCache.minSize = isMobile ? 1000 : 4000;
-        tiles.lruCache.maxSize = isMobile ? 1500 : 6000;
+        // Aggressive limits: minSize=500, maxSize=1000 for mobile
+        tiles.lruCache.minSize = isMobile ? 500 : 4000;
+        tiles.lruCache.maxSize = isMobile ? 800 : 6000;
         
         // @ts-ignore
-        tiles.lruCache.unloadPercent = isMobile ? 0.2 : 0.05; // Force unloading of unused tiles
+        tiles.lruCache.unloadPercent = isMobile ? 0.4 : 0.05; // Force unloading of unused tiles aggressively on mobile
 
-        tiles.errorTarget = isMobile ? 12 : 10; // Slightly lower detail on mobile
-        tiles.loadSiblings = true;
+        // Increase error target on mobile to reduce geometry load (lower LOD)
+        tiles.errorTarget = isMobile ? 18 : 10;
+        tiles.loadSiblings = !isMobile; // Disable sibling loading on mobile to save bandwidth/memory
         tiles.maxDepth = 30;
         tiles.showEmptyTiles = true;
 

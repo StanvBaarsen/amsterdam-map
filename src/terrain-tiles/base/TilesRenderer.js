@@ -94,7 +94,22 @@ export class TilesRenderer {
                              // So we just check tileId.
                              
                              this.group.remove(child);
-                             this.resourceTracker.untrack(child);
+                             // this.resourceTracker.untrack(child);
+                             
+                             // Manual disposal
+                             if (child.geometry) {
+                                child.geometry.dispose();
+                                this.resourceTracker.untrack(child.geometry);
+                            }
+                            if (child.material) {
+                                if (child.material.map) {
+                                    child.material.map.dispose();
+                                    this.resourceTracker.untrack(child.material.map);
+                                }
+                                child.material.dispose();
+                                this.resourceTracker.untrack(child.material);
+                            }
+
                              this.activeTiles.delete(child.userData.tileId);
                         }
                     }
@@ -169,8 +184,23 @@ export class TilesRenderer {
 
 			if ( this.group.children[ i ].name != this.tileLevel ) {
 
-				this.group.remove( this.group.children[ i ] );
-				this.resourceTracker.untrack( this.group.children[ i ] );
+                const child = this.group.children[ i ];
+				this.group.remove( child );
+				// this.resourceTracker.untrack( child ); // Child is mesh, not tracked directly.
+                
+                // Manual disposal of resources
+                if (child.geometry) {
+                    child.geometry.dispose();
+                    this.resourceTracker.untrack(child.geometry);
+                }
+                if (child.material) {
+                    if (child.material.map) {
+                        child.material.map.dispose();
+                        this.resourceTracker.untrack(child.material.map);
+                    }
+                    child.material.dispose();
+                    this.resourceTracker.untrack(child.material);
+                }
 
 			}
 
@@ -247,6 +277,8 @@ export class TilesRenderer {
                     tex.colorSpace = 'srgb'; // Use srgb color space
                     var material = new MeshBasicMaterial( { map: scope.track( tex ), side: 2 } ); // DoubleSide
                     material.depthWrite = false;
+                    // TRACK THE MATERIAL
+                    scope.track(material);
                     mesh.material = material;
                     if (scope.onLoadTile) scope.onLoadTile();
 

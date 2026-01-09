@@ -7,7 +7,7 @@ interface TimelineOverlayProps {
     maxYear: number;
     presentYear?: number;
     currentYear: number;
-    onYearChange: (year: number) => void;
+    onYearChange: (year: number, isDragging?: boolean) => void;
     isPlaying: boolean;
     onPlayPause: (playing: boolean) => void;
     isStorylineActive?: boolean;
@@ -52,7 +52,7 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
         if (!isNaN(newYear)) {
             // Clamp value between min and max
             const clampedYear = Math.max(minYear, Math.min(newYear, maxYear));
-            onYearChange(clampedYear);
+            onYearChange(clampedYear, false);
         }
     };
 
@@ -144,13 +144,13 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
             // We do NOT setInternalValue here. We let the parent tween update the prop, 
             // and the useEffect will sync internalValue smoothly.
             if (newYear !== currentYear) {
-                onYearChange(newYear);
+                onYearChange(newYear, false);
             }
         } else {
             // Dragging - instant visual feedback
             setInternalValue(snapVisual);
             if (newYear !== currentYear) {
-                onYearChange(newYear);
+                onYearChange(newYear, true);
             }
         }
 
@@ -304,7 +304,9 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
                                 ${isAtEnd ? 'rgba(255, 68, 68, 0.15)' : 'transparent'} ${presentStop},
                                 ${isAtEnd ? 'rgba(0, 153, 255, 0.15)' : 'transparent'} 100%
                             )`,
-                            transition: 'background 0.5s ease'
+                            // Only transition background color if we could, but removing transition 
+                            // entirely for background ensures the gradient stop tracks the thumb instantly.
+                            transition: 'opacity 0.3s ease' 
                         }}
                     />
                     {/* Visual Dotted Line for the Gap */}
