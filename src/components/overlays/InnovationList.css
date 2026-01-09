@@ -178,8 +178,8 @@
 /* Common Mobile Styles */
 @media (max-width: 768px) {
     .innovation-list-container {
-        top: auto;
-        bottom: 100px; /* Position above bottom controls if any */
+        top: 6rem; /* Underneath header */
+        bottom: auto;
         right: 16px;
     }
 

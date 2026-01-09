@@ -211,8 +211,8 @@
 /* Common Mobile Styles */
 @media (max-width: 768px) {
     .storyline-list-container {
-        top: auto;
-        bottom: 100px;
+        top: 8.5rem; /* Underneath header + extra space for timeline overlap */
+        bottom: auto;
         left: 16px;
     }
 

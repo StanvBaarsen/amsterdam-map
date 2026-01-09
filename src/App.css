@@ -60,6 +60,8 @@
 @media (max-width: 768px) {
   .app-header.storyline-active {
       transform: translate(0, -200%);
+      opacity: 0;
+      pointer-events: none;
   }
 }
 
