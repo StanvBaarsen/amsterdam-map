@@ -16,6 +16,7 @@ export const useTileShaders = (
     const [palettes] = useState(() => ({
         default: createPaletteTexture('default'),
         grayscale: createPaletteTexture('grayscale'),
+        technical: createPaletteTexture('technical'),
         future: createPaletteTexture('future')
     }));
 
@@ -70,11 +71,8 @@ export const useTileShaders = (
                     vec4 colorB = texture2D(paletteTextureNext, vec2(normYear, 0.5));
                     diffuseColor.rgb = mix(colorA.rgb, colorB.rgb, paletteMix);
                 } else {
-                    // Unknown year (0) -> Use max year color (newest) from current palette
-                    // Map 1.0 (end of texture)
-                    vec4 colorA = texture2D(paletteTexture, vec2(1.0, 0.5));
-                    vec4 colorB = texture2D(paletteTextureNext, vec2(1.0, 0.5));
-                    diffuseColor.rgb = mix(colorA.rgb, colorB.rgb, paletteMix);
+                    // Unknown year (0) -> Light Grey
+                    diffuseColor.rgb = vec3(0.933, 0.933, 0.933); 
                 }
                 `
             ).replace(

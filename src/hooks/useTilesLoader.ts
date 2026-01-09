@@ -70,22 +70,12 @@ export const useTilesLoader = ({
         tiles.fetchOptions = { mode: 'cors' };
         tiles.displayBoxBounds = false;
         tiles.colorMode = 0;
-
-        const isMobile = window.innerWidth < 768;
-
-        // Reduce cache size significantly for mobile to prevent OOM crashes
-        // Adjusted to prevent "thrashing" (load/unload loop) which causes low FPS.
-        // If the view needs ~100 tiles, minSize must be comfortably above that.
-        tiles.lruCache.minSize = isMobile ? 350 : 4000;
-        tiles.lruCache.maxSize = isMobile ? 500 : 6000;
-        
+        tiles.lruCache.minSize = 6000;
+        tiles.lruCache.maxSize = 8000;
         // @ts-ignore
-        // Unload less aggressively to avoid CPU spikes from re-decoding
-        tiles.lruCache.unloadPercent = isMobile ? 0.1 : 0.05; 
-
-        // Increase error target on mobile to reduce geometry load (lower LOD)
-        tiles.errorTarget = isMobile ? 20 : 10;
-        tiles.loadSiblings = !isMobile; // Disable sibling loading on mobile to save bandwidth/memory
+        tiles.lruCache.unloadPercent = 0; // Prevent unloading
+        tiles.errorTarget = 10;
+        tiles.loadSiblings = true;
         tiles.maxDepth = 30;
         tiles.showEmptyTiles = true;
 
@@ -110,9 +100,6 @@ export const useTilesLoader = ({
         tilesRef.current = tiles;
 
         return () => {
-             // Dispose loaders to terminate workers
-             dracoLoader.dispose();
-             
             if (tilesRef.current) {
                 if (offsetParentRef.current) offsetParentRef.current.remove(tilesRef.current.group);
                 if (tilesRef.current.dispose) tilesRef.current.dispose();

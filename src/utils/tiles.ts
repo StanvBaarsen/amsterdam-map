@@ -3,8 +3,8 @@ import { getBuildingColor } from './colors';
 
 export const processTileColors = (scene: THREE.Object3D | THREE.Group, tile: any, coloredMaterial: THREE.Material, defaultMaterial: THREE.Material) => {
     // Check if we've already processed this tile
-    // Removed caching check to ensure re-loaded tiles get colored correctly
-    // if (tile._colorsProcessed) return;
+    // @ts-ignore
+    if (tile._colorsProcessed) return;
 
     // Try to find batch table in various locations
     const batchTable = tile.batchTable ||
@@ -58,30 +58,10 @@ export const processTileColors = (scene: THREE.Object3D | THREE.Group, tile: any
             if (c.isMesh) {
                 let geometry = c.geometry;
 
-                // CRITICAL MEMORY FIX:
-                // Dispose of the original material AND its textures.
-                // GLTFLoader typically creates unique materials/textures for tiles. 
-                // Since we replace them, all these textures become orphaned in GPU memory if not disposed.
-                if (c.material && c.material !== coloredMaterial && c.material !== defaultMaterial) {
-                    const mat = c.material;
-                    // Dispose textures
-                    if (mat.map) mat.map.dispose();
-                    if (mat.emissiveMap) mat.emissiveMap.dispose();
-                    if (mat.roughnessMap) mat.roughnessMap.dispose();
-                    if (mat.metalnessMap) mat.metalnessMap.dispose();
-                    if (mat.normalMap) mat.normalMap.dispose();
-                    if (mat.aoMap) mat.aoMap.dispose();
-                    
-                    mat.dispose();
-                }
-
                 // Ensure geometry is non-indexed to support per-face coloring (hard edges)
                 if (geometry.index) {
-                    const oldGeometry = geometry;
                     geometry = geometry.toNonIndexed();
                     c.geometry = geometry;
-                    // Dispose of the original indexed geometry
-                    oldGeometry.dispose();
                 }
 
                 const batchIdAttr = geometry.getAttribute('_batchid');
@@ -106,11 +86,13 @@ export const processTileColors = (scene: THREE.Object3D | THREE.Group, tile: any
                     geometry.setAttribute('constructionYear', new THREE.BufferAttribute(years, 1));
                     // Remove existing normals to ensure flat shading works correctly
                     geometry.deleteAttribute('normal');
-                    
-                    // Reverted: Use shared material without cloning.
-                    // This is essential for draw call batching and performance ("slideshow" fix).
-                    // The potential crashing issue due to shared material disposal is mitigated
-                    // by ensuring 3d-tiles-renderer does not own this material instance.
+
+                    // Dispose the original material/texture to prevent leaks
+                    if (c.material && c.material !== coloredMaterial) {
+                        if (c.material.map) c.material.map.dispose();
+                        c.material.dispose();
+                    }
+
                     c.material = coloredMaterial;
                 }
             }
@@ -125,18 +107,12 @@ export const processTileColors = (scene: THREE.Object3D | THREE.Group, tile: any
                 c.material !== defaultMaterial &&
                 c.material !== coloredMaterial) {
                 
-                // Dispose old material AND textures
+                // Dispose the original material/texture to prevent leaks
                 if (c.material) {
-                    const mat = c.material;
-                    if (mat.map) mat.map.dispose();
-                    if (mat.emissiveMap) mat.emissiveMap.dispose();
-                    if (mat.roughnessMap) mat.roughnessMap.dispose();
-                    if (mat.metalnessMap) mat.metalnessMap.dispose();
-                    if (mat.normalMap) mat.normalMap.dispose();
-                    if (mat.aoMap) mat.aoMap.dispose();
-                    mat.dispose();
+                    if (c.material.map) c.material.map.dispose();
+                    c.material.dispose();
                 }
-                
+
                 c.material = defaultMaterial;
             }
         });
