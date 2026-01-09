@@ -74,18 +74,11 @@ export const useStorylineLogic = ({
 
                     const next = prev + increment;
 
-                    // Trigger zoom out at 1850 directly in the loop to avoid timing issues
+                    // Trigger zoom out at 1850 directly in the loop (Only during playback)
                     if (prev < 1850 && next >= 1850 && !hasZoomedOutRef.current) {
                         hasZoomedOutRef.current = true;
                         isOrbitingRef.current = false;
-                        
-                        // Condition: if we are heading to a date past 1850, use 5000 distance
-                        // Wait, this IS the trigger at 1850. 
-                        // The user said: "if the target-date is past 1850, please make the cam distance like 5000"
-                        // I assume this means the intermediate zoom out should be closer (5000) instead of default (6000)
-                        // because modern Amsterdam is bigger? Or smaller? 
-                        // Actually, if we are crossing 1850, we are definitely passing 1850.
-                        zoomOutToMax(5000);
+                        zoomOutToMax(6000); // Trigger full city view
                     }
 
                     if (nextEvent && next >= nextEvent.year) {

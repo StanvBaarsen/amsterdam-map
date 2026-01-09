@@ -16,7 +16,6 @@ export const useTileShaders = (
     const [palettes] = useState(() => ({
         default: createPaletteTexture('default'),
         grayscale: createPaletteTexture('grayscale'),
-        technical: createPaletteTexture('technical'),
         future: createPaletteTexture('future')
     }));
 

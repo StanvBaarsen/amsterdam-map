@@ -90,17 +90,21 @@ export const StorylineOverlay: React.FC<StorylineOverlayProps> = ({
                 <div className="storyline-scroll-container" ref={scrollContainerRef}>
                     <div style={{ position: 'relative' }}>
                         <img src={event.image} alt={`Amsterdam ${event.year}`} className="storyline-image" />
-                        <button 
-                            onClick={handleSkip}
-                            className={`storyline-skip-btn ${variant === 'innovation' ? 'icon-only' : ''}`}
-                            title={variant === 'innovation' ? "Sluiten" : skipButtonText}
-                        >
-                            {variant === 'innovation' ? <MdClose /> : <>{skipButtonText} »</>}
-                        </button>
+                        {!isEndingText && (
+                            <button 
+                                onClick={handleSkip}
+                                className={`storyline-skip-btn ${variant === 'innovation' ? 'icon-only' : ''}`}
+                                title={variant === 'innovation' ? "Sluiten" : skipButtonText}
+                            >
+                                {variant === 'innovation' ? <MdClose /> : <>{skipButtonText} »</>}
+                            </button>
+                        )}
                     </div>
                     <div className="storyline-content">
                         <div className="storyline-description">
-                            <ReactMarkdown>{event.description}</ReactMarkdown>
+                            <ReactMarkdown>
+                                {event.description.replace(/Ondernemersloket/g, 'Ondernemers\u00ADloket')}
+                            </ReactMarkdown>
                         </div>
                     </div>
                 </div>

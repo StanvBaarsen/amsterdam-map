@@ -131,10 +131,11 @@ const ViewerPage: React.FC = () => {
     };
 
     const [isStorylineActive, setIsStorylineActive] = useState(false);
+    const [isInnovationActive, setIsInnovationActive] = useState(false);
 
     return (
         <div id="viewer" style={{ width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative' }}>
-            <div className={`app-header ${isStorylineActive ? 'storyline-active' : ''}`}>
+            <div className={`app-header ${isStorylineActive || isInnovationActive ? 'storyline-active' : ''}`}>
                 <div style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -199,6 +200,7 @@ const ViewerPage: React.FC = () => {
                     setShowBuildingInfo(true);
                 }}
                 onStorylineToggle={setIsStorylineActive}
+                onInnovationToggle={setIsInnovationActive}
             />
         </div>
     );
