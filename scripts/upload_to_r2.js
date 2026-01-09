@@ -127,9 +127,7 @@ async function deleteExtraneousFiles() {
     }
 
     console.log(`🗑️  Found ${keysToDelete.length} files to delete from R2...`);
-await deleteExtraneousFiles();
 
-    
     // Batch delete in chunks of 1000
     const chunkSize = 1000;
     for (let i = 0; i < keysToDelete.length; i += chunkSize) {
@@ -163,6 +161,8 @@ async function main() {
             console.warn(`⚠️ Folder not found: ${folder}`);
         }
     }
+    
+    await deleteExtraneousFiles();
 
     console.log("✨ Upload complete!");
 }
