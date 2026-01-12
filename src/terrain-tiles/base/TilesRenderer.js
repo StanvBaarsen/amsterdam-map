@@ -82,7 +82,7 @@ export class TilesRenderer {
 
                 // Memory Cleanup: Prune tiles that are no longer in view
                 // This prevents infinite accumulation of tiles during long sessions (e.g. storylines)
-                const MAX_ACTIVE_TILES = 50;
+                const MAX_ACTIVE_TILES = 200;
                 if (this.activeTiles.size > MAX_ACTIVE_TILES) {
                     for ( let i = this.group.children.length - 1; i >= 0; i-- ) {
                         const child = this.group.children[i];
