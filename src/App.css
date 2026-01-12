@@ -54,14 +54,14 @@
 }
 
 .app-header.storyline-active {
-  transform: translate(-245px, 0);
+  transform: translate(0, 0);
 }
 
 @media (max-width: 768px) {
   .app-header.storyline-active {
-      transform: translate(0, -200%);
-      opacity: 0;
-      pointer-events: none;
+      transform: translate(0, 0);
+      opacity: 1;
+      pointer-events: auto;
   }
 }
 

@@ -87,6 +87,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     const [innovationEvent, setInnovationEvent] = useState<any>(null);
     const [controlsGuideDismissed, setControlsGuideDismissed] = useState(false);
     const [isTransitioning, setIsTransitioning] = useState(false);
+    const [activeOverlay, setActiveOverlay] = useState<'chapter' | 'innovation' | null>(null);
 
     // Load saved progress on mount
     useEffect(() => {
@@ -1291,6 +1292,8 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                     chapters={parsedStorylinesData}
                     activeIndex={storylineIndex}
                     isProjectCompleted={isStorylineComplete}
+                    isOpen={activeOverlay === 'chapter'}
+                    onToggle={(isOpen) => setActiveOverlay(isOpen ? 'chapter' : null)}
                     onJump={(index) => {
                         setIsPlaying(false); // Pause on manual jump
 
@@ -1518,7 +1521,11 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                             {storylineMode === 'overview' && !innovationEvent && (
                                 <InnovationList
                                     projects={innovationProjects}
-                                    onToggle={onInnovationToggle}
+                                    isOpen={activeOverlay === 'innovation'}
+                                    onToggle={(isOpen) => {
+                                        setActiveOverlay(isOpen ? 'innovation' : null);
+                                        if (onInnovationToggle) onInnovationToggle(isOpen);
+                                    }}
                                     onSelectProject={(project) => {
                                         setStorylineMode('overview'); // Exit story mode
                                         setInnovationEvent({

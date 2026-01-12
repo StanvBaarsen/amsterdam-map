@@ -15,7 +15,7 @@
     border-radius: 50%;
     background: white;
     border: none;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -29,8 +29,15 @@
     background: #f0f0f0;
     transform: scale(1.1);
     color: #1a1a1a;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.25);
 }
 
 .map-control-btn:active {
     transform: scale(0.95);
+}
+
+@media (max-width: 768px) {
+    .map-controls-container {
+        bottom: 172px;
+    }
 }
