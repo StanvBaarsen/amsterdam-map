@@ -17,21 +17,35 @@ interface InnovationListProps {
     projects: InnovationProject[];
     onSelectProject: (project: InnovationProject) => void;
     onToggle?: (isOpen: boolean) => void;
+    isOpen?: boolean;
 }
 
-export const InnovationList: React.FC<InnovationListProps> = ({ projects, onSelectProject, onToggle }) => {
-    const [isOpen, setIsOpen] = useState(false);
+export const InnovationList: React.FC<InnovationListProps> = ({ 
+    projects, 
+    onSelectProject, 
+    onToggle: controlledOnToggle, 
+    isOpen: controlledIsOpen 
+}) => {
+    const [internalOpen, setInternalOpen] = useState(false);
+    
+    // Determine if component is controlled
+    const isControlled = controlledIsOpen !== undefined;
+    const isOpen = isControlled ? controlledIsOpen : internalOpen;
+
+    const handleToggle = (newState: boolean) => {
+        if (isControlled && controlledOnToggle) {
+            controlledOnToggle(newState);
+        } else {
+            setInternalOpen(newState);
+            controlledOnToggle?.(newState);
+        }
+    };
     
     useEffect(() => {
         return () => {
-            onToggle?.(false);
+             // Cleanup if needed
         };
-    }, [onToggle]);
-
-    const handleToggle = (newState: boolean) => {
-        setIsOpen(newState);
-        onToggle?.(newState);
-    };
+    }, []);
     
     // Filter out projects that are marked as ending text (should not show in list)
     const visibleProjects = projects.filter(p => !p.ending_text);

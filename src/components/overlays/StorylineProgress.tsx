@@ -11,6 +11,8 @@ interface StorylineProgressProps {
     onJump: (index: number) => void;
     onSkipToFuture: () => void;
     onStartStoryline?: () => void;
+    isOpen?: boolean;
+    onToggle?: (isOpen: boolean) => void;
 }
 
 export const StorylineProgress: React.FC<StorylineProgressProps> = ({
@@ -22,9 +24,23 @@ export const StorylineProgress: React.FC<StorylineProgressProps> = ({
     onJump,
     onSkipToFuture,
     // onStartStoryline
+    isOpen: controlledIsOpen,
+    onToggle: controlledOnToggle
 }) => {
     
-    const [isOpen, setIsOpen] = useState(false);
+    const [internalOpen, setInternalOpen] = useState(false);
+    
+    // Determine if component is controlled
+    const isControlled = controlledIsOpen !== undefined;
+    const isOpen = isControlled ? controlledIsOpen : internalOpen;
+    
+    const handleToggle = (newState: boolean) => {
+        if (isControlled && controlledOnToggle) {
+            controlledOnToggle(newState);
+        } else {
+            setInternalOpen(newState);
+        }
+    };
 
     const getTitle = (desc: string) => {
         // Extract title from markdown-like description
@@ -37,7 +53,7 @@ export const StorylineProgress: React.FC<StorylineProgressProps> = ({
         <div className={`storyline-list-container mode-${mode}`}>
             <button 
                 className={`storyline-toggle ${isOpen ? 'active' : ''}`}
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={() => handleToggle(!isOpen)}
                 title="Hoofdstukken"
             >
                 <div className="icon-wrapper">
@@ -62,7 +78,7 @@ export const StorylineProgress: React.FC<StorylineProgressProps> = ({
                                 className={`storyline-item ${isActive ? 'active' : ''} ${isPast ? 'past' : ''}`}
                                 onClick={() => {
                                     onJump(index);
-                                    setIsOpen(false);
+                                    handleToggle(false);
                                 }}
                             >
                                 <span className="storyline-item-year">{chapter.year}</span>
@@ -74,7 +90,7 @@ export const StorylineProgress: React.FC<StorylineProgressProps> = ({
                         className="storyline-item future-item"
                         onClick={() => {
                             onSkipToFuture();
-                            setIsOpen(false);
+                            handleToggle(false);
                         }}
                     >
                         <span className="storyline-item-year">2030</span>

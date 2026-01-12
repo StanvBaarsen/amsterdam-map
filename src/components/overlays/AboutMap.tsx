@@ -1,10 +1,22 @@
-import React, { useState } from 'react';
-import { MdRotateRight, MdAdsClick, MdMouse } from 'react-icons/md';
+import React, { useState, useEffect } from 'react';
+import { MdRotateRight, MdAdsClick, MdMouse, MdTouchApp, MdPanTool, MdZoomIn } from 'react-icons/md';
 import './AboutMap.css';
 
 export const AboutMap: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [isClosing, setIsClosing] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     const handleClose = () => {
         setIsClosing(true);
@@ -23,30 +35,7 @@ export const AboutMap: React.FC = () => {
             <button
                 onClick={handleOpen}
                 title="Informatie & Credits"
-                style={{
-                    position: 'absolute',
-                    bottom: '20px',
-                    right: '25px',
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '50%',
-                    background: 'white',
-                    border: 'none',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '16px',
-                    fontWeight: 'bold',
-                    color: '#1a1a1a',
-                    cursor: 'pointer',
-                    zIndex: 90,
-                    transition: 'transform 0.2s',
-                    fontFamily: '"Helvetica Neue", Arial, sans-serif'
-                }}
-                onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-                onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                className="about-map-toggle"
             >
                 ?
             </button>
@@ -91,22 +80,34 @@ export const AboutMap: React.FC = () => {
                              <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1rem', color: '#1a1a1a' }}>Navigatie</h3>
                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                                 <div style={{ background: '#f5f7fa', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
-                                    <div style={{ color: '#ff4444', marginBottom: '6px', fontSize: '24px' }}><MdRotateRight /></div>
+                                    <div style={{ color: '#ff4444', marginBottom: '6px', fontSize: '24px' }}>
+                                        {isMobile ? <MdTouchApp /> : <MdRotateRight />}
+                                    </div>
                                     <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '4px' }}>Draaien</div>
-                                    <div style={{ fontSize: '12px', color: '#666' }}>Linker muisknop</div>
-                                    <div style={{ fontSize: '12px', color: '#999' }}>of shift + slepen</div>
+                                    <div style={{ fontSize: '12px', color: '#666' }}>
+                                        {isMobile ? 'Sleep met één vinger' : 'Linker muisknop'}
+                                    </div>
+                                    {!isMobile && <div style={{ fontSize: '12px', color: '#999' }}>of shift + slepen</div>}
                                 </div>
                                 <div style={{ background: '#f5f7fa', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
-                                    <div style={{ color: '#ff4444', marginBottom: '6px', fontSize: '24px' }}><MdAdsClick /></div>
+                                    <div style={{ color: '#ff4444', marginBottom: '6px', fontSize: '24px' }}>
+                                        {isMobile ? <MdPanTool /> : <MdAdsClick />}
+                                    </div>
                                     <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '4px' }}>Verplaatsen</div>
-                                    <div style={{ fontSize: '12px', color: '#666' }}>Rechter muisknop</div>
-                                    <div style={{ fontSize: '12px', color: '#999' }}>of 2 vingers</div>
+                                    <div style={{ fontSize: '12px', color: '#666' }}>
+                                        {isMobile ? 'Sleep met twee vingers' : 'Rechter muisknop'}
+                                    </div>
+                                    {!isMobile && <div style={{ fontSize: '12px', color: '#999' }}>of 2 vingers</div>}
                                 </div>
                                 <div style={{ background: '#f5f7fa', padding: '12px', borderRadius: '8px', textAlign: 'center', gridColumn: 'span 2' }}>
-                                    <div style={{ color: '#ff4444', marginBottom: '6px', fontSize: '24px' }}><MdMouse /></div>
+                                    <div style={{ color: '#ff4444', marginBottom: '6px', fontSize: '24px' }}>
+                                        {isMobile ? <MdZoomIn /> : <MdMouse />}
+                                    </div>
                                     <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '4px' }}>Zoomen</div>
-                                    <div style={{ fontSize: '12px', color: '#666' }}>Scrollen met muiswiel</div>
-                                    <div style={{ fontSize: '12px', color: '#999' }}>of pinch beweging</div>
+                                    <div style={{ fontSize: '12px', color: '#666' }}>
+                                        {isMobile ? 'Pinch (knijp) beweging' : 'Scrollen met muiswiel'}
+                                    </div>
+                                    {!isMobile && <div style={{ fontSize: '12px', color: '#999' }}>of pinch beweging</div>}
                                 </div>
                              </div>
                         </div>
