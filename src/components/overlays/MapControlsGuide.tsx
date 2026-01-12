@@ -47,7 +47,7 @@ export const MapControlsGuide: React.FC<MapControlsGuideProps> = ({ visible, has
     if (!show) return null;
 
     return (
-        <div style={{
+        <div className="map-controls-guide" style={{
             position: 'absolute',
             bottom: '160px', 
             left: '50%',
@@ -92,6 +92,11 @@ export const MapControlsGuide: React.FC<MapControlsGuideProps> = ({ visible, has
                     @keyframes fadeOut {
                         from { opacity: 1; transform: translate(-50%, 0); }
                         to { opacity: 0; transform: translate(-50%, -10px); }
+                    }
+                    @media (max-width: 768px) {
+                        .map-controls-guide {
+                            display: none !important;
+                        }
                     }
                 `}
             </style>

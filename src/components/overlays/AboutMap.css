@@ -76,3 +76,39 @@
 .about-map-overlay.closing .about-map-content {
   animation: scaleOut 0.3s ease-in forwards;
 }
+
+.about-map-toggle {
+    position: absolute;
+    bottom: 20px;
+    right: 25px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: bold;
+    color: #1a1a1a;
+    cursor: pointer;
+    z-index: 90;
+    transition: transform 0.2s, box-shadow 0.2s;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+}
+
+.about-map-toggle:hover {
+    box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+}
+
+.about-map-toggle:active {
+    transform: scale(0.95);
+}
+
+@media (max-width: 768px) {
+    .about-map-toggle {
+        bottom: 130px;
+    }
+}
