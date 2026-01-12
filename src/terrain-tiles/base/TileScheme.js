@@ -193,7 +193,7 @@ class BaseTileScheme {
         // Safety loop: If too many tiles, try lower resolution
         let tiles = [];
         let attempts = 0;
-        const MAX_TILES = 150; // Increased from 60 to 150 since we have a queue now
+        const MAX_TILES = 300; // Increased from 150 to 300 to prevent LOD thrashing on large screens
 
         while (attempts < 5) {
             const centerTile = tileMatrix.getTileAt( position );

@@ -36,8 +36,8 @@ const foldersToUpload = [
     'data/basemap'
 ];
 
-// Set to store existing keys
-const existingKeys = new Set();
+// Set to store existing keys mapped to their size
+const existingKeys = new Map();
 // Set to store local keys (files that should exist)
 const localKeys = new Set();
 
@@ -56,7 +56,7 @@ async function fetchExistingFiles() {
             const response = await s3.send(command);
             if (response.Contents) {
                 for (const object of response.Contents) {
-                    existingKeys.add(object.Key);
+                    existingKeys.set(object.Key, object.Size);
                     count++;
                 }
             }
@@ -71,9 +71,16 @@ async function fetchExistingFiles() {
 }
 
 async function uploadFile(filePath, key) {
+    const stat = fs.statSync(filePath);
+    const localSize = stat.size;
+
     if (existingKeys.has(key)) {
-        // console.log(`⏭️  Skipping (already exists): ${key}`);
-        return;
+        const remoteSize = existingKeys.get(key);
+        if (remoteSize === localSize) {
+             // console.log(`⏭️  Skipping (already exists & same size): ${key}`);
+             return;
+        }
+        console.log(`🔄 Updating (size changed): ${key} (R2: ${remoteSize} -> Local: ${localSize})`);
     }
 
     const fileContent = fs.readFileSync(filePath);
@@ -115,7 +122,7 @@ async function processDirectory(directory) {
 
 async function deleteExtraneousFiles() {
     const keysToDelete = [];
-    for (const key of existingKeys) {
+    for (const key of existingKeys.keys()) {
         if (!localKeys.has(key)) {
             keysToDelete.push({ Key: key });
         }
