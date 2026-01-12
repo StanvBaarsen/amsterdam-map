@@ -28,14 +28,37 @@ def read_b3dm(file_path):
             try:
                 bt_json = json.loads(bt_json_data.decode('utf-8'))
                 print("Batch Table Keys:", list(bt_json.keys()))
-                if 'attributes' in bt_json:
-                    print("Example 'attributes' entry:", bt_json['attributes'][0] if len(bt_json['attributes']) > 0 else "Empty")
-                # Check for large fields
-                for k, v in bt_json.items():
-                    if isinstance(v, list):
-                        print(f"Field '{k}' has {len(v)} elements.")
             except Exception as e:
                 print(f"Error parsing BT JSON: {e}")
+        
+        # Skip Batch Table Binary
+        f.seek(bt_bin_len, 1)
+
+        # GLB Header
+        glb_magic = f.read(4)
+        if glb_magic == b'glTF':
+            glb_version = struct.unpack('<I', f.read(4))[0]
+            glb_length = struct.unpack('<I', f.read(4))[0]
+            print(f"GLB Version: {glb_version}, Length: {glb_length}")
+            
+            # GLB Chunks
+            while f.tell() < 28 + ft_json_len + ft_bin_len + bt_json_len + bt_bin_len + glb_length:
+                try:
+                    chunk_len = struct.unpack('<I', f.read(4))[0]
+                    chunk_type = f.read(4)
+                    
+                    if chunk_type == b'JSON':
+                        json_data = f.read(chunk_len)
+                        glb_json = json.loads(json_data.decode('utf-8'))
+                        print(f"GLB Extensions Used: {glb_json.get('extensionsUsed', [])}")
+                        print(f"GLB Extensions Required: {glb_json.get('extensionsRequired', [])}")
+                        break # Just want the JSON
+                    else:
+                        f.seek(chunk_len, 1)
+                except:
+                    break
+        else:
+            print("No valid GLB found (magic mismatch)")
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
