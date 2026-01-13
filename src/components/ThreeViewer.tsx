@@ -21,6 +21,7 @@ import { InnovationList } from './overlays/InnovationList';
 import { MapControlsGuide } from './overlays/MapControlsGuide';
 import { AboutMap } from './overlays/AboutMap';
 import { MapControls } from './overlays/MapControls';
+import { PopulationChart } from './overlays/PopulationChart';
 
 import { processTileColors } from '../utils/tiles';
 // import { createPaletteTexture } from '../utils/colors'; // Now in useTileShaders
@@ -87,7 +88,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     const [innovationEvent, setInnovationEvent] = useState<any>(null);
     const [controlsGuideDismissed, setControlsGuideDismissed] = useState(false);
     const [isTransitioning, setIsTransitioning] = useState(false);
-    const [activeOverlay, setActiveOverlay] = useState<'chapter' | 'innovation' | null>(null);
+    const [activeOverlay, setActiveOverlay] = useState<'chapter' | 'innovation' | 'about' | null>(null);
 
     // Load saved progress on mount
     useEffect(() => {
@@ -1711,7 +1712,15 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                             }
                         }}
                     />
-                    <AboutMap />
+                    <AboutMap 
+                        isOpen={activeOverlay === 'about'} 
+                        onClose={() => setActiveOverlay(null)} 
+                        onToggle={() => setActiveOverlay(prev => prev === 'about' ? null : 'about')}
+                    />
+                    <PopulationChart 
+                        currentYear={currentYear} 
+                        onOpenAbout={() => setActiveOverlay('about')}
+                    />
 
                 </>
             )}
