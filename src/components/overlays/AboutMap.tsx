@@ -2,8 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { MdRotateRight, MdAdsClick, MdMouse, MdTouchApp, MdPanTool, MdZoomIn } from 'react-icons/md';
 import './AboutMap.css';
 
-export const AboutMap: React.FC = () => {
-    const [isOpen, setIsOpen] = useState(false);
+interface AboutMapProps {
+    isOpen?: boolean;
+    onClose?: () => void;
+    onToggle?: () => void;
+}
+
+export const AboutMap: React.FC<AboutMapProps> = ({ 
+    isOpen: propIsOpen, 
+    onClose: propOnClose,
+    onToggle: propOnToggle
+}) => {
+    // Local state fallback if not controlled
+    const [localIsOpen, setLocalIsOpen] = useState(false);
+    const isControlled = typeof propIsOpen !== 'undefined';
+    const isOpen = isControlled ? propIsOpen : localIsOpen;
+
     const [isClosing, setIsClosing] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
 
@@ -21,13 +35,21 @@ export const AboutMap: React.FC = () => {
     const handleClose = () => {
         setIsClosing(true);
         setTimeout(() => {
-            setIsOpen(false);
+            if (isControlled) {
+                if (propOnClose) propOnClose();
+            } else {
+                setLocalIsOpen(false);
+            }
             setIsClosing(false);
         }, 300);
     };
 
     const handleOpen = () => {
-        setIsOpen(true);
+        if (isControlled) {
+            if (propOnToggle) propOnToggle();
+        } else {
+            setLocalIsOpen(true);
+        }
     };
 
     return (
@@ -124,7 +146,18 @@ export const AboutMap: React.FC = () => {
                                     <strong>3D Data:</strong> Met dank aan het <a href="https://3dbag.nl" target="_blank" rel="noopener noreferrer" style={{ color: '#ff4444', textDecoration: 'none' }}>3DBAG</a> project (TU Delft) voor de gedetailleerde gebouwinformatie en kaart-logica.
                                 </li>
                                 <li style={{ marginBottom: '8px' }}>
-                                    <strong>Bevolking:</strong> Cijfers afkomstig uit <a href="https://onderzoek.amsterdam.nl/artikel/de-amsterdamse-bevolking-tot-1900" target="_blank" rel="noopener noreferrer" style={{ color: '#ff4444', textDecoration: 'none' }}>Onderzoek & Statistiek Amsterdam</a>.
+                                    <strong>Bevolkingsdata:</strong>
+                                    <ul style={{ marginTop: '5px', paddingLeft: '15px', listStyleType: 'disc' }}>
+                                        <li style={{ marginBottom: '4px' }}>
+                                            1000-1275: <a href="https://openresearch.amsterdam/nl/page/114554/erfgoed-van-de-week-een-wandeling-in-amsterdam-in-1275" target="_blank" rel="noopener noreferrer" style={{ color: '#ff4444', textDecoration: 'none' }}>OpenResearch</a> & <a href="https://www.amsterdammuseum.nl/tentoonstelling/geschiedenis-van-de-dam/12469" target="_blank" rel="noopener noreferrer" style={{ color: '#ff4444', textDecoration: 'none' }}>Amsterdam Museum</a>
+                                        </li>
+                                        <li style={{ marginBottom: '4px' }}>
+                                            1600-1900: <a href="https://onderzoek.amsterdam.nl/artikel/de-amsterdamse-bevolking-tot-1900" target="_blank" rel="noopener noreferrer" style={{ color: '#ff4444', textDecoration: 'none' }}>Onderzoek & Statistiek Gemeente Amsterdam (tot 1900)</a>
+                                        </li>
+                                        <li>
+                                            2000-2024: <a href="https://onderzoek.amsterdam.nl/artikel/bevolking-in-cijfers-2024" target="_blank" rel="noopener noreferrer" style={{ color: '#ff4444', textDecoration: 'none' }}>Onderzoek & Statistiek Gemeente Amsterdam (2024)</a>
+                                        </li>
+                                    </ul>
                                 </li>
                                 <li style={{ marginBottom: '8px' }}>
                                     <strong>Ontwikkeling:</strong> Door <a href="https://herprogrammeerdeoverheid.nl" target="_blank" rel="noopener noreferrer" style={{ color: '#ff4444', textDecoration: 'none' }}>Herprogrammeer de Overheid</a> (<a href="https://www.linkedin.com/in/oscar-lepoeter-87002a160/" target="_blank" rel="noopener noreferrer" style={{ color: '#ff4444', textDecoration: 'none' }}>Oscar Lepoeter</a>, <a href="https://www.linkedin.com/in/onnoericblom/" target="_blank" rel="noopener noreferrer" style={{ color: '#ff4444', textDecoration: 'none' }}>Onno Eric Blom</a> en <a href="https://www.stanvanbaarsen.nl" target="_blank" rel="noopener noreferrer" style={{ color: '#ff4444', textDecoration: 'none' }}>Stan van Baarsen</a>).
