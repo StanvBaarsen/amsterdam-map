@@ -20,6 +20,35 @@ const POPULATION_DATA: PopulationDataPoint[] = [
     { year: 2024, pop: 931000 }
 ];
 
+// Helper to determine nice ticks
+function calculateNiceScale(maxValue: number, tickCountTarget: number = 5) {
+    if (maxValue === 0) return { max: 100, step: 20 };
+    
+    // 1. Calculate rough step
+    const roughStep = maxValue / tickCountTarget;
+    
+    // 2. Normalize to nice step (1, 2, 5 * 10^n)
+    const magnitude = Math.pow(10, Math.floor(Math.log10(roughStep)));
+    const fraction = roughStep / magnitude;
+    
+    let niceFraction;
+    if (fraction <= 1) niceFraction = 1;
+    else if (fraction <= 2) niceFraction = 2;
+    else if (fraction <= 5) niceFraction = 5;
+    else niceFraction = 10;
+    
+    const step = niceFraction * magnitude;
+    
+    // 3. Calculate new max
+    // Ensure we are strictly above maxValue if users wants "one value above" the data point
+    let niceMax = Math.ceil(maxValue / step) * step;
+    if (niceMax <= maxValue) {
+        niceMax += step;
+    }
+    
+    return { max: niceMax, step };
+}
+
 interface PopulationChartProps {
     currentYear: number;
     onOpenAbout?: () => void;
@@ -48,18 +77,12 @@ export const PopulationChart: React.FC<PopulationChartProps> = ({ currentYear, o
     // ----- Scales -----
     const minYear = 1000;
     
-    // Y-Axis Max (Population)
-    // We want nice round numbers above the max.
-    const maxPop = useMemo(() => {
-        if (activeData.length === 0) return 1000;
+    // Y-Axis Max (Population) and Step
+    const { maxPop, scaleStep } = useMemo(() => {
+        if (activeData.length === 0) return { maxPop: 1000, scaleStep: 200 };
         const rawMax = Math.max(...activeData.map(d => d.pop));
-        // Nice number logic:
-        if (rawMax === 0) return 1000;
-        
-        const magnitude = Math.pow(10, Math.floor(Math.log10(rawMax)));
-        // Use 5 ticks target logic for nice numbers
-        const niceMax = Math.ceil(rawMax / (magnitude/2)) * (magnitude/2);
-        return niceMax > rawMax ? niceMax : niceMax + (magnitude/2);
+        const { max, step } = calculateNiceScale(rawMax);
+        return { maxPop: max, scaleStep: step };
     }, [activeData]);
 
     // X-Axis Max (Year)
@@ -85,18 +108,16 @@ export const PopulationChart: React.FC<PopulationChartProps> = ({ currentYear, o
     // ----- TICKS GENERATION -----
     
     // Y-Axis Ticks (Population)
-    // Generate ~4-5 nice ticks
+    // Nice round ticks based on calculated scale
     const yTicks = useMemo(() => {
         if (maxPop <= 0) return [];
-        const tickCount = 4;
-        const step = maxPop / tickCount; 
-        
         const ticks = [];
-        for (let i = 1; i <= tickCount; i++) {
-            ticks.push(Math.round(step * i)); 
+        // Start from step, go up to maxPop
+        for (let i = scaleStep; i <= maxPop; i += scaleStep) {
+            ticks.push(i); 
         }
         return ticks; 
-    }, [maxPop]);
+    }, [maxPop, scaleStep]);
 
     // X-Axis Ticks (Year)
     // "each 200 years or so"
@@ -116,7 +137,7 @@ export const PopulationChart: React.FC<PopulationChartProps> = ({ currentYear, o
     const margin = { top: 20, right: 30, bottom: 40, left: 50 }; 
     
     // Collapsed Chart Config (Small)
-    const smallW = 150;
+    const smallW = 130;
     const smallMargin = { top: 5, right: 5, bottom: 5, left: 5 }; 
 
     // Helper to map normalized 0..100 coords to pixels
