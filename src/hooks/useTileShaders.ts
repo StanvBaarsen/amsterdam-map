@@ -64,9 +64,9 @@ export const useTileShaders = (
                 #include <color_fragment>
                 
                 // Override vertex color with palette lookup
-                // Map years 1200...2030 to 0..1 texture coordinates
+                // Map years 1200...2026 to 0..1 texture coordinates
                 if (vConstructionYear > 10.0) {
-                    float normYear = clamp((vConstructionYear - 1200.0) / (2030.0 - 1200.0), 0.0, 1.0);
+                    float normYear = clamp((vConstructionYear - 1200.0) / (2026.0 - 1200.0), 0.0, 1.0);
                     vec4 colorA = texture2D(paletteTexture, vec2(normYear, 0.5));
                     vec4 colorB = texture2D(paletteTextureNext, vec2(normYear, 0.5));
                     diffuseColor.rgb = mix(colorA.rgb, colorB.rgb, paletteMix);
@@ -108,13 +108,9 @@ export const useTileShaders = (
 
             // Determine Target Palette
             let targetPaletteName = 'default';
-            if (currentYear >= 2029) {
-                targetPaletteName = 'future';
-            } else {
-                const currentChapter = storylinesData[storylineIndex] as any;
-                if (storylineMode === 'focus' && currentChapter?.palette) {
-                    targetPaletteName = currentChapter.palette;
-                }
+            const currentChapter = storylinesData[storylineIndex] as any;
+            if (storylineMode === 'focus' && currentChapter?.palette) {
+                targetPaletteName = currentChapter.palette;
             }
 
             // Handle Palette Transition

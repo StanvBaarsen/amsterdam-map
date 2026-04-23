@@ -44,12 +44,12 @@ export const PALETTES: Record<string, ColorStop[]> = {
 
 export const createPaletteTexture = (paletteName: string = 'default'): THREE.DataTexture => {
     const stops = PALETTES[paletteName] || PALETTES['default'];
-    // Create a texture that maps years 1200 to 2030 to colors
+    // Create a texture that maps years 1200 to 2026 to colors
     // Width can be 1024 to give year-level precision or 256 for interpolation
     const width = 1024;
     const data = new Uint8Array(4 * width);
     const minYear = 1200;
-    const maxYear = 2030;
+    const maxYear = 2026;
 
     const getColorForYear = (y: number) => {
         // Find applicable stop

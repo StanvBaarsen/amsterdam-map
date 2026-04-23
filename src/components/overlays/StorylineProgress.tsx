@@ -93,7 +93,7 @@ export const StorylineProgress: React.FC<StorylineProgressProps> = ({
                             handleToggle(false);
                         }}
                     >
-                        <span className="storyline-item-year">2030</span>
+                        <span className="storyline-item-year">2026</span>
                         <span className="storyline-item-title">Innovatieprojecten</span>
                     </button>
                 </div>

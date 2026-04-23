@@ -8,6 +8,7 @@ const storylinesData = storylinesDataRaw.map((s: any) => ({
     ...s,
     year: (s.year === "current") ? new Date().getFullYear() : s.year
 }));
+const MAX_TIMELINE_YEAR = 2026;
 
 interface UseStorylineLogicProps {
     isPlaying: boolean;
@@ -95,10 +96,10 @@ export const useStorylineLogic = ({
                         return nextEvent.year;
                     }
 
-                    if (next >= new Date().getFullYear()) {
+                    if (next >= MAX_TIMELINE_YEAR) {
                         setIsPlaying(false);
                         setIsStorylineComplete(true);
-                        return new Date().getFullYear();
+                        return MAX_TIMELINE_YEAR;
                     }
                     return next;
                 });
