@@ -1,4 +1,4 @@
-# Amsterdam 2030 Map
+# Amsterdam Timeline Map
 
 A 3D map viewer for Amsterdam using 3D Tiles and React.
 

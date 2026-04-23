@@ -5,16 +5,12 @@ import startText from '../../assets/start_text.json';
 
 interface IntroOverlayProps {
     show: boolean;
-    onStart: (skipStoryline: boolean, resume?: boolean, goToInnovation?: boolean) => void;
+    onStart: (skipStoryline?: boolean, resume?: boolean, goToInnovation?: boolean) => void;
     isLoading: boolean;
     progress: number;
 }
 
 export const IntroOverlay: React.FC<IntroOverlayProps> = ({ show, onStart, isLoading, progress }) => {
-
-    const handleStart = (skip: boolean, goToInnovation: boolean = false) => {
-         onStart(skip, false, goToInnovation);
-    };
 
     // Clamp progress at 99%
     const displayProgress = Math.min(99, Math.round(progress));
@@ -45,26 +41,11 @@ export const IntroOverlay: React.FC<IntroOverlayProps> = ({ show, onStart, isLoa
 
                     <div className={`start-options ${!isLoading ? 'visible' : ''}`}>
                         <button 
-                            onClick={() => handleStart(false)}
+                            onClick={() => onStart()}
                             className="start-button full-width"
                         >
-                            Volledige Amsterdam innovatie-tour
+                            Start
                         </button>
-                        
-                        <div className="start-options-row">
-                            <button 
-                                onClick={() => handleStart(true, true)}
-                                className="start-button half-width"
-                            >
-                                Direct naar innovatieprojecten 2030
-                            </button>
-                            <button 
-                                onClick={() => handleStart(true, false)}
-                                className="start-button half-width"
-                            >
-                                Innovatie-kaart vrij verkennen
-                            </button>
-                        </div>
                     </div>
                 </div>
             </div>

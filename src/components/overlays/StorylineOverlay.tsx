@@ -135,9 +135,9 @@ export const StorylineOverlay: React.FC<StorylineOverlayProps> = ({
                         {isEndingText 
                             ? "Afsluiten"
                             : (nextIsEnding && variant !== 'innovation'
-                                ? "Bekijk innovatieprojecten in 2030"
+                                ? "Bekijk innovatieprojecten in 2026"
                                 : (currentIndex === totalEvents - 1 
-                                    ? (variant === 'innovation' ? 'Naar het slot' : 'Bekijk innovatieprojecten in 2030')
+                                    ? (variant === 'innovation' ? 'Naar het slot' : 'Bekijk innovatieprojecten in 2026')
                                     : (variant === 'innovation' ? 'Bekijk volgend project' : 'Volgende')
                                   )
                               )

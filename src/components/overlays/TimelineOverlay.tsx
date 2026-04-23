@@ -18,7 +18,6 @@ interface TimelineOverlayProps {
 export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
     minYear,
     maxYear,
-    presentYear = new Date().getFullYear(),
     currentYear,
     onYearChange,
     isPlaying,
@@ -66,15 +65,11 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
     // We also disable interaction while playing (auto-scrolling), as per user request
     const isInteractive = !isStorylineActive && !isTransitioning && !isPlaying;
 
-    // Gap size matches distance to act as a buffer. 
-    // We want the visual gap to be substantial.
-    const GAP_SIZE = 50;
-    const sliderMax = presentYear + GAP_SIZE;
+    const sliderMax = maxYear;
 
     // Determine visual slider position from current year
     const getSliderValue = (year: number) => {
-        if (year >= maxYear) return sliderMax;
-        return Math.min(year, presentYear);
+        return Math.min(year, sliderMax);
     };
 
     const [internalValue, setInternalValue] = React.useState(getSliderValue(currentYear));
@@ -90,7 +85,7 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
             // But actually, we ALWAYS want to sync if not dragging, because that provides the animation.
             setInternalValue(newValue);
         }
-    }, [currentYear, isDragging, maxYear, presentYear]);
+    }, [currentYear, isDragging, sliderMax]);
 
     const handleSliderChange = () => {
         // NOTE: We do NOT use this standard onChange for user interactions anymore
@@ -123,20 +118,8 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
         
         const rawValue = minYear + (ratio * (sliderMax - minYear));
         
-        // Apply logic to snap to gap
-        let newYear = rawValue;
-        let snapVisual = rawValue;
-
-        if (rawValue > presentYear) {
-             const gapProgress = (rawValue - presentYear) / GAP_SIZE;
-             if (gapProgress > 0.5) {
-                 newYear = maxYear;
-                 snapVisual = sliderMax;
-             } else {
-                 newYear = presentYear;
-                 snapVisual = presentYear;
-             }
-        }
+        const newYear = Math.max(minYear, Math.min(rawValue, sliderMax));
+        const snapVisual = newYear;
 
         // If clicking (not dragging), we trigger the change but DO NOT visually snap instantly.
         // We let the prop update drive the visual slider (smooth transition).
@@ -197,31 +180,14 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
         window.addEventListener('pointerup', onPointerUp);
     };
 
-    // Calculate percentage for gradient stop
-    // presentYear represents the end of the solid line
-    // sliderMax represents the end of the total track
-    
-    // We want RED color for the years passed.
-    // Gradient: 
-    // Red from 0% to (current / total)%
-    // Gray from (current / total)% to (present / total)% ??
-    // User said: "timeline part that has passed should be red not gray"
-    // Previously: CurrentColor (Red) -> ... -> Gray
-    // Now: Red -> ... -> Gray
-    
-    // Innovation Mode / Future Blue
-    const ACTIVE_BLUE = '#0099ff'; // Matching 'future' palette brightest
     const ACTIVE_RED = '#ff4444'; 
-    
-    const isAtEnd = internalValue >= sliderMax;
 
     const totalRange = sliderMax - minYear;
-    const currentRatio = (Math.min(internalValue, presentYear) - minYear) / totalRange;
-    const presentRatio = (presentYear - minYear) / totalRange;
+    const currentRatio = (Math.min(internalValue, sliderMax) - minYear) / totalRange;
 
     // Use calc to align gradient stops with the slider thumb (which has 9px offset due to width)
     const currentStop = `calc(9px + ${currentRatio} * (100% - 18px))`;
-    const presentStop = `calc(9px + ${presentRatio} * (100% - 18px))`;
+    const endStop = 'calc(100% - 9px)';
 
     return (
         <div className={`timeline-overlay ${isStorylineActive ? 'storyline-active' : ''}`}>
@@ -239,7 +205,7 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
                         }}
                         className="timeline-play-button"
                         style={{
-                            background: isAtEnd ? ACTIVE_BLUE : ACTIVE_RED,
+                            background: ACTIVE_RED,
                             transition: 'background 0.5s ease'
                         }}
                     >
@@ -268,7 +234,7 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
                             style={{ 
                                 cursor: isInteractive ? 'pointer' : 'default',
                                 fontSize: ((isTransitioning || isPlaying) && !isStorylineActive) ? '4rem' : undefined,
-                                color: isAtEnd ? ACTIVE_BLUE : ACTIVE_RED,
+                                color: ACTIVE_RED,
                                 transition: 'color 0.5s ease, font-size 0.3s ease'
                             }}
                             title={isInteractive ? "Click to edit year" : ""}
@@ -297,12 +263,10 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
                             pointerEvents: !isInteractive ? 'none' : 'auto',
                             opacity: isInteractive ? 1 : 0.7,
                             background: `linear-gradient(to right, 
-                                ${isAtEnd ? ACTIVE_BLUE : ACTIVE_RED} 0%, 
-                                ${isAtEnd ? ACTIVE_BLUE : ACTIVE_RED} ${currentStop}, 
+                                ${ACTIVE_RED} 0%, 
+                                ${ACTIVE_RED} ${currentStop}, 
                                 #ddd ${currentStop}, 
-                                #ddd ${presentStop},
-                                ${isAtEnd ? 'rgba(255, 68, 68, 0.15)' : 'transparent'} ${presentStop},
-                                ${isAtEnd ? 'rgba(0, 153, 255, 0.15)' : 'transparent'} 100%
+                                #ddd ${endStop}
                             )`,
                             // Only transition background color if we could, but removing transition 
                             // entirely for background ensures the gradient stop tracks the thumb instantly.
@@ -313,25 +277,24 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
                     <div 
                         className="timeline-gap"
                         style={{
-                            // Align with slider thumb center which travels from 9px to (width-9px)
-                            left: `calc(9px + ${(presentYear - minYear) / (sliderMax - minYear)} * (100% - 18px))`,
-                            width: `calc(${(sliderMax - presentYear) / (sliderMax - minYear)} * (100% - 18px))`
+                            left: 'calc(100% - 9px)',
+                            width: '0px'
                         }}
                     />
-                    {/* 2030 Marker Dot */}
+                    {/* End-year marker dot */}
                     <div
                         className="timeline-gap-dot"
                         style={{
                             left: 'calc(100% - 9px)',
                             opacity: internalValue >= sliderMax ? 1 : 0.5,
-                            backgroundColor: isAtEnd ? ACTIVE_BLUE : ACTIVE_RED,
+                            backgroundColor: ACTIVE_RED,
                             transition: 'background-color 0.5s ease, opacity 0.2s ease'
                         }}
                      />
                     {/* Inject custom styles for thumb color transition */}
                     <style>{`
                         .timeline-slider::-webkit-slider-thumb {
-                            background: ${isAtEnd ? ACTIVE_BLUE : ACTIVE_RED} !important;
+                            background: ${ACTIVE_RED} !important;
                             transition: background 0.5s ease;
                         }
                     `}</style>
