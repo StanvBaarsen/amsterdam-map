@@ -24,12 +24,12 @@ export const IntroOverlay: React.FC<IntroOverlayProps> = ({ show, onStart, isLoa
                 <div className="intro-description">
                     <ReactMarkdown>{startText.content}</ReactMarkdown>
                 </div>
-                <p className="mobile-warning">Deze kaart werkt het beste op een desktop.</p>
+                <p className="mobile-warning">This map works best on a desktop.</p>
 
                 <div className="actions-area">
                     <div className={`loading-container ${isLoading ? 'loading' : ''}`}>
                         <div className="loading-text">
-                            Laden... {displayProgress}%
+                            Loading... {displayProgress}%
                         </div>
                         <div className="loading-track">
                             <div 
@@ -44,7 +44,7 @@ export const IntroOverlay: React.FC<IntroOverlayProps> = ({ show, onStart, isLoa
                             onClick={() => onStart()}
                             className="start-button full-width"
                         >
-                            Start
+                            Open map
                         </button>
                     </div>
                 </div>

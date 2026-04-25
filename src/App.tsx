@@ -156,7 +156,7 @@ const ViewerPage: React.FC = () => {
                         textTransform: 'uppercase',
                         fontFamily: "'Merriweather', serif"
                     }}>
-                        Amsterdam Timeline
+                        Amsterdam Through Time
                     </h1>
                     <img src="/favicon.svg" alt="Logo" className="header-logo" />
                 </div>
