@@ -15,6 +15,8 @@ import {
 	arrayBuffer2Base64
 } from './ArrayBuffer2Base64.js';
 
+import { tileCache } from './TileCache.js';
+
 export class TilesRenderer {
 
 	constructor() {
@@ -245,8 +247,47 @@ export class TilesRenderer {
 		var signal = controller.signal;
 		this.downloadQueue.set( tileId, controller );
 
+        const handleBuffer = ( buffer ) => {
+
+            scope.downloadQueue.delete( tileId );
+            scope.pendingFetches--;
+            scope.processFetchQueue();
+
+            // Place tiles of new/current tile level with loaded texture completely on top
+            mesh.renderOrder = -1;
+
+            const tex = new Texture();
+            var image = new Image();
+            image.src = 'data:image/png;base64,' + arrayBuffer2Base64( buffer );
+            image.onload = function () {
+
+                tex.image = image;
+                tex.magFilter = LinearFilter;
+                tex.minFilter = LinearFilter;
+                tex.generateMipmaps = false;
+                tex.needsUpdate = true;
+                tex.colorSpace = 'srgb';
+                var material = new MeshBasicMaterial( { map: scope.track( tex ), side: 2 } );
+                material.depthWrite = false;
+                scope.track(material);
+                mesh.material = material;
+                if (scope.onLoadTile) scope.onLoadTile();
+
+            };
+
+            image.onerror = function() { /* swallow */ };
+        };
+
         const fetchTile = () => {
             this.pendingFetches++;
+
+            // Hit the in-memory prefetch cache first to avoid a network round-trip.
+            const cached = tileCache.get( requestURL );
+            if ( cached ) {
+                handleBuffer( cached );
+                return;
+            }
+
             fetch( requestURL, { signal } ).then( function ( res ) {
 
                 if (!res.ok) {
@@ -254,46 +295,9 @@ export class TilesRenderer {
                 }
                 return res.arrayBuffer();
 
-            } ).then( function ( buffer ) {
+            } ).then( handleBuffer ).catch( function () {
 
-                scope.downloadQueue.delete( tileId );
-                scope.pendingFetches--;
-                scope.processFetchQueue();
-
-                // Place tiles of new/current tile level with loaded texture completely on top
-                mesh.renderOrder = -1;
-
-                const tex = new Texture();
-                var image = new Image();
-                image.src = 'data:image/png;base64,' + arrayBuffer2Base64( buffer );
-                image.onload = function () {
-
-                    // console.log("Texture loaded for tile:", tileId);
-                    tex.image = image;
-                    tex.magFilter = LinearFilter;
-                    tex.minFilter = LinearFilter;
-                    tex.generateMipmaps = false;
-                    tex.needsUpdate = true;
-                    tex.colorSpace = 'srgb'; // Use srgb color space
-                    var material = new MeshBasicMaterial( { map: scope.track( tex ), side: 2 } ); // DoubleSide
-                    material.depthWrite = false;
-                    // TRACK THE MATERIAL
-                    scope.track(material);
-                    mesh.material = material;
-                    if (scope.onLoadTile) scope.onLoadTile();
-
-                };
-                
-                image.onerror = function(err) {
-                    // Suppress texture load errors for cancelled/invalid tiles
-                    // console.error("Texture load error for tile:", tileId, err);
-                };
-
-            } ).catch( function ( e ) {
-                
-                // console.warn("Tile fetch failed:", tileId, e.message);
-
-                // we end up here if abort() is called on the Abortcontroller attached to this tile, or if fetch fails
+                // Abort or fetch failure
                 scope.downloadQueue.delete( tileId );
                 scope.activeTiles.delete( tileId );
                 scope.resourceTracker.untrack( geometry );

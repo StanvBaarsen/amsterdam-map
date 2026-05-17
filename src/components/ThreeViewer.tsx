@@ -24,6 +24,7 @@ import { MapControls } from './overlays/MapControls';
 import { PopulationChart } from './overlays/PopulationChart';
 
 import { processTileColors } from '../utils/tiles';
+import { prefetchBasemap } from '../utils/prefetchBasemap';
 // import { createPaletteTexture } from '../utils/colors'; // Now in useTileShaders
 import storylinesDataRaw from '../assets/storylines.json';
 import innovationProjectsRaw from '../assets/innovation_projects.json';
@@ -81,6 +82,8 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     const [loadingProgress, setLoadingProgress] = useState(0);
     const [, setAreImagesPreloaded] = useState(false);
     const areImagesPreloadedRef = useRef(false);
+    const isBasemapPrefetchedRef = useRef(false);
+    const basemapPrefetchProgressRef = useRef(0);
     const [showIntro, setShowIntro] = useState(true);
     const PRESENT_YEAR = 2026;
     const [currentYear, setCurrentYear] = useState(PRESENT_YEAR);
@@ -143,6 +146,31 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
             }
         });
     }, []);
+
+    // Prefetch basemap tiles into the in-memory tile cache so they're ready the
+    // moment the user opens the map (no pop-in as the camera flies in).
+    useEffect(() => {
+        const template = (basemapOptions as any)?.options?.template;
+        if (!template) {
+            isBasemapPrefetchedRef.current = true;
+            basemapPrefetchProgressRef.current = 1;
+            return;
+        }
+
+        const controller = new AbortController();
+        prefetchBasemap({
+            template,
+            signal: controller.signal,
+            onProgress: (loaded, total) => {
+                basemapPrefetchProgressRef.current = total > 0 ? loaded / total : 1;
+            },
+        }).finally(() => {
+            isBasemapPrefetchedRef.current = true;
+            basemapPrefetchProgressRef.current = 1;
+        });
+
+        return () => controller.abort();
+    }, [basemapOptions]);
 
     // Save progress when index changes
     useEffect(() => {
@@ -730,8 +758,9 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         if (isLoadingRef.current && tilesRef.current) {
             const stats = tilesRef.current.stats;
             const isStable = stats.downloading === 0 && stats.parsing === 0;
-            
-            if (tilesRef.current.root && isStable) {
+            const basemapDone = isBasemapPrefetchedRef.current;
+
+            if (tilesRef.current.root && isStable && basemapDone) {
                 stableFramesRef.current++;
                 // Wait for 15 frames (approx 0.25 sec) of stability to ensure everything is truly loaded
                 if (stableFramesRef.current > 15 && !isFinishingLoadRef.current) {
@@ -756,11 +785,13 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
                 stableFramesRef.current = 0;
                 if (!isFinishingLoadRef.current) {
                     setLoadingProgress((prev: number) => {
-                        // While downloading/parsing, move towards 80%
-                        const target = 80;
-                        const step = (target - prev) * 0.08; // Significantly faster than 0.01
-                         // Ensure we always move at least a little bit if we are far from target
-                        return prev + Math.max(0.2, step); 
+                        // While downloading/parsing, blend 3D-tile progress with basemap prefetch progress.
+                        // Basemap is half the remaining work; together they reach ~90 before stabilizing.
+                        const tilesPart = tilesRef.current?.root && isStable ? 1 : 0;
+                        const basemapPart = basemapPrefetchProgressRef.current;
+                        const target = 30 + 60 * (tilesPart * 0.4 + basemapPart * 0.6);
+                        const step = (target - prev) * 0.08;
+                        return prev + Math.max(0.2, step);
                     });
                 }
             }
