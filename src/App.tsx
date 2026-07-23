@@ -33,10 +33,12 @@ const ViewerPage: React.FC = () => {
         }
     }, []);
 
-    // Configuration for external tile hosting (e.g. Cloudflare R2, AWS S3)
-    // If empty, it will look for files in the local public/ folder
+    // Tiles are served by the amsterdam-tiles-proxy Worker (worker/), which
+    // fronts the R2 bucket with Cloudflare edge caching. Deliberately not
+    // read from VITE_TILE_HOST: Netlify still injects the old uncached
+    // r2.dev URL under that name. Use VITE_TILE_HOST_OVERRIDE to override.
     // If __USE_LOCAL_DATA__ is true (dev mode with local data), use /data
-    const REMOTE_TILE_HOST = import.meta.env.VITE_TILE_HOST || '';
+    const REMOTE_TILE_HOST = import.meta.env.VITE_TILE_HOST_OVERRIDE || 'https://tiles.stanvanbaarsen.nl';
     
     const BASEMAP_HOST = (import.meta.env.DEV && typeof __USE_LOCAL_BASEMAP__ !== 'undefined' && __USE_LOCAL_BASEMAP__) 
         ? '/data' 

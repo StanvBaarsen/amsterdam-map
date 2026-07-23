@@ -1,0 +1,16 @@
+{
+    "$schema": "node_modules/wrangler/config-schema.json",
+    "name": "amsterdam-tiles-proxy",
+    "main": "src/index.js",
+    "compatibility_date": "2026-07-01",
+    "account_id": "71c476a388b6d9c2db0015c2e539d384",
+    "routes": [
+        {
+            "pattern": "tiles.stanvanbaarsen.nl",
+            "custom_domain": true
+        }
+    ],
+    "observability": {
+        "enabled": true
+    }
+}

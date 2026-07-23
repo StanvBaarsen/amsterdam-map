@@ -76,48 +76,73 @@ interface PrefetchOptions {
     template: string;
     concurrency?: number;
     onProgress?: (loaded: number, total: number) => void;
+    /** Called once every tile up to CRITICAL_MAX_LEVEL is fetched. */
+    onCriticalDone?: () => void;
     signal?: AbortSignal;
 }
+
+// Levels up to this one block the loading screen; deeper levels (the bulk of
+// the data) keep prefetching in the background after the map opens. The map
+// opens on a wide view, so only coarse levels are visible immediately —
+// deeper tiles either arrive before the user zooms in or stream on demand.
+const CRITICAL_MAX_LEVEL = 10;
+
+const fetchUrls = async (
+    urls: string[],
+    concurrency: number,
+    signal: AbortSignal | undefined,
+    onTileDone: () => void,
+): Promise<void> => {
+    let index = 0;
+    const worker = async () => {
+        while (index < urls.length) {
+            if (signal?.aborted) return;
+            const url = urls[index++];
+            if (!tileCache.has(url)) {
+                try {
+                    const res = await fetch(url, { signal });
+                    if (res.ok) {
+                        const buffer = await res.arrayBuffer();
+                        tileCache.set(url, buffer);
+                    }
+                } catch {
+                    // Individual tile failures (404 on edge tiles, aborts, etc.) are non-fatal.
+                }
+            }
+            onTileDone();
+        }
+    };
+    const workerCount = Math.max(1, Math.min(concurrency, urls.length));
+    await Promise.all(Array.from({ length: workerCount }, worker));
+};
 
 export const prefetchBasemap = async ({
     template,
     concurrency = 12,
     onProgress,
+    onCriticalDone,
     signal,
 }: PrefetchOptions): Promise<void> => {
-    const urls: string[] = [];
+    const criticalUrls: string[] = [];
+    const backgroundUrls: string[] = [];
     for (const matrix of TILE_MATRIX_SET) {
-        urls.push(...buildUrlsForMatrix(template, matrix));
+        const target = matrix.level <= CRITICAL_MAX_LEVEL ? criticalUrls : backgroundUrls;
+        target.push(...buildUrlsForMatrix(template, matrix));
     }
 
-    const total = urls.length;
+    // Progress only tracks the critical phase — it drives the loading bar.
+    const total = criticalUrls.length;
     let loaded = 0;
-    let index = 0;
     onProgress?.(0, total);
 
-    const worker = async () => {
-        while (index < urls.length) {
-            if (signal?.aborted) return;
-            const url = urls[index++];
-            if (tileCache.has(url)) {
-                loaded++;
-                onProgress?.(loaded, total);
-                continue;
-            }
-            try {
-                const res = await fetch(url, { signal });
-                if (res.ok) {
-                    const buffer = await res.arrayBuffer();
-                    tileCache.set(url, buffer);
-                }
-            } catch {
-                // Individual tile failures (404 on edge tiles, aborts, etc.) are non-fatal.
-            }
-            loaded++;
-            onProgress?.(loaded, total);
-        }
-    };
+    await fetchUrls(criticalUrls, concurrency, signal, () => {
+        loaded++;
+        onProgress?.(loaded, total);
+    });
+    if (signal?.aborted) return;
+    onCriticalDone?.();
 
-    const workerCount = Math.max(1, Math.min(concurrency, urls.length));
-    await Promise.all(Array.from({ length: workerCount }, worker));
+    // Deep levels: lower concurrency so we don't starve the 3D tiles the user
+    // is actually looking at once the map is open.
+    await fetchUrls(backgroundUrls, 4, signal, () => {});
 };

@@ -164,6 +164,12 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
             onProgress: (loaded, total) => {
                 basemapPrefetchProgressRef.current = total > 0 ? loaded / total : 1;
             },
+            // The loading screen only waits for the coarse levels; deeper
+            // levels keep prefetching in the background after the map opens.
+            onCriticalDone: () => {
+                isBasemapPrefetchedRef.current = true;
+                basemapPrefetchProgressRef.current = 1;
+            },
         }).finally(() => {
             isBasemapPrefetchedRef.current = true;
             basemapPrefetchProgressRef.current = 1;
@@ -800,12 +806,10 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
 
     const updateTilesAndMaterials = () => {
         if (tilesRef.current) {
-            // While loading, force high detail loading even if far away
-            if (isLoadingRef.current) {
-                tilesRef.current.errorTarget = 1;
-            } else {
-                tilesRef.current.errorTarget = 10;
-            }
+            // Use the same detail target while loading as when the map is
+            // open: forcing errorTarget = 1 here made the loading screen
+            // stream far more geometry than the open map ever displays.
+            tilesRef.current.errorTarget = 10;
 
             if (tilesRef.current.update()) {
                 needsRerender.current = Math.max(needsRerender.current, 1);
