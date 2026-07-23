@@ -26,23 +26,10 @@ import { PopulationChart } from './overlays/PopulationChart';
 import { processTileColors } from '../utils/tiles';
 import { prefetchBasemap } from '../utils/prefetchBasemap';
 // import { createPaletteTexture } from '../utils/colors'; // Now in useTileShaders
-import storylinesDataRaw from '../assets/storylines.json';
-import innovationProjectsRaw from '../assets/innovation_projects.json';
-
-// Handle parsing of "current" year in storylines
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const storylinesData = (storylinesDataRaw as any[]).map((s: any) => ({
-    ...s,
-    year: (s.year === "current") ? new Date().getFullYear() : Number(s.year), // Force Number() here
-    cameraAngle: s.cameraAngle, // Ensure this property is passed through if present
-    cameraDistance: s.cameraDistance
-}));
-
-const innovationProjects = innovationProjectsRaw as any[];
-
-const parsedStorylinesData = storylinesData; 
-
-
+// Storyline data was intentionally removed; these empty collections preserve
+// the inactive legacy branches until they can be deleted separately.
+const parsedStorylinesData: any[] = [];
+const innovationProjects: any[] = [];
 interface ThreeViewerProps {
     tilesUrl?: string;
     basemapOptions?: any;
@@ -84,6 +71,8 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     const areImagesPreloadedRef = useRef(false);
     const isBasemapPrefetchedRef = useRef(false);
     const basemapPrefetchProgressRef = useRef(0);
+    const criticalTilesReadyRef = useRef(false);
+    const criticalTileStableFramesRef = useRef(0);
     const [showIntro, setShowIntro] = useState(true);
     const PRESENT_YEAR = 2026;
     const [currentYear, setCurrentYear] = useState(PRESENT_YEAR);
@@ -94,57 +83,9 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     const [controlsGuideDismissed, setControlsGuideDismissed] = useState(false);
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [activeOverlay, setActiveOverlay] = useState<'chapter' | 'innovation' | 'about' | null>(null);
-
-    // Load saved progress on mount
     useEffect(() => {
-        const savedIndex = localStorage.getItem('amsterdam_map_storyline_index');
-        if (savedIndex) {
-            const index = parseInt(savedIndex, 10);
-            if (index > 0 && index < parsedStorylinesData.length) {
-                setStorylineIndex(index);
-                // Ensure initial year is correct if resuming
-                // setCurrentYear(parsedStorylinesData[index].year); // Optional: depends on desired startup behavior
-            }
-        }
-    }, []);
-
-    // Preload images
-    useEffect(() => {
-        const imageUrls = [
-            ...parsedStorylinesData.map(s => s.image).filter(Boolean),
-            ...innovationProjects.map(p => p.image).filter(Boolean)
-        ];
-        
-        const uniqueUrls = [...new Set(imageUrls)];
-        
-        let loadedCount = 0;
-        const total = uniqueUrls.length;
-        
-        if (total === 0) {
-            setAreImagesPreloaded(true);
-            areImagesPreloadedRef.current = true;
-            return;
-        }
-
-        uniqueUrls.forEach(url => {
-            const img = new Image();
-            img.src = url;
-            img.onload = () => {
-                loadedCount++;
-                if (loadedCount === total) {
-                    setAreImagesPreloaded(true);
-                    areImagesPreloadedRef.current = true;
-                }
-            };
-            img.onerror = () => {
-                console.warn(`Failed to preload image: ${url}`);
-                loadedCount++;
-                if (loadedCount === total) {
-                    setAreImagesPreloaded(true);
-                    areImagesPreloadedRef.current = true;
-                }
-            }
-        });
+        setAreImagesPreloaded(true);
+        areImagesPreloadedRef.current = true;
     }, []);
 
     // Prefetch basemap tiles into the in-memory tile cache so they're ready the
@@ -178,11 +119,6 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         return () => controller.abort();
     }, [basemapOptions]);
 
-    // Save progress when index changes
-    useEffect(() => {
-         localStorage.setItem('amsterdam_map_storyline_index', storylineIndex.toString());
-    }, [storylineIndex]);
-    
     // NEW STATE: Track user interaction for persistence
     const [userHasPanned, setUserHasPanned] = useState(false);
     const [userHasRotated, setUserHasRotated] = useState(false);
@@ -202,17 +138,13 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
     const [skipStoryline, setSkipStoryline] = useState(true);
     const [isStorylineComplete, setIsStorylineComplete] = useState(true);
     const [minYear, ] = useState(1275);
-    
+
     useEffect(() => {
-        if (onStorylineToggle) {
-            onStorylineToggle(storylineMode === 'focus');
-        }
+        onStorylineToggle?.(storylineMode === 'focus');
     }, [storylineMode, onStorylineToggle]);
 
     useEffect(() => {
-        if (onInnovationToggle) {
-            onInnovationToggle(!!innovationEvent);
-        }
+        onInnovationToggle?.(!!innovationEvent);
     }, [innovationEvent, onInnovationToggle]);
 
     const containerRef = useRef<HTMLDivElement>(null);
@@ -231,21 +163,21 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
 
     const location = useLocation();
 
-    // Adjust rotation speed on mobile during storyline mode
+    // Adjust rotation speed on mobile.
     useEffect(() => {
         if (controlsRef.current) {
             const isMobile = window.innerWidth < 768;
             if (isMobile && storylineMode === 'focus') {
-                 controlsRef.current.rotateSpeed = 0.25; 
+                controlsRef.current.rotateSpeed = 0.25;
             } else {
-                 controlsRef.current.rotateSpeed = isMobile ? 0.6 : 1.0; 
+                controlsRef.current.rotateSpeed = isMobile ? 0.6 : 1.0;
             }
         }
     }, [storylineMode]);
 
     // Materials
     const materialRef = useRef<THREE.Material>(new THREE.MeshLambertMaterial({ color: 0xff4444, flatShading: true }));
-    const coloredMaterialRef = useTileShaders(currentYear, storylineIndex, storylineMode, needsRerender);
+    const coloredMaterialRef = useTileShaders(currentYear, needsRerender);
 
 
 
@@ -253,7 +185,7 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
 
     const reinitBasemapRef = useRef<() => void>(() => {});
 
-    const { tilesRef, isLoadingRef, stableFramesRef, isFinishingLoadRef, keepAliveFrames } = useTilesLoader({
+    const { tilesRef, isLoadingRef, isFinishingLoadRef, keepAliveFrames } = useTilesLoader({
         tilesUrl,
         cameraRef,
         rendererRef,
@@ -764,52 +696,42 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         if (isLoadingRef.current && tilesRef.current) {
             const stats = tilesRef.current.stats;
             const isStable = stats.downloading === 0 && stats.parsing === 0;
-            const basemapDone = isBasemapPrefetchedRef.current;
+            const hasVisibleTiles = stats.visible > 0;
+            const coarseTilesReady = tilesRef.current.root && hasVisibleTiles && isStable;
 
-            if (tilesRef.current.root && isStable && basemapDone) {
-                stableFramesRef.current++;
-                // Wait for 15 frames (approx 0.25 sec) of stability to ensure everything is truly loaded
-                if (stableFramesRef.current > 15 && !isFinishingLoadRef.current) {
-                    // Also wait for images to load
-                    if (areImagesPreloadedRef.current) {
-                        isFinishingLoadRef.current = true;
-                        setLoadingProgress(100);
-                        setTimeout(() => {
-                            setIsLoading(false);
-                            isLoadingRef.current = false;
-                        }, 200);
-                    }
-                } else if (!isFinishingLoadRef.current) {
-                   // Continue inching towards 100 while verifying stability
-                   setLoadingProgress((prev: number) => {
-                        const target = 99;
-                        const step = (target - prev) * 0.05; // Slower approach to 99 so it doesn't sit there as long
-                        return prev + Math.max(0.05, step);
-                   });
-                }
+            // The map is usable as soon as a coarse visible set is stable. Fine
+            // 3D refinement and basemap prefetching continue after this point.
+            if (coarseTilesReady) {
+                criticalTileStableFramesRef.current++;
             } else {
-                stableFramesRef.current = 0;
-                if (!isFinishingLoadRef.current) {
-                    setLoadingProgress((prev: number) => {
-                        // While downloading/parsing, blend 3D-tile progress with basemap prefetch progress.
-                        // Basemap is half the remaining work; together they reach ~90 before stabilizing.
-                        const tilesPart = tilesRef.current?.root && isStable ? 1 : 0;
-                        const basemapPart = basemapPrefetchProgressRef.current;
-                        const target = 30 + 60 * (tilesPart * 0.4 + basemapPart * 0.6);
-                        const step = (target - prev) * 0.08;
-                        return prev + Math.max(0.2, step);
-                    });
-                }
+                criticalTileStableFramesRef.current = 0;
+            }
+
+            if (criticalTileStableFramesRef.current > 8 && !isFinishingLoadRef.current) {
+                criticalTilesReadyRef.current = true;
+                isFinishingLoadRef.current = true;
+                setLoadingProgress(100);
+                setTimeout(() => {
+                    setIsLoading(false);
+                    isLoadingRef.current = false;
+                }, 200);
+            } else if (!isFinishingLoadRef.current) {
+                setLoadingProgress((prev: number) => {
+                    const tilesPart = coarseTilesReady ? 1 : 0;
+                    const basemapPart = basemapPrefetchProgressRef.current;
+                    const target = 30 + 60 * (tilesPart * 0.7 + basemapPart * 0.3);
+                    const step = (target - prev) * 0.08;
+                    return prev + Math.max(0.2, step);
+                });
             }
         }
     };
 
     const updateTilesAndMaterials = () => {
         if (tilesRef.current) {
-            // Use the same detail target while loading as when the map is
-            // open: forcing errorTarget = 1 here made the loading screen
-            // stream far more geometry than the open map ever displays.
-            tilesRef.current.errorTarget = 10;
+            // Load only coarse geometry before opening the map. Once the map
+            // is usable, refine in the background to the normal detail target.
+            tilesRef.current.errorTarget = criticalTilesReadyRef.current ? 10 : 35;
 
             if (tilesRef.current.update()) {
                 needsRerender.current = Math.max(needsRerender.current, 1);

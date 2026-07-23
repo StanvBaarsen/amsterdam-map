@@ -1,13 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import TWEEN from '@tweenjs/tween.js';
 import { createPaletteTexture } from '../utils/colors'; 
-import storylinesData from '../assets/storylines.json';
 
 export const useTileShaders = (
     currentYear: number,
-    storylineIndex: number,
-    storylineMode: 'overview' | 'focus',
     needsRerender: React.MutableRefObject<number>
 ) => {
     const coloredMaterialRef = useRef<THREE.Material>(new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide, flatShading: true }));
@@ -19,15 +15,6 @@ export const useTileShaders = (
         technical: createPaletteTexture('technical'),
         future: createPaletteTexture('future')
     }));
-
-    // Animation State
-    const animState = useRef({
-        fromPalette: 'default',
-        toPalette: 'default',
-        mix: 0
-    });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const tweenRef = useRef<any>(null);
 
     useEffect(() => {
         coloredMaterialRef.current.onBeforeCompile = (shader) => {
@@ -106,99 +93,16 @@ export const useTileShaders = (
                 shader.uniforms.saturation.value = sat;
             }
 
-            // Determine Target Palette
-            let targetPaletteName = 'default';
-            const currentChapter = storylinesData[storylineIndex] as any;
-            if (storylineMode === 'focus' && currentChapter?.palette) {
-                targetPaletteName = currentChapter.palette;
-            }
-
-            // Handle Palette Transition
+            // The map-only experience uses the default palette.
             if (shader.uniforms.paletteTexture && shader.uniforms.paletteTextureNext) {
-                
-                const s = animState.current;
-
-                if (targetPaletteName !== s.toPalette) {
-                    // Change detected
-                    
-                    if (targetPaletteName === s.fromPalette) {
-                        // Reversing: Going back to where we started
-                        // E.g. A -> B (at 0.5), now target is A.
-                        // We continue with textures as is (A, B) but animate mix back to 0.
-                        s.toPalette = targetPaletteName; // = A
-                        // s.fromPalette is already A
-                        
-                        if (tweenRef.current) tweenRef.current.stop();
-                        
-                        const startM = s.mix;
-                        tweenRef.current = new TWEEN.Tween({ m: startM })
-                            .to({ m: 0 }, 1000 * (startM)) // faster if closer
-                            .easing(TWEEN.Easing.Quadratic.Out)
-                            .onUpdate((obj) => {
-                                s.mix = obj.m;
-                                shader.uniforms.paletteMix.value = obj.m;
-                                needsRerender.current = 1;
-                            })
-                            .start();
-
-                    } else {
-                        // New Target C (or B from A)
-                        // If we were already at B (Mix=1), then From=B.
-                        // If we were at A (Mix=0), From=A.
-                        
-                        // Hard set Start to current visual endpoint if settled
-                        if (s.mix >= 0.99) {
-                            s.fromPalette = s.toPalette;
-                            s.mix = 0;
-                        } 
-                        else if (s.mix <= 0.01) {
-                            // s.fromPalette is correct
-                            s.mix = 0;
-                        } else {
-                            // Interrupted A->B. Now -> C.
-                            // Hard jump: Assume From=B (destination of prev) ?? 
-                            // Or From=A (source of prev).
-                            // Let's reset to "From = Current To" to minimize perceived error if we were close? 
-                            // No, safer to just reset mixing.
-                            // JUMP: From = Old "To" (because we probably want to chain?)
-                            // Let's just set From = s.toPalette (the one we were transitioning TO). 
-                            // And mix = 0. (So we act like we finished).
-                            s.fromPalette = s.toPalette;
-                            s.mix = 0;
-                        }
-
-                        s.fromPalette = s.toPalette; // The old "To" becomes the new "Start"
-                        s.toPalette = targetPaletteName;
-                        s.mix = 0;
-
-                         // Set Uniforms
-                         shader.uniforms.paletteTexture.value = palettes[s.fromPalette as keyof typeof palettes] || palettes.default;
-                         shader.uniforms.paletteTextureNext.value = palettes[s.toPalette as keyof typeof palettes] || palettes.default;
-                         shader.uniforms.paletteMix.value = 0;
-
-                         if (tweenRef.current) tweenRef.current.stop();
-
-                         tweenRef.current = new TWEEN.Tween({ m: 0 })
-                            .to({ m: 1 }, 1000)
-                            .easing(TWEEN.Easing.Quadratic.Out)
-                            .onUpdate((obj) => {
-                                s.mix = obj.m;
-                                shader.uniforms.paletteMix.value = obj.m;
-                                needsRerender.current = 1;
-                            })
-                            .onComplete(() => {
-                                // Optimization: Lock to final
-                                // s.fromPalette could become target, mix=0? 
-                                // Or just leave at 1.
-                            })
-                            .start();
-                    }
-                }
+                shader.uniforms.paletteTexture.value = palettes.default;
+                shader.uniforms.paletteTextureNext.value = palettes.default;
+                shader.uniforms.paletteMix.value = 0;
             }
 
             needsRerender.current = 1;
         }
-    }, [currentYear, storylineIndex, storylineMode, palettes, needsRerender]);
+    }, [currentYear, palettes, needsRerender]);
 
     return coloredMaterialRef;
 };

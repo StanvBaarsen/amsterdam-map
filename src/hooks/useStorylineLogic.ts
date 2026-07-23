@@ -1,13 +1,9 @@
 import { useEffect, useRef } from 'react';
-import storylinesDataRaw from '../assets/storylines.json';
 import TWEEN from '@tweenjs/tween.js';
 
 // Parse "current" year
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const storylinesData = storylinesDataRaw.map((s: any) => ({
-    ...s,
-    year: (s.year === "current") ? new Date().getFullYear() : s.year
-}));
+const storylinesData: any[] = [];
 const MAX_TIMELINE_YEAR = 2026;
 
 interface UseStorylineLogicProps {
