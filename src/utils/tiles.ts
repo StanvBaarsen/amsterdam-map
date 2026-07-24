@@ -106,6 +106,12 @@ export const processTileColors = (scene: THREE.Object3D | THREE.Group, tile: any
             if (c.isMesh &&
                 c.material !== defaultMaterial &&
                 c.material !== coloredMaterial) {
+
+                // Some fallback tiles do not include normals. A Lambert
+                // material without normals renders as a black surface.
+                if (!c.geometry.getAttribute('normal')) {
+                    c.geometry.computeVertexNormals();
+                }
                 
                 // Dispose the original material/texture to prevent leaks
                 if (c.material) {

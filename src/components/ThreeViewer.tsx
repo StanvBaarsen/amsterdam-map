@@ -710,7 +710,9 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
             if (criticalTileStableFramesRef.current > 8 && !isFinishingLoadRef.current) {
                 criticalTilesReadyRef.current = true;
                 isFinishingLoadRef.current = true;
-                setLoadingProgress(100);
+                // This is the interactive threshold, not full refinement.
+                // Keep the UI honest while higher-detail tiles stream in.
+                setLoadingProgress(92);
                 setTimeout(() => {
                     setIsLoading(false);
                     isLoadingRef.current = false;

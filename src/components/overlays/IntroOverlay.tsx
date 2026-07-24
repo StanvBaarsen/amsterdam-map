@@ -12,8 +12,8 @@ interface IntroOverlayProps {
 
 export const IntroOverlay: React.FC<IntroOverlayProps> = ({ show, onStart, isLoading, progress }) => {
 
-    // Clamp progress at 99%
-    const displayProgress = Math.min(99, Math.round(progress));
+    const displayProgress = Math.min(92, Math.round(progress));
+    const readyForInteraction = !isLoading;
 
     return (
         <div className={`intro-overlay ${show ? 'visible' : ''} ${!isLoading ? 'loaded' : ''}`}>
@@ -29,7 +29,9 @@ export const IntroOverlay: React.FC<IntroOverlayProps> = ({ show, onStart, isLoa
                 <div className="actions-area">
                     <div className={`loading-container ${isLoading ? 'loading' : ''}`}>
                         <div className="loading-text">
-                            Loading... {displayProgress}%
+                            {readyForInteraction
+                                ? 'Map ready — detailed tiles continue loading'
+                                : `Loading coarse map... ${displayProgress}%`}
                         </div>
                         <div className="loading-track">
                             <div 
