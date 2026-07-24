@@ -88,6 +88,18 @@ export const ThreeViewer: React.FC<ThreeViewerProps> = ({
         areImagesPreloadedRef.current = true;
     }, []);
 
+    // Keep the loading number moving while the interactive map is ready and
+    // higher-detail geometry continues streaming in the background.
+    useEffect(() => {
+        if (isLoading || !showIntro) return;
+
+        const interval = window.setInterval(() => {
+            setLoadingProgress((prev) => Math.min(99, prev + 0.15));
+        }, 250);
+
+        return () => window.clearInterval(interval);
+    }, [isLoading, showIntro]);
+
     // Prefetch basemap tiles into the in-memory tile cache so they're ready the
     // moment the user opens the map (no pop-in as the camera flies in).
     useEffect(() => {
