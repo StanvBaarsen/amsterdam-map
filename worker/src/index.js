@@ -1,11 +1,12 @@
-// Caching proxy in front of the R2 public bucket that hosts the map tiles.
+// Caching front end for the R2 bucket that hosts the map tiles, running on
+// tiles.stanvanbaarsen.nl.
 //
-// The r2.dev public endpoint is rate-limited, never CDN-cached, and serves
-// everything uncompressed, which made cold loads painfully slow. This Worker
-// runs on tiles.stanvanbaarsen.nl and serves the same objects through
-// Cloudflare's edge cache with long-lived cache headers.
-
-const ORIGIN = 'https://pub-b7e9f888ec4543df94637d8bae9ce3c5.r2.dev';
+// Tiles are read straight off the bucket through the TILES binding. This
+// replaced an earlier setup that proxied the bucket's public r2.dev URL: that
+// endpoint is rate-limited, never CDN-cached, and serves everything
+// uncompressed, which made cold loads painfully slow. Reads still go through
+// Cloudflare's edge cache with long-lived headers, so a warm tile costs no R2
+// operation at all.
 
 // Tile data changes rarely (only on a full re-upload). If you replace the
 // dataset, purge the cache for tiles.stanvanbaarsen.nl in the Cloudflare
@@ -24,20 +25,21 @@ export default {
 
         let response = await cache.match(cacheKey);
         if (!response) {
-            const originResponse = await fetch(`${ORIGIN}${url.pathname}`);
-            if (!originResponse.ok) {
+            const object = await env.TILES.get(url.pathname.replace(/^\//, ''));
+            if (object === null) {
                 // Edge tiles legitimately 404; don't cache errors.
-                return new Response(originResponse.body, {
-                    status: originResponse.status,
+                return new Response('Not found', {
+                    status: 404,
                     headers: { 'Access-Control-Allow-Origin': '*' },
                 });
             }
             const headers = new Headers();
-            const contentType = originResponse.headers.get('Content-Type');
+            const contentType = object.httpMetadata?.contentType;
             if (contentType) headers.set('Content-Type', contentType);
             headers.set('Cache-Control', CACHE_HEADER);
             headers.set('Access-Control-Allow-Origin', '*');
-            response = new Response(originResponse.body, { status: 200, headers });
+            headers.set('ETag', object.httpEtag);
+            response = new Response(object.body, { status: 200, headers });
             ctx.waitUntil(cache.put(cacheKey, response.clone()));
         }
 

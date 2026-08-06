@@ -10,14 +10,18 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Configuration
-const ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
-const ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
-const SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
+// Configuration.
+//
+// The tiles moved to the mail@ Cloudflare account in August 2026 (see
+// migrate_r2_account.js), so this reads R2_NEW_* rather than the old R2_*
+// credentials, which addressed a bucket that no longer exists.
+const ACCOUNT_ID = process.env.R2_NEW_ACCOUNT_ID;
+const ACCESS_KEY_ID = process.env.R2_NEW_ACCESS_KEY_ID;
+const SECRET_ACCESS_KEY = process.env.R2_NEW_SECRET_ACCESS_KEY;
 const BUCKET_NAME = 'amsterdam-map-tiles'; // Update if different
 
 if (!ACCOUNT_ID || !ACCESS_KEY_ID || !SECRET_ACCESS_KEY) {
-    console.error("Error: Please set R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, and R2_SECRET_ACCESS_KEY environment variables.");
+    console.error("Error: Please set R2_NEW_ACCOUNT_ID, R2_NEW_ACCESS_KEY_ID, and R2_NEW_SECRET_ACCESS_KEY environment variables.");
     process.exit(1);
 }
 

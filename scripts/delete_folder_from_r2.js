@@ -5,14 +5,15 @@ import { fileURLToPath } from 'url';
 
 dotenv.config();
 
-// Configuration
-const ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
-const ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
-const SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
-const BUCKET_NAME = 'amsterdam-map-tiles'; 
+// Configuration. Points at the mail@ account, where the tiles live since the
+// August 2026 move off the old account (see migrate_r2_account.js).
+const ACCOUNT_ID = process.env.R2_NEW_ACCOUNT_ID;
+const ACCESS_KEY_ID = process.env.R2_NEW_ACCESS_KEY_ID;
+const SECRET_ACCESS_KEY = process.env.R2_NEW_SECRET_ACCESS_KEY;
+const BUCKET_NAME = 'amsterdam-map-tiles';
 
 if (!ACCOUNT_ID || !ACCESS_KEY_ID || !SECRET_ACCESS_KEY) {
-    console.error("Error: Please set R2 env vars.");
+    console.error("Error: Please set the R2_NEW_* env vars.");
     process.exit(1);
 }
 

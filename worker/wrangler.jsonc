@@ -10,6 +10,12 @@
             "custom_domain": true
         }
     ],
+    "r2_buckets": [
+        {
+            "binding": "TILES",
+            "bucket_name": "amsterdam-map-tiles"
+        }
+    ],
     "observability": {
         "enabled": true
     }
